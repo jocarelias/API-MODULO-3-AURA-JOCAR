@@ -1,0 +1,96 @@
+name: CI/CD — G3 Avaliações e Horários
+
+on:
+  push:
+    branches: [main, develop, staging, ci]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  DATABASE_URL: postgresql://smartcampos:smartcampos@localhost:5434/smartcampos
+
+jobs:
+  lint-and-typecheck:
+    name: Lint + Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+
+  unit-tests:
+    name: Testes unitários
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run prisma:generate
+      - run: npm run test:unit
+
+  e2e-tests:
+    name: Testes e2e (PostgreSQL)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: smartcampos
+          POSTGRES_PASSWORD: smartcampos
+          POSTGRES_DB: smartcampos
+        ports:
+          - 5434:5432
+        options: >-
+          --health-cmd "pg_isready -U smartcampos"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run prisma:generate
+      - run: npx prisma migrate deploy
+      - run: npm run db:seed
+      - run: npm run test:e2e
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, unit-tests, e2e-tests]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+  deploy-staging:
+    name: Deploy (staging)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/staging'
+    needs: [build]
+    steps:
+      - run: echo "Deploy para staging — TODO: adicionar alvo real"
+      - run: echo "Branch ${{ github.ref_name }} · SHA ${{ github.sha }}"
+
+  deploy-production:
+    name: Deploy (produção)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    needs: [build]
+    steps:
+      - run: echo "Deploy para produção — TODO: adicionar alvo real"
+      - run: echo "Branch ${{ github.ref_name }} · SHA ${{ github.sha }}"
