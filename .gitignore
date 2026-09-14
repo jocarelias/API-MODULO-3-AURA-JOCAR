@@ -3,6 +3,10 @@ node_modules/
 dist/
 coverage/
 
+# Agentes IA
+AGENTS.md
+.opencode/
+
 # Ambiente
 .env
 .env.local
