@@ -83,8 +83,8 @@ jobs:
     if: github.ref == 'refs/heads/staging'
     needs: [build]
     steps:
-      - run: echo "Deploy para staging — TODO: adicionar alvo real"
-      - run: echo "Branch ${{ github.ref_name }} · SHA ${{ github.sha }}"
+      - run: 'echo "Deploy para staging — TODO: adicionar alvo real"'
+      - run: 'echo "Branch ${{ github.ref_name }} · SHA ${{ github.sha }}"'
 
   deploy-production:
     name: Deploy (produção)
@@ -92,5 +92,5 @@ jobs:
     if: github.ref == 'refs/heads/main'
     needs: [build]
     steps:
-      - run: echo "Deploy para produção — TODO: adicionar alvo real"
-      - run: echo "Branch ${{ github.ref_name }} · SHA ${{ github.sha }}"
+      - run: 'echo "Deploy para produção — TODO: adicionar alvo real"'
+      - run: 'echo "Branch ${{ github.ref_name }} · SHA ${{ github.sha }}"'
