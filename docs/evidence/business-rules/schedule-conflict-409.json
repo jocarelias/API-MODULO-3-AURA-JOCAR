@@ -1,0 +1,1 @@
+{"code":"CONFLICT","message":"Conflito de horário detectado","details":[{"type":"TEACHER","message":"Professor já possui aula das 14:00 às 15:30"},{"type":"CLASS","message":"Turma já possui aula das 14:00 às 15:30"}],"correlationId":"6fa79fa9-36b5-4c82-9633-d88c2364a237"}

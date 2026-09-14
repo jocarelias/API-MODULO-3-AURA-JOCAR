@@ -1,0 +1,9 @@
+               conname               |                                         definition                                         
+-------------------------------------+--------------------------------------------------------------------------------------------
+ check_assessment_max_score_positive | CHECK (("maxScore" > (0)::numeric))
+ check_assessment_weight_positive    | CHECK ((weight > (0)::numeric))
+ check_grade_score_range             | CHECK (((score >= (0)::numeric) AND (score <= (100)::numeric)))
+ check_result_average_range          | CHECK (((average IS NULL) OR ((average >= (0)::numeric) AND (average <= (100)::numeric))))
+ check_schedule_time_range           | CHECK (("startTime" < "endTime"))
+(5 rows)
+

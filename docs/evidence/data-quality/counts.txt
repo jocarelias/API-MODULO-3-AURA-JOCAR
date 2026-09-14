@@ -1,0 +1,8 @@
+   entity    | total 
+-------------+-------
+ assessments |    34
+ grades      |   101
+ schedules   |    16
+ results     |    50
+(4 rows)
+

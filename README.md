@@ -127,3 +127,18 @@ Pré-requisito dos testes e2e: banco migrado e com seed (`npm run db:reset -- --
 ## Documentação
 
 Ver `docs/` — `openapi.yaml`, `entity-model.md`, `manual-apis-core.md`, `reflection-questions.md`, `implementation-evidence.md`, `test-evidence.md`, `diagrams/` e o relatório final `.docx`.
+
+### Ficha de exercícios — respostas e evidências
+
+| Artefacto | Descrição |
+|---|---|
+| `docs/G3-exercicios-respostas.md` | Respostas consolidadas dos 7 exercícios (markdown) |
+| `docs/G3_Horario_Avaliacoes_Type_Documentacao.docx` | Versão Word com evidências e imagens reais |
+| `docs/diagrams/er-diagram.{svg,png,pdf}` | Diagrama entidade-relação do módulo |
+| `docs/entity-model.md` | Modelo de entidades detalhado |
+| `docs/evidence/prisma/` | Evidências `prisma generate` / `migrate status` / migration SQL |
+| `docs/evidence/crud/` | Create/Update/Delete reais (201/200) e validações (400) |
+| `docs/evidence/business-rules/` | Regras de negócio (409) — duplicata, imutabilidade, delete bloqueado, conflito de horário |
+| `docs/evidence/transaction/` | Evidência ACID (rollback forçado) |
+| `docs/evidence/tests/` | Saída real do `npm test` (49 testes) |
+| `docs/evidence/data-quality/` | Constraints CHECK e registos rejeitados |

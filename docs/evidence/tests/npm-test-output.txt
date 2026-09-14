@@ -1,0 +1,35 @@
+
+> g3-avaliacoes-horarios@1.0.0 test
+> npm run test:unit && npm run test:e2e
+
+
+> g3-avaliacoes-horarios@1.0.0 test:unit
+> vitest run
+
+
+ RUN  v3.2.7 /home/Jocarelias/Documents/API HORARIOS
+
+ ✓ src/modules/schedules-assessments/domain/evaluation.test.ts (21 tests) 23ms
+
+ Test Files  1 passed (1)
+      Tests  21 passed (21)
+   Start at  14:13:44
+   Duration  703ms (transform 92ms, setup 0ms, collect 86ms, tests 23ms, environment 0ms, prepare 148ms)
+
+
+> g3-avaliacoes-horarios@1.0.0 test:e2e
+> vitest run --config vitest.e2e.config.ts
+
+
+ RUN  v3.2.7 /home/Jocarelias/Documents/API HORARIOS
+
+ ✓ src/modules/schedules-assessments/tests/g3.transaction.e2e.test.ts (2 tests) 425ms
+   ✓ G3 transações ACID (nível de serviço) > lançar nota + recálculo é atómico: falha no recálculo faz rollback total  342ms
+ ✓ src/modules/schedules-assessments/tests/error-scenarios.e2e.test.ts (3 tests) 191ms
+ ✓ src/modules/schedules-assessments/tests/g3.e2e.test.ts (23 tests) 1289ms
+
+ Test Files  3 passed (3)
+      Tests  28 passed (28)
+   Start at  14:13:46
+   Duration  2.55s (transform 341ms, setup 0ms, collect 1.39s, tests 1.90s, environment 1ms, prepare 604ms)
+
