@@ -1,0 +1,64 @@
+Table Assessments {
+  id String [pk]
+  type AssessmentType [default: 'TEST']
+  termId String [not null]
+  classId String [not null]
+  subjectId String [not null]
+  title String [not null]
+  startTime DateTime [not null]
+  endTime DateTime [not null]
+  maxScore Decimal [not null]
+  weight Decimal [not null]
+  status GradeStatus [default: 'OPEN']
+  createdAt DateTime [default: `now()`]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (termId, classId, subjectId, title) [unique, name: 'idx_assessments_unique']
+  }
+  Note: 'CHECK (endTime > startTime)', 'CHECK (maxScore > 0)', 'CHECK (weight > 0)'
+}
+
+Table Grades {
+  id String [pk]
+  assessmentId String [not null, ref: > Assessments.id]
+  studentId String [not null]
+  score Decimal [not null]
+
+  indexes {
+    (assessmentId, studentId) [unique, name: 'idx_grades_assessment_student']
+  }
+  Note: '1 nota por aluno por avaliação', 'CHECK (score >= 0 e <= maxScore da avaliação)'
+}
+
+Table Results {
+  id String [pk]
+  studentId String [not null]
+  termId String [not null]
+  classId String [not null]
+  subjectId String [not null]
+  average Decimal [not null]
+  status ResultStatus [not null]
+  statusReason String
+  createdAt DateTime [default: `now()`]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (studentId, termId, classId, subjectId) [unique, name: 'idx_results_unique']
+  }
+}
+
+Table Schedules {
+  id String [pk]
+  termId String [not null]
+  classId String [not null]
+  subjectId String [not null]
+  startTime DateTime [not null]
+  endTime DateTime [not null]
+  room String [not null]
+  professorId String [not null]
+  createdAt DateTime [default: `now()`]
+  updatedAt DateTime [not null]
+
+  Note: 'Conflito professor/turma/sala -> 409 (regra no service)'
+}

@@ -1,0 +1,202 @@
+### CHECK constraints (G3)
+-[ RECORD 1 ]---------------------------------------------------------------------------------------
+conname | check_assessment_max_score_positive
+table_  | assessments
+def     | CHECK (("maxScore" > (0)::numeric))
+-[ RECORD 2 ]---------------------------------------------------------------------------------------
+conname | check_assessment_weight_positive
+table_  | assessments
+def     | CHECK ((weight > (0)::numeric))
+-[ RECORD 3 ]---------------------------------------------------------------------------------------
+conname | check_grade_score_range
+table_  | grades
+def     | CHECK (((score >= (0)::numeric) AND (score <= (100)::numeric)))
+-[ RECORD 4 ]---------------------------------------------------------------------------------------
+conname | check_schedule_time_range
+table_  | schedules
+def     | CHECK (("startTime" < "endTime"))
+-[ RECORD 5 ]---------------------------------------------------------------------------------------
+conname | check_result_average_range
+table_  | results
+def     | CHECK (((average IS NULL) OR ((average >= (0)::numeric) AND (average <= (100)::numeric))))
+
+### UNIQUE constraints (G3)
+(0 rows)
+
+### UNIQUE indexes (G3)
+-[ RECORD 1 ]----------------------------------------------
+index_name | assessments_academicYearId_idx
+table_     | assessments
+columns    | academicYearId
+unique_    | f
+-[ RECORD 2 ]----------------------------------------------
+index_name | assessments_classId_idx
+table_     | assessments
+columns    | classId
+unique_    | f
+-[ RECORD 3 ]----------------------------------------------
+index_name | assessments_date_idx
+table_     | assessments
+columns    | date
+unique_    | f
+-[ RECORD 4 ]----------------------------------------------
+index_name | assessments_pkey
+table_     | assessments
+columns    | id
+unique_    | t
+-[ RECORD 5 ]----------------------------------------------
+index_name | assessments_schoolId_classId_idx
+table_     | assessments
+columns    | schoolId, classId
+unique_    | f
+-[ RECORD 6 ]----------------------------------------------
+index_name | assessments_schoolId_idx
+table_     | assessments
+columns    | schoolId
+unique_    | f
+-[ RECORD 7 ]----------------------------------------------
+index_name | assessments_schoolId_subjectId_idx
+table_     | assessments
+columns    | schoolId, subjectId
+unique_    | f
+-[ RECORD 8 ]----------------------------------------------
+index_name | assessments_schoolId_teacherId_idx
+table_     | assessments
+columns    | schoolId, teacherId
+unique_    | f
+-[ RECORD 9 ]----------------------------------------------
+index_name | assessments_status_idx
+table_     | assessments
+columns    | status
+unique_    | f
+-[ RECORD 10 ]---------------------------------------------
+index_name | assessments_subjectId_idx
+table_     | assessments
+columns    | subjectId
+unique_    | f
+-[ RECORD 11 ]---------------------------------------------
+index_name | assessments_teacherId_idx
+table_     | assessments
+columns    | teacherId
+unique_    | f
+-[ RECORD 12 ]---------------------------------------------
+index_name | assessments_termId_idx
+table_     | assessments
+columns    | termId
+unique_    | f
+-[ RECORD 13 ]---------------------------------------------
+index_name | grades_assessmentId_idx
+table_     | grades
+columns    | assessmentId
+unique_    | f
+-[ RECORD 14 ]---------------------------------------------
+index_name | grades_assessmentId_studentId_key
+table_     | grades
+columns    | assessmentId, studentId
+unique_    | t
+-[ RECORD 15 ]---------------------------------------------
+index_name | grades_pkey
+table_     | grades
+columns    | id
+unique_    | t
+-[ RECORD 16 ]---------------------------------------------
+index_name | grades_studentId_idx
+table_     | grades
+columns    | studentId
+unique_    | f
+-[ RECORD 17 ]---------------------------------------------
+index_name | results_academicYearId_idx
+table_     | results
+columns    | academicYearId
+unique_    | f
+-[ RECORD 18 ]---------------------------------------------
+index_name | results_classId_idx
+table_     | results
+columns    | classId
+unique_    | f
+-[ RECORD 19 ]---------------------------------------------
+index_name | results_pkey
+table_     | results
+columns    | id
+unique_    | t
+-[ RECORD 20 ]---------------------------------------------
+index_name | results_schoolId_idx
+table_     | results
+columns    | schoolId
+unique_    | f
+-[ RECORD 21 ]---------------------------------------------
+index_name | results_studentId_classId_subjectId_termId_key
+table_     | results
+columns    | studentId, classId, subjectId, termId
+unique_    | t
+-[ RECORD 22 ]---------------------------------------------
+index_name | results_studentId_idx
+table_     | results
+columns    | studentId
+unique_    | f
+-[ RECORD 23 ]---------------------------------------------
+index_name | results_subjectId_idx
+table_     | results
+columns    | subjectId
+unique_    | f
+-[ RECORD 24 ]---------------------------------------------
+index_name | results_termId_idx
+table_     | results
+columns    | termId
+unique_    | f
+-[ RECORD 25 ]---------------------------------------------
+index_name | schedules_academicYearId_idx
+table_     | schedules
+columns    | academicYearId
+unique_    | f
+-[ RECORD 26 ]---------------------------------------------
+index_name | schedules_classId_idx
+table_     | schedules
+columns    | classId
+unique_    | f
+-[ RECORD 27 ]---------------------------------------------
+index_name | schedules_dayOfWeek_idx
+table_     | schedules
+columns    | dayOfWeek
+unique_    | f
+-[ RECORD 28 ]---------------------------------------------
+index_name | schedules_pkey
+table_     | schedules
+columns    | id
+unique_    | t
+-[ RECORD 29 ]---------------------------------------------
+index_name | schedules_schoolId_classId_dayOfWeek_idx
+table_     | schedules
+columns    | schoolId, classId, dayOfWeek
+unique_    | f
+-[ RECORD 30 ]---------------------------------------------
+index_name | schedules_schoolId_idx
+table_     | schedules
+columns    | schoolId
+unique_    | f
+-[ RECORD 31 ]---------------------------------------------
+index_name | schedules_schoolId_room_dayOfWeek_idx
+table_     | schedules
+columns    | schoolId, room, dayOfWeek
+unique_    | f
+-[ RECORD 32 ]---------------------------------------------
+index_name | schedules_schoolId_teacherId_dayOfWeek_idx
+table_     | schedules
+columns    | schoolId, teacherId, dayOfWeek
+unique_    | f
+-[ RECORD 33 ]---------------------------------------------
+index_name | schedules_subjectId_idx
+table_     | schedules
+columns    | subjectId
+unique_    | f
+-[ RECORD 34 ]---------------------------------------------
+index_name | schedules_teacherId_idx
+table_     | schedules
+columns    | teacherId
+unique_    | f
+-[ RECORD 35 ]---------------------------------------------
+index_name | schedules_termId_idx
+table_     | schedules
+columns    | termId
+unique_    | f
+

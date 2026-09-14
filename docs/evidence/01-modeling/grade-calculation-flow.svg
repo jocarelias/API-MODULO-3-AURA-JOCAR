@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="860" viewBox="0 0 1080 860" font-family="Arial, Helvetica, sans-serif">
+  <rect width="1080" height="860" fill="#ffffff"/>
+  <text x="20" y="32" font-size="19" font-weight="bold" fill="#1f4e79">Fluxo do Cálculo da Média Ponderada — domain/evaluation.js</text>
+  <text x="20" y="54" font-size="12" fill="#555">Função weightedAverage(grades) + resolveResultStatus(...) — regra de negócio central do G3.</text>
+
+  <!-- start -->
+  <ellipse cx="540" cy="96" rx="14" ry="8" fill="#1f4e79"/>
+  <text x="540" y="120" font-size="11" font-weight="bold" text-anchor="middle" fill="#1f4e79">Início</text>
+
+  <!-- input -->
+  <rect x="300" y="138" width="480" height="46" rx="8" fill="#eef4fb" stroke="#2e74b5"/>
+  <text x="540" y="158" font-size="11.5" text-anchor="middle" fill="#1a1a1a">Notas do aluno: [{score, weight}, …] por avaliação</text>
+  <text x="540" y="176" font-size="10.5" text-anchor="middle" fill="#555">peso &gt; 0 exigido no create · nota ∈ [0, maxScore]</text>
+
+  <!-- decision 1 -->
+  <polygon points="540,228 680,282 540,336 400,282" fill="#ffffff" stroke="#2e74b5"/>
+  <text x="540" y="278" font-size="11" text-anchor="middle" fill="#1a1a1a">existem notas?</text>
+  <text x="540" y="294" font-size="11" text-anchor="middle" fill="#1a1a1a">(grades.length &gt; 0)</text>
+
+  <line x1="540" y1="336" x2="540" y2="376"/>
+  <polygon points="540,376 534,364 546,364" fill="#2e74b5"/>
+  <text x="552" y="360" font-size="11" fill="#2e74b5">Sim</text>
+
+  <!-- sum -->
+  <rect x="330" y="376" width="420" height="54" rx="8" fill="#eef4fb" stroke="#2e74b5"/>
+  <text x="540" y="398" font-size="11.5" text-anchor="middle" fill="#1a1a1a">SomaPesos = Σ weight     SomaPonderada = Σ (score × weight)</text>
+  <text x="540" y="418" font-size="10.5" text-anchor="middle" fill="#555">laço sobre as notas do aluno (cálculo determinístico)</text>
+
+  <!-- decision 2 -->
+  <polygon points="540,470 680,524 540,578 400,524" fill="#ffffff" stroke="#2e74b5"/>
+  <text x="540" y="520" font-size="11" text-anchor="middle" fill="#1a1a1a">SomaPesos &gt; 0?</text>
+
+  <line x1="400" y1="524" x2="240" y2="524"/>
+  <polygon points="240,524 250,516 250,532" fill="#2e74b5"/>
+  <text x="330" y="516" font-size="11" fill="#2e74b5">Não</text>
+  <rect x="40" y="504" width="200" height="40" rx="8" fill="#fdf5f5" stroke="#c00000"/>
+  <text x="140" y="522" font-size="11" text-anchor="middle" fill="#1a1a1a">média = Σ score / N</text>
+  <text x="140" y="538" font-size="10.5" text-anchor="middle" fill="#555">fallback aritmético</text>
+
+  <line x1="540" y1="578" x2="540" y2="618"/>
+  <polygon points="540,618 534,606 546,606" fill="#2e74b5"/>
+  <text x="552" y="606" font-size="11" fill="#2e74b5">Sim</text>
+
+  <rect x="330" y="618" width="420" height="58" rx="8" fill="#eef4fb" stroke="#2e74b5"/>
+  <text x="540" y="642" font-size="12" font-weight="bold" text-anchor="middle" fill="#1f4e79">média = Σ (score × weight) / Σ weight</text>
+  <text x="540" y="662" font-size="11" text-anchor="middle" fill="#1a1a1a">aplica round2 (2 casas decimais)</text>
+
+  <!-- example -->
+  <line x1="760" y1="647" x2="930" y2="600"/>
+  <rect x="700" y="520" width="340" height="78" rx="8" fill="#fff8e6" stroke="#bf9000"/>
+  <text x="712" y="540" font-size="10.5" font-weight="bold" fill="#7f6000">Exemplo real</text>
+  <text x="712" y="558" font-size="10" fill="#1a1a1a">A1: nota 15, peso 2 → 30</text>
+  <text x="712" y="574" font-size="10" fill="#1a1a1a">A2: nota 17, peso 1 → 17</text>
+  <text x="712" y="590" font-size="10" fill="#1a1a1a">média = (30+17)/(2+1) = 15,67</text>
+
+  <!-- decision 3: status -->
+  <polygon points="540,720 680,774 540,828 400,774" fill="#ffffff" stroke="#2e74b5"/>
+  <text x="540" y="768" font-size="11" text-anchor="middle" fill="#1a1a1a">faltam notas?</text>
+  <text x="540" y="784" font-size="11" text-anchor="middle" fill="#1a1a1a">(missingCount &gt; 0)</text>
+
+  <line x1="540" y1="828" x2="540" y2="840"/>
+  <text x="20" y="850" font-size="11" fill="#555">Status final: IN_PROGRESS (faltam notas) · caso contrário, conforme a média: APPROVED (≥10) · RECOVERY (≥8) · FAILED (&lt;8) · PENDING (sem avaliações).</text>
+  <text x="20" y="868" font-size="10.5" fill="#555">Resultado gravado em «results» (upsert por studentId+classId+subjectId+termId) em transação atómica com o lançamento da nota.</text>
+</svg>

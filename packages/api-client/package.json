@@ -1,0 +1,8 @@
+{
+  "name": "@smartcampus/api-client",
+  "version": "1.0.0",
+  "description": "Cliente HTTP TypeScript para a API aberta do Smart Campus (G3 — Avaliações e Horários)",
+  "private": true,
+  "main": "src/index.ts",
+  "license": "UNLICENSED"
+}

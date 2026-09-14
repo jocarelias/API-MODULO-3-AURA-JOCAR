@@ -1,0 +1,36 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram id="g3-er" name="ER G3">
+    <mxGraphModel dx="1180" dy="760" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1180" pageHeight="760" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t" value="Assessments" style="swimlane;fontStyle=1;fillColor=#1f4e79;fontColor=#ffffff;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="60" y="80" width="240" height="300" as="geometry" />
+        </mxCell>
+        <mxCell id="t1" value="id PK&#xa;type&#xa;termId FK&#xa;classId FK&#xa;subjectId FK&#xa;title&#xa;startTime&#xa;endTime&#xa;maxScore&#xa;weight&#xa;status&#xa;createdAt&#xa;updatedAt" style="text;align=left;spacingLeft=8;fillColor=none;" vertex="1" parent="t">
+          <mxGeometry y="26" width="240" height="274" as="geometry" />
+        </mxCell>
+        <mxCell id="g" value="Grades" style="swimlane;fontStyle=1;fillColor=#1f4e79;fontColor=#ffffff;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="380" y="320" width="220" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="g1" value="id PK&#xa;assessmentId FK&#xa;studentId&#xa;score&#xa;createdAt" style="text;align=left;spacingLeft=8;fillColor=none;" vertex="1" parent="g">
+          <mxGeometry y="26" width="220" height="94" as="geometry" />
+        </mxCell>
+        <mxCell id="r" value="Results" style="swimlane;fontStyle=1;fillColor=#1f4e79;fontColor=#ffffff;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="680" y="80" width="240" height="224" as="geometry" />
+        </mxCell>
+        <mxCell id="r1" value="id PK&#xa;studentId FK&#xa;termId FK&#xa;classId FK&#xa;subjectId FK&#xa;average&#xa;status&#xa;statusReason&#xa;createdAt&#xa;updatedAt" style="text;align=left;spacingLeft=8;fillColor=none;" vertex="1" parent="r">
+          <mxGeometry y="26" width="240" height="198" as="geometry" />
+        </mxCell>
+        <mxCell id="s" value="Schedules" style="swimlane;fontStyle=1;fillColor=#bf9000;fontColor=#ffffff;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="380" y="80" width="220" height="176" as="geometry" />
+        </mxCell>
+        <mxCell id="s1" value="id PK&#xa;termId FK&#xa;classId FK&#xa;subjectId FK&#xa;startTime&#xa;endTime&#xa;room&#xa;professorId&#xa;createdAt&#xa;updatedAt" style="text;align=left;spacingLeft=8;fillColor=none;" vertex="1" parent="s">
+          <mxGeometry y="26" width="220" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="g2a" style="edgeStyle=entityRelationEdgeStyle;html=1;strokeWidth=2;" edge="1" parent="1" source="t" target="g"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="g2b" style="edgeStyle=entityRelationEdgeStyle;html=1;strokeWidth=2;dashed=1;" edge="1" parent="1" source="g" target="r"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

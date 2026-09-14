@@ -1,0 +1,544 @@
+// ============================================================
+// Smart Campos Core API - Prisma Schema
+// PostgreSQL - modelo acadêmico multi-tenant
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum Role {
+  SUPER_ADMIN
+  SCHOOL_ADMIN
+  DIRECTOR
+  COORDINATOR
+  TEACHER
+  STUDENT
+  PARENT
+  SECRETARY
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+enum SchoolStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum AcademicYearStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum TermStatus {
+  ACTIVE
+  COMPLETED
+  PENDING
+  CANCELLED
+}
+
+enum ClassStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum TeacherStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum StudentStatus {
+  ACTIVE
+  INACTIVE
+  TRANSFERRED
+  DROPPED
+}
+
+enum SubjectStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  TRANSFERRED
+  CANCELLED
+}
+
+enum EvaluationType {
+  TEST
+  EXAM
+  ASSIGNMENT
+  QUIZ
+  PROJECT
+  PRACTICAL
+  ORAL
+  OTHER
+}
+
+enum EvaluationStatus {
+  DRAFT
+  SCHEDULED
+  OPEN
+  CLOSED
+  CANCELLED
+}
+
+enum GradeStatus {
+  SUBMITTED
+  APPROVED
+  REVISED
+}
+
+enum ScheduleStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
+enum ResultStatus {
+  APPROVED
+  FAILED
+  RECOVERY
+  PENDING
+  IN_PROGRESS
+}
+
+// ============================================================
+// NÚCLEO / MULTI-TENANCY
+// ============================================================
+
+model School {
+  id        String       @id @default(uuid())
+  name      String
+  code      String       @unique
+  email     String?
+  phone     String?
+  address   String?
+  status    SchoolStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  users        User[]
+  academicYrs  AcademicYear[]
+  terms        Term[]
+  classes      Class[]
+  teachers     Teacher[]
+  students     Student[]
+  subjects     Subject[]
+  enrollments  Enrollment[]
+  assessments  Assessment[]
+  scheduleEnts Schedule[]
+  results      Result[]
+  auditLogs    AuditLog[]
+
+  @@index([status])
+  @@map("schools")
+}
+
+model User {
+  id           String     @id @default(uuid())
+  schoolId     String
+  role         Role
+  name         String
+  email        String     @unique
+  passwordHash String
+  phone        String?
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  school        School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  teacher       Teacher?
+  student       Student?
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]     @relation("AuditLogUser")
+
+  @@index([schoolId])
+  @@index([role])
+  @@map("users")
+}
+
+model RefreshToken {
+  id          String    @id @default(uuid())
+  userId      String
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  userAgent   String?
+  ipAddress   String?
+  createdAt   DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+// ============================================================
+// MÓDULO ACADÊMICO
+// ============================================================
+
+model AcademicYear {
+  id          String              @id @default(uuid())
+  schoolId    String
+  name        String
+  startDate   DateTime
+  endDate     DateTime
+  status      AcademicYearStatus  @default(ACTIVE)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  terms       Term[]
+  classes     Class[]
+  enrollments Enrollment[]
+  assessments Assessment[]
+  scheduleEnts Schedule[]
+  results     Result[]
+
+  @@unique([schoolId, name])
+  @@index([schoolId, status])
+  @@map("academic_years")
+}
+
+model Term {
+  id            String      @id @default(uuid())
+  schoolId      String
+  academicYearId String
+  name          String
+  startDate     DateTime
+  endDate       DateTime
+  status        TermStatus  @default(ACTIVE)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  academicYear  AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  school        School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  enrollments   Enrollment[]
+  assessments   Assessment[]
+  scheduleEnts  Schedule[]
+  results       Result[]
+
+  @@index([schoolId])
+  @@index([academicYearId])
+  @@map("terms")
+}
+
+model Class {
+  id             String      @id @default(uuid())
+  schoolId       String
+  academicYearId String
+  name           String
+  grade          String?
+  shift          String?
+  room           String?
+  status         ClassStatus @default(ACTIVE)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  school       School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+
+  enrollments Enrollment[]
+  assessments Assessment[]
+  scheduleEnts Schedule[]
+  results     Result[]
+
+  @@index([schoolId])
+  @@index([academicYearId])
+  @@index([schoolId, status])
+  @@map("classes")
+}
+
+model Teacher {
+  id        String        @id @default(uuid())
+  schoolId  String
+  userId    String?       @unique
+  name      String
+  email     String?
+  phone     String?
+  status    TeacherStatus @default(ACTIVE)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  school      School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  assessments Assessment[]
+  scheduleEnts Schedule[]
+  results     Result[]
+
+  @@index([schoolId])
+  @@index([schoolId, status])
+  @@map("teachers")
+}
+
+model Student {
+  id              String        @id @default(uuid())
+  schoolId        String
+  userId          String?       @unique
+  name            String
+  email           String?
+  dateOfBirth     DateTime?
+  enrollmentNumber String?      @unique
+  status          StudentStatus @default(ACTIVE)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  school      School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  enrollments Enrollment[]
+  grades      Grade[]
+  results     Result[]
+
+  @@index([schoolId])
+  @@index([schoolId, status])
+  @@map("students")
+}
+
+model Subject {
+  id          String        @id @default(uuid())
+  schoolId    String
+  name        String
+  code        String?
+  description String?
+  status      SubjectStatus @default(ACTIVE)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  school      School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  enrollments Enrollment[]
+  assessments Assessment[]
+  scheduleEnts Schedule[]
+  results     Result[]
+
+  @@index([schoolId])
+  @@index([schoolId, status])
+  @@map("subjects")
+}
+
+model Enrollment {
+  id             String           @id @default(uuid())
+  schoolId       String
+  academicYearId String
+  termId         String
+  classId        String
+  studentId      String
+  subjectId      String
+  status         EnrollmentStatus @default(ACTIVE)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  school       School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  term         Term         @relation(fields: [termId], references: [id], onDelete: Cascade)
+  class        Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student      Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subject      Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, classId, subjectId, termId])
+  @@index([schoolId])
+  @@index([classId])
+  @@index([studentId])
+  @@index([subjectId])
+  @@index([termId])
+  @@index([academicYearId])
+  @@index([schoolId, status])
+  @@map("enrollments")
+}
+
+// ============================================================
+// MÓDULO DE AVALIAÇÕES (G3)
+// ============================================================
+
+model Assessment {
+  id             String           @id @default(uuid())
+  schoolId       String
+  academicYearId String
+  termId         String
+  classId        String
+  subjectId      String
+  teacherId      String
+  name           String
+  type           EvaluationType
+  description    String?
+  date           DateTime
+  maxScore       Decimal          @default(20) @db.Decimal(5, 2)
+  weight         Decimal          @default(1) @db.Decimal(5, 3)
+  status         EvaluationStatus @default(DRAFT)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  school       School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  term         Term         @relation(fields: [termId], references: [id], onDelete: Cascade)
+  class        Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subject      Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacher      Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  grades       Grade[]
+
+  @@index([schoolId])
+  @@index([academicYearId])
+  @@index([termId])
+  @@index([classId])
+  @@index([subjectId])
+  @@index([teacherId])
+  @@index([date])
+  @@index([status])
+  @@index([schoolId, classId])
+  @@index([schoolId, subjectId])
+  @@index([schoolId, teacherId])
+  @@map("assessments")
+}
+
+model Grade {
+  id           String      @id @default(uuid())
+  assessmentId String
+  studentId    String
+  score        Decimal     @db.Decimal(5, 2)
+  comment      String?
+  status       GradeStatus @default(SUBMITTED)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  student    Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([assessmentId, studentId])
+  @@index([assessmentId])
+  @@index([studentId])
+  @@map("grades")
+}
+
+// ============================================================
+// MÓDULO DE HORÁRIOS
+// ============================================================
+
+model Schedule {
+  id             String         @id @default(uuid())
+  schoolId       String
+  academicYearId String
+  termId         String
+  classId        String
+  subjectId      String
+  teacherId      String
+  dayOfWeek      DayOfWeek
+  startTime      String
+  endTime        String
+  room           String?
+  status         ScheduleStatus @default(ACTIVE)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  school       School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  term         Term         @relation(fields: [termId], references: [id], onDelete: Cascade)
+  class        Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subject      Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacher      Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId])
+  @@index([academicYearId])
+  @@index([termId])
+  @@index([classId])
+  @@index([subjectId])
+  @@index([teacherId])
+  @@index([dayOfWeek])
+  @@index([schoolId, teacherId, dayOfWeek])
+  @@index([schoolId, classId, dayOfWeek])
+  @@index([schoolId, room, dayOfWeek])
+  @@map("schedules")
+}
+
+// ============================================================
+// MÓDULO DE RESULTADOS
+// ============================================================
+
+model Result {
+  id             String       @id @default(uuid())
+  schoolId       String
+  academicYearId String
+  termId         String
+  classId        String
+  subjectId      String
+  studentId      String
+  teacherId      String?
+  average        Decimal?     @db.Decimal(5, 2)
+  finalScore     Decimal?     @db.Decimal(5, 2)
+  weightedTotal  Decimal?     @db.Decimal(5, 2)
+  status         ResultStatus @default(PENDING)
+  calculatedAt   DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  school       School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  term         Term         @relation(fields: [termId], references: [id], onDelete: Cascade)
+  class        Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subject      Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  student      Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher      Teacher?     @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+
+  @@unique([studentId, classId, subjectId, termId])
+  @@index([schoolId])
+  @@index([studentId])
+  @@index([classId])
+  @@index([subjectId])
+  @@index([termId])
+  @@index([academicYearId])
+  @@map("results")
+}
+
+// ============================================================
+// AUDITORIA
+// ============================================================
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  schoolId String?
+  action    String
+  entity    String
+  entityId  String?
+  oldValue  Json?
+  newValue  Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user   User?   @relation("AuditLogUser", fields: [userId], references: [id], onDelete: SetNull)
+  school School? @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+
+  @@index([schoolId])
+  @@index([userId])
+  @@index([entity])
+  @@index([entityId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

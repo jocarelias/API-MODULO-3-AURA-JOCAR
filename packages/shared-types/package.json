@@ -1,0 +1,8 @@
+{
+  "name": "@smartcampus/shared-types",
+  "version": "1.0.0",
+  "description": "DTOs, constantes e contrato público partilhado do Smart Campus (G3 — Avaliações e Horários)",
+  "private": true,
+  "main": "src/index.ts",
+  "license": "UNLICENSED"
+}

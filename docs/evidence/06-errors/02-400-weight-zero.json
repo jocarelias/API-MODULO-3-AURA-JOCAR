@@ -1,0 +1,1 @@
+{"code":"VALIDATION_ERROR","message":"Dados inválidos","details":[{"field":"weight","message":"Peso deve ser maior que 0"}],"correlationId":"2d4cc582-fb05-4505-b6e3-6dc3de4d0e10"}

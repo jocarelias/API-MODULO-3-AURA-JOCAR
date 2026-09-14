@@ -1,0 +1,36 @@
+# Dependencias
+node_modules/
+dist/
+coverage/
+
+# Ambiente
+.env
+.env.local
+.env.test
+.env.*.local
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Cache / OS
+.tmp/
+.cache/
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Prisma (migrations sao versionadas; apenas gerados sao ignorados)
+src/generated/
+
+# Testes
+.tmp-test/

@@ -1,0 +1,8 @@
+{
+  "name": "@smartcampus/validation",
+  "version": "1.0.0",
+  "description": "Schemas Zod partilhados do Smart Campus (G3 — Avaliações e Horários)",
+  "private": true,
+  "main": "src/index.ts",
+  "license": "UNLICENSED"
+}

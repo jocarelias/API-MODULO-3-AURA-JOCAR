@@ -1,0 +1,41 @@
+### Row counts (G3)
+-[ RECORD 1 ]------
+tbl   | assessments
+count | 31
+-[ RECORD 2 ]------
+tbl   | grades
+count | 101
+-[ RECORD 3 ]------
+tbl   | schedules
+count | 15
+-[ RECORD 4 ]------
+tbl   | results
+count | 50
+
+### Sample weighted-average result
+-[ RECORD 1 ]-----------------------------------
+studentId | d7dc970a-287b-4695-9798-e72b7b6a0aaf
+aluno     | Valter Nhantumbo
+average   | 20.00
+status    | APPROVED
+-[ RECORD 2 ]-----------------------------------
+studentId | d7dc970a-287b-4695-9798-e72b7b6a0aaf
+aluno     | Valter Nhantumbo
+average   | 20.00
+status    | APPROVED
+-[ RECORD 3 ]-----------------------------------
+studentId | d7dc970a-287b-4695-9798-e72b7b6a0aaf
+aluno     | Valter Nhantumbo
+average   | 20.00
+status    | APPROVED
+-[ RECORD 4 ]-----------------------------------
+studentId | d7dc970a-287b-4695-9798-e72b7b6a0aaf
+aluno     | Valter Nhantumbo
+average   | 20.00
+status    | APPROVED
+-[ RECORD 5 ]-----------------------------------
+studentId | d7dc970a-287b-4695-9798-e72b7b6a0aaf
+aluno     | Valter Nhantumbo
+average   | 20.00
+status    | IN_PROGRESS
+

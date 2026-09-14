@@ -1,0 +1,552 @@
+openapi: 3.0.0
+info:
+  title: Smart Campos — Módulo G3 (Avaliações e Horários)
+  version: 1.0.0
+  description: >-
+    API aberta para gestão de avaliações, notas, médias, horários, resultados e
+    impressão de pautas/horários. Sem autenticação neste módulo (sem security schemes).
+
+paths:
+  /api/v1/assessments:
+    get:
+      tags: [Avaliações]
+      summary: Lista avaliações (filtros opcionais por termo, turma, disciplina, professor)
+      parameters:
+        - $ref: '#/components/parameters/TermIdQuery'
+        - $ref: '#/components/parameters/ClassIdQuery'
+        - $ref: '#/components/parameters/SubjectIdQuery'
+        - $ref: '#/components/parameters/TeacherIdQuery'
+        - $ref: '#/components/parameters/PageQuery'
+        - $ref: '#/components/parameters/PageSizeQuery'
+      responses:
+        '200':
+          $ref: '#/components/responses/AssessmentList'
+    post:
+      tags: [Avaliações]
+      summary: Cria uma avaliação
+      description: Valida período, atribuição do professor, não duplicação e peso > 0.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssessmentBody'
+      responses:
+        '201':
+          $ref: '#/components/responses/AssessmentCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/v1/assessments/{id}:
+    get:
+      tags: [Avaliações]
+      summary: Obtém uma avaliação por ID
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          $ref: '#/components/responses/AssessmentOk'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Avaliações]
+      summary: Atualiza uma avaliação
+      description: Peso e nota máxima ficam bloqueados após o lançamento de notas (409).
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssessmentBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/AssessmentOk'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      tags: [Avaliações]
+      summary: Elimina uma avaliação sem notas
+      description: Avaliações com notas lançadas retornam 409.
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeletedOk'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/v1/assessments/{assessmentId}/grades:
+    get:
+      tags: [Notas]
+      summary: Lista notas de uma avaliação
+      parameters:
+        - $ref: '#/components/parameters/AssessmentIdPath'
+      responses:
+        '200':
+          $ref: '#/components/responses/GradeList'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [Notas]
+      summary: Lança uma nota para um aluno
+      description: >-
+        Avaliação deve estar OPEN; uma nota por aluno; recalcula resultados em
+        transação (ACID).
+      parameters:
+        - $ref: '#/components/parameters/AssessmentIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GradeBody'
+      responses:
+        '201':
+          $ref: '#/components/responses/GradeCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/v1/assessments/{assessmentId}/grades/{gradeId}:
+    patch:
+      tags: [Notas]
+      summary: Atualiza uma nota
+      parameters:
+        - $ref: '#/components/parameters/AssessmentIdPath'
+        - $ref: '#/components/parameters/GradeIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GradeBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/GradeOk'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/v1/schedules:
+    get:
+      tags: [Horários]
+      summary: Lista horários (filtros opcionais por termo, turma, professor, aluno)
+      parameters:
+        - $ref: '#/components/parameters/TermIdQuery'
+        - $ref: '#/components/parameters/ClassIdQuery'
+        - $ref: '#/components/parameters/TeacherIdQuery'
+        - $ref: '#/components/parameters/StudentIdQuery'
+        - $ref: '#/components/parameters/PageQuery'
+        - $ref: '#/components/parameters/PageSizeQuery'
+      responses:
+        '200':
+          $ref: '#/components/responses/ScheduleList'
+    post:
+      tags: [Horários]
+      summary: Cria um horário
+      description: Conflitos de professor, turma ou sala no mesmo dia/período retornam 409.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleBody'
+      responses:
+        '201':
+          $ref: '#/components/responses/ScheduleCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/v1/schedules/{id}:
+    get:
+      tags: [Horários]
+      summary: Obtém um horário por ID
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          $ref: '#/components/responses/ScheduleOk'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Horários]
+      summary: Atualiza um horário
+      description: Revalida conflitos considerando os novos valores.
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/ScheduleOk'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      tags: [Horários]
+      summary: Elimina um horário
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeletedOk'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/results:
+    get:
+      tags: [Resultados]
+      summary: Lista resultados acadêmicos
+      parameters:
+        - $ref: '#/components/parameters/TermIdQuery'
+        - $ref: '#/components/parameters/ClassIdQuery'
+        - $ref: '#/components/parameters/SubjectIdQuery'
+        - $ref: '#/components/parameters/StudentIdQuery'
+        - $ref: '#/components/parameters/PageQuery'
+        - $ref: '#/components/parameters/PageSizeQuery'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResultList'
+    post:
+      tags: [Resultados]
+      summary: Calcula/atualiza resultados em lote
+      description: Recalcula médias e status de uma turma/disciplina/período em transação atómica.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResultBody'
+      responses:
+        '201':
+          $ref: '#/components/responses/ResultList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/results/{id}:
+    get:
+      tags: [Resultados]
+      summary: Obtém um resultado por ID
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResultOk'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Resultados]
+      summary: Recalcula um resultado individual
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResultOk'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/print/class/{classId}/schedule:
+    get:
+      tags: [Impressão]
+      summary: Dados para impressão do horário de uma turma
+      parameters:
+        - $ref: '#/components/parameters/ClassIdPath'
+        - $ref: '#/components/parameters/TermIdQuery'
+      responses:
+        '200':
+          $ref: '#/components/responses/PrintOk'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/print/class/{classId}/pauta:
+    get:
+      tags: [Impressão]
+      summary: Dados para impressão da pauta de uma turma/disciplina
+      parameters:
+        - $ref: '#/components/parameters/ClassIdPath'
+        - $ref: '#/components/parameters/TermIdQuery'
+        - $ref: '#/components/parameters/SubjectIdQuery'
+      responses:
+        '200':
+          $ref: '#/components/responses/PrintOk'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes: {}
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    AssessmentIdPath:
+      name: assessmentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    GradeIdPath:
+      name: gradeId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ClassIdPath:
+      name: classId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    PageQuery:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSizeQuery:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 100
+    TermIdQuery:
+      name: termId
+      in: query
+      schema:
+        type: string
+        format: uuid
+    ClassIdQuery:
+      name: classId
+      in: query
+      schema:
+        type: string
+        format: uuid
+    SubjectIdQuery:
+      name: subjectId
+      in: query
+      schema:
+        type: string
+        format: uuid
+    TeacherIdQuery:
+      name: teacherId
+      in: query
+      schema:
+        type: string
+        format: uuid
+    StudentIdQuery:
+      name: studentId
+      in: query
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    Uuid:
+      type: string
+      format: uuid
+    Assessment:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        schoolId: { $ref: '#/components/schemas/Uuid' }
+        academicYearId: { $ref: '#/components/schemas/Uuid' }
+        termId: { $ref: '#/components/schemas/Uuid' }
+        classId: { $ref: '#/components/schemas/Uuid' }
+        subjectId: { $ref: '#/components/schemas/Uuid' }
+        teacherId: { $ref: '#/components/schemas/Uuid' }
+        name: { type: string }
+        type: { type: string, enum: [TESTE, EXAME_NORMAL, EXAME_RECURRENCIA] }
+        description: { type: string, nullable: true }
+        date: { type: string, format: date-time }
+        maxScore: { type: number }
+        weight: { type: number }
+        status: { type: string, enum: [DRAFT, SCHEDULED, OPEN, CLOSED, CANCELLED] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, schoolId, academicYearId, termId, classId, subjectId, teacherId, name, type, date, maxScore, weight, status]
+    AssessmentBody:
+      type: object
+      required: [academicYearId, termId, classId, subjectId, teacherId, name, type, date, weight]
+      properties:
+        academicYearId: { $ref: '#/components/schemas/Uuid' }
+        termId: { $ref: '#/components/schemas/Uuid' }
+        classId: { $ref: '#/components/schemas/Uuid' }
+        subjectId: { $ref: '#/components/schemas/Uuid' }
+        teacherId: { $ref: '#/components/schemas/Uuid' }
+        name: { type: string, minLength: 1 }
+        type: { type: string, enum: [TESTE, EXAME_NORMAL, EXAME_RECURRENCIA] }
+        description: { type: string, nullable: true }
+        date: { type: string, format: date-time }
+        maxScore: { type: number, exclusiveMinimum: 0, default: 20 }
+        weight: { type: number, exclusiveMinimum: 0 }
+        status: { type: string, enum: [DRAFT, SCHEDULED, OPEN, CLOSED, CANCELLED] }
+    Grade:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        assessmentId: { $ref: '#/components/schemas/Uuid' }
+        studentId: { $ref: '#/components/schemas/Uuid' }
+        score: { type: number }
+        comment: { type: string, nullable: true }
+        status: { type: string, enum: [SUBMITTED, APPROVED, REVISED] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, assessmentId, studentId, score, status]
+    GradeBody:
+      type: object
+      required: [studentId, score]
+      properties:
+        studentId: { $ref: '#/components/schemas/Uuid' }
+        score: { type: number, minimum: 0 }
+        comment: { type: string, nullable: true }
+    Schedule:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        schoolId: { $ref: '#/components/schemas/Uuid' }
+        academicYearId: { $ref: '#/components/schemas/Uuid' }
+        termId: { $ref: '#/components/schemas/Uuid' }
+        classId: { $ref: '#/components/schemas/Uuid' }
+        subjectId: { $ref: '#/components/schemas/Uuid' }
+        teacherId: { $ref: '#/components/schemas/Uuid' }
+        dayOfWeek: { type: string, enum: [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY] }
+        startTime: { type: string, pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' }
+        endTime: { type: string, pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' }
+        room: { type: string, nullable: true }
+        status: { type: string, enum: [ACTIVE, INACTIVE, CANCELLED] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, schoolId, academicYearId, termId, classId, subjectId, teacherId, dayOfWeek, startTime, endTime, status]
+    ScheduleBody:
+      type: object
+      required: [academicYearId, termId, classId, subjectId, teacherId, dayOfWeek, startTime, endTime]
+      properties:
+        academicYearId: { $ref: '#/components/schemas/Uuid' }
+        termId: { $ref: '#/components/schemas/Uuid' }
+        classId: { $ref: '#/components/schemas/Uuid' }
+        subjectId: { $ref: '#/components/schemas/Uuid' }
+        teacherId: { $ref: '#/components/schemas/Uuid' }
+        dayOfWeek: { type: string, enum: [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY] }
+        startTime: { type: string, pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' }
+        endTime: { type: string, pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' }
+        room: { type: string, nullable: true }
+        status: { type: string, enum: [ACTIVE, INACTIVE, CANCELLED] }
+    Result:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        schoolId: { $ref: '#/components/schemas/Uuid' }
+        academicYearId: { $ref: '#/components/schemas/Uuid' }
+        termId: { $ref: '#/components/schemas/Uuid' }
+        classId: { $ref: '#/components/schemas/Uuid' }
+        subjectId: { $ref: '#/components/schemas/Uuid' }
+        studentId: { $ref: '#/components/schemas/Uuid' }
+        average: { type: number, nullable: true }
+        finalScore: { type: number, nullable: true }
+        status: { type: string, enum: [APPROVED, FAILED, RECOVERY, PENDING, IN_PROGRESS] }
+        calculatedAt: { type: string, format: date-time, nullable: true }
+      required: [id, schoolId, academicYearId, termId, classId, subjectId, studentId, status]
+    ResultBody:
+      type: object
+      required: [classId, subjectId, termId]
+      properties:
+        classId: { $ref: '#/components/schemas/Uuid' }
+        subjectId: { $ref: '#/components/schemas/Uuid' }
+        termId: { $ref: '#/components/schemas/Uuid' }
+        studentIds:
+          type: array
+          items: { $ref: '#/components/schemas/Uuid' }
+    Error:
+      type: object
+      properties:
+        code: { type: string }
+        message: { type: string }
+        details:
+          type: array
+          items: { type: object }
+        correlationId: { type: string }
+      required: [code, message, correlationId]
+    Meta:
+      type: object
+      properties:
+        correlationId: { type: string }
+        page: { type: number }
+        pageSize: { type: number }
+        total: { type: number }
+      required: [correlationId]
+  responses:
+    BadRequest:
+      description: Requisição inválida (validação Zod ou regra de domínio)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: Recurso não encontrado
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Conflict:
+      description: Conflito (duplicação, horário, bloqueio por notas)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ServerError:
+      description: Erro interno do servidor
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Envelope:
+      description: Envelope de sucesso
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data: {}
+              meta: { $ref: '#/components/schemas/Meta' }
+            required: [data, meta]
+    AssessmentOk: { $ref: '#/components/responses/Envelope' }
+    AssessmentCreated: { $ref: '#/components/responses/Envelope' }
+    AssessmentList: { $ref: '#/components/responses/Envelope' }
+    GradeOk: { $ref: '#/components/responses/Envelope' }
+    GradeCreated: { $ref: '#/components/responses/Envelope' }
+    GradeList: { $ref: '#/components/responses/Envelope' }
+    ScheduleOk: { $ref: '#/components/responses/Envelope' }
+    ScheduleCreated: { $ref: '#/components/responses/Envelope' }
+    ScheduleList: { $ref: '#/components/responses/Envelope' }
+    ResultOk: { $ref: '#/components/responses/Envelope' }
+    ResultList: { $ref: '#/components/responses/Envelope' }
+    PrintOk: { $ref: '#/components/responses/Envelope' }
+    DeletedOk: { $ref: '#/components/responses/Envelope' }

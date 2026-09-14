@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="760" viewBox="0 0 1180 760" font-family="Arial, Helvetica, sans-serif">
+  <rect width="1180" height="760" fill="#ffffff"/>
+
+  <text x="20" y="34" font-size="20" font-weight="bold" fill="#1f4e79">Diagrama Entidade-Relacionamento — Módulo G3 (Avaliações e Horários)</text>
+  <text x="20" y="54" font-size="12" fill="#555555">Prisma/PostgreSQL — entidades do módulo + auxiliar Grade; FKs documentadas por etiqueta e matriz (relações completas em entity-model.md)</text>
+
+  <!-- ASSESSMENT -->
+  <g>
+    <rect x="40" y="80" width="320" height="360" fill="#f4f9ff" stroke="#2e74b5" stroke-width="1.4" rx="6"/>
+    <rect x="40" y="80" width="320" height="30" fill="#1f4e79" rx="6"/>
+    <rect x="40" y="100" width="320" height="10" fill="#1f4e79"/>
+    <text x="52" y="100" font-size="13" font-weight="bold" fill="#ffffff">Assessment — tabela: assessments</text>
+    <g font-size="12">
+      <text x="52" y="128" fill="#1a1a1a"><tspan y="128" fill="#7f6000" font-weight="bold">[PK]</tspan> id : uuid</text>
+      <text x="52" y="148" fill="#1a1a1a"><tspan fill="#548235" font-weight="bold">[FK]</tspan> schoolId : uuid</text>
+      <text x="52" y="168" fill="#1a1a1a"><tspan fill="#548235" font-weight="bold">[FK]</tspan> academicYearId : uuid</text>
+      <text x="52" y="188" fill="#1a1a1a"><tspan fill="#548235" font-weight="bold">[FK]</tspan> termId : uuid</text>
+      <text x="52" y="208" fill="#1a1a1a"><tspan fill="#548235" font-weight="bold">[FK]</tspan> classId : uuid</text>
+      <text x="52" y="228" fill="#1a1a1a"><tspan fill="#548235" font-weight="bold">[FK]</tspan> subjectId : uuid</text>
+      <text x="52" y="248" fill="#1a1a1a"><tspan fill="#548235" font-weight="bold">[FK]</tspan> teacherId : uuid</text>
+      <text x="52" y="270" fill="#1a1a1a">name : string</text>
+      <text x="52" y="290" fill="#1a1a1a">type : enum TEST | EXAM</text>
+      <text x="52" y="310" fill="#7f7f7f">description : string ?</text>
+      <text x="52" y="330" fill="#1a1a1a">date : datetime</text>
+      <text x="52" y="350" fill="#1a1a1a">maxScore : decimal (default 20, &gt;0)</text>
+      <text x="52" y="370" fill="#1a1a1a">weight : decimal (default 1, &gt;0)</text>
+      <text x="52" y="390" fill="#1a1a1a">status : enum DRAFT…CANCELLED</text>
+      <text x="52" y="410" fill="#7f7f7f">createdAt / updatedAt : datetime</text>
+      <text x="52" y="432" fill="#9c5700">UNIQUE app: (termId, classId, subjectId, name)</text>
+    </g>
+  </g>
+
+  <!-- SCHEDULE -->
+  <g>
+    <rect x="430" y="80" width="320" height="360" fill="#f4f9ff" stroke="#2e74b5" stroke-width="1.4" rx="6"/>
+    <rect x="430" y="80" width="320" height="30" fill="#1f4e79" rx="6"/>
+    <rect x="430" y="100" width="320" height="10" fill="#1f4e79"/>
+    <text x="442" y="100" font-size="13" font-weight="bold" fill="#ffffff">Schedule — tabela: schedules</text>
+    <g font-size="12">
+      <text x="442" y="128" fill="#1a1a1a"><tspan fill="#7f6000" font-weight="bold">[PK]</tspan> id : uuid</text>
+      <text x="442" y="148" fill="#1a1a1a"><tspan fill="#548235" font-weight="bold">[FK]</tspan> schoolId : uuid</text>
+      <text x="442" y="168" fill="#1a1a1a"><tspan fill="#548235" font-weight="bold">[FK]</tspan> academicYearId : uuid</text>
+      <text x="442" y="188" fill="#1a1a1a"><tspan fill="#548235" font-weight="bold">[FK]</tspan> termId : uuid</text>
+      <text x="442" y="208" fill="#1a1a1a"><tspan fill="#548235" font-weight="bold">[FK]</tspan> classId : uuid</text>
+      <text x="442" y="228" fill="#1a1a1a"><tspan fill="#548235" font-weight="bold">[FK]</tspan> subjectId : uuid</text>
+      <text x="442" y="248" fill="#1a1a1a"><tspan fill="#548235" font-weight="bold">[FK]</tspan> teacherId : uuid</text>
+      <text x="442" y="270" fill="#1a1a1a">dayOfWeek : enum MONDAY…SATURDAY</text>
+      <text x="442" y="290" fill="#1a1a1a">startTime : string HH:mm</text>
+      <text x="442" y="310" fill="#1a1a1a">endTime : string HH:mm (start &lt; end)</text>
+      <text x="442" y="330" fill="#7f7f7f">room : string ?</text>
+      <text x="442" y="350" fill="#1a1a1a">status : enum ACTIVE…CANCELLED</text>
+      <text x="442" y="370" fill="#7f7f7f">createdAt / updatedAt : datetime</text>
+      <text x="442" y="410" fill="#9c5700">Rules: sem sobreposição p/ p</text>
+      <text x="452" y="428" fill="#9c5700">rofessor, turma ou sala (regra app)</text>
+    </g>
+  </g>
+
+  <!-- RESULT -->
+  <g>
+    <rect x="820" y="80" width="320" height="360" fill="#f4f9ff" stroke="#2e74b5" stroke-width="1.4" rx="6"/>
+    <rect x="820" y="80" width="320" height="30" fill="#1f4e79" rx="6"/>
+    <rect x="820" y="100" width="320" height="10" fill="#1f4e79"/>
+    <text x="832" y="100" font-size="13" font-weight="bold" fill="#ffffff">Result — tabela: results</text>
+    <g font-size="12">
+      <text x="832" y="128" fill="#1a1a1a"><tspan fill="#7f6000" font-weight="bold">[PK]</tspan> id : uuid</text>
+      <text x="832" y="148" fill="#1a1a1a"><tspan fill="#548235" font-weight="bold">[FK]</tspan> schoolId : uuid</text>
+      <text x="832" y="168" fill="#1a1a1a"><tspan fill="#548235" font-weight="bold">[FK]</tspan> academicYearId : uuid</text>
+      <text x="832" y="188" fill="#1a1a1a"><tspan fill="#548235" font-weight="bold">[FK]</tspan> termId : uuid</text>
+      <text x="832" y="208" fill="#1a1a1a"><tspan fill="#548235" font-weight="bold">[FK]</tspan> classId : uuid</text>
+      <text x="832" y="228" fill="#1a1a1a"><tspan fill="#548235" font-weight="bold">[FK]</tspan> subjectId : uuid</text>
+      <text x="832" y="248" fill="#1a1a1a"><tspan fill="#548235" font-weight="bold">[FK]</tspan> studentId : uuid</text>
+      <text x="832" y="268" fill="#1a1a1a"><tspan fill="#548235" font-weight="bold">[FK]</tspan> teacherId : uuid ?</text>
+      <text x="832" y="290" fill="#7f7f7f">average : decimal ?</text>
+      <text x="832" y="310" fill="#7f7f7f">finalScore : decimal ?</text>
+      <text x="832" y="330" fill="#7f7f7f">weightedTotal : decimal ?</text>
+      <text x="832" y="350" fill="#1a1a1a">status : enum APPROVED…PENDING</text>
+      <text x="832" y="370" fill="#7f7f7f">calculatedAt : datetime ?</text>
+      <text x="832" y="390" fill="#7f7f7f">createdAt / updatedAt : datetime</text>
+      <text x="832" y="412" fill="#9c5700">UNIQUE (studentId, classId, sub</text>
+      <text x="842" y="430" fill="#9c5700">jectId, termId) — derivado (média)</text>
+    </g>
+  </g>
+
+  <!-- GRADE -->
+  <g>
+    <rect x="40" y="480" width="320" height="170" fill="#fbf7ec" stroke="#bf9000" stroke-width="1.3" rx="6"/>
+    <rect x="40" y="480" width="320" height="26" fill="#7f6000" rx="6"/>
+    <rect x="40" y="496" width="320" height="10" fill="#7f6000"/>
+    <text x="52" y="499" font-size="12" font-weight="bold" fill="#ffffff">Grade (auxiliar) — tabela: grades</text>
+    <g font-size="12">
+      <text x="52" y="528" fill="#1a1a1a"><tspan fill="#7f6000" font-weight="bold">[PK]</tspan> id : uuid</text>
+      <text x="52" y="548" fill="#1a1a1a"><tspan fill="#548235" font-weight="bold">[FK]</tspan> assessmentId : uuid → Assessment</text>
+      <text x="52" y="568" fill="#1a1a1a"><tspan fill="#548235" font-weight="bold">[FK]</tspan> studentId : uuid → Student</text>
+      <text x="52" y="588" fill="#1a1a1a">score : decimal (0 ≤ score ≤ maxScore)</text>
+      <text x="52" y="608" fill="#7f7f7f">comment : string ?</text>
+      <text x="52" y="628" fill="#1a1a1a">status : enum SUBMITTED…REVISED</text>
+      <text x="52" y="648" fill="#7f7f7f">createdAt / updatedAt : datetime</text>
+    </g>
+  </g>
+
+  <!-- CORE -->
+  <g>
+    <rect x="520" y="480" width="380" height="90" fill="#f0f0f0" stroke="#7f7f7f" stroke-width="1.2" rx="6"/>
+    <rect x="520" y="480" width="380" height="26" fill="#555555" rx="6"/>
+    <rect x="520" y="496" width="380" height="10" fill="#555555"/>
+    <text x="532" y="499" font-size="12" font-weight="bold" fill="#ffffff">Core Académico (reutilizado — Smart Campus)</text>
+    <text x="532" y="526" font-size="11.5" fill="#1a1a1a">School · AcademicYear · Term · Class · Subject · Teacher · Student</text>
+    <text x="532" y="544" font-size="10.5" fill="#555555">Referenciado por FKs das entidades do módulo (não duplicado)</text>
+    <text x="532" y="560" font-size="10.5" fill="#555555">Todas as entidades do módulo carregam schoolId + academicYearId</text>
+  </g>
+
+  <!-- RELATION: Assessment 1 - N Grade -->
+  <line x1="200" y1="440" x2="200" y2="480" stroke="#c00000" stroke-width="1.6"/>
+  <circle cx="200" cy="448" fill="#ffffff" stroke="#c00000" r="3.4"/>
+  <polygon points="200,480 194,470 206,470" fill="#c00000"/>
+  <text x="210" y="448" font-size="11.5" fill="#c00000" font-weight="bold">1</text>
+  <text x="210" y="480" font-size="11.5" fill="#c00000" font-weight="bold">N</text>
+  <text x="140" y="466" font-size="11" fill="#c00000">avalia (1 : N)</text>
+
+  <!-- RELATION: derived result dashed -->
+  <line x1="360" y1="300" x2="820" y2="300" stroke="#2e74b5" stroke-width="1.4" stroke-dasharray="6 4"/>
+  <text x="470" y="292" font-size="11" fill="#2e74b5">deriva das notas (cálculo da média) — sem FK</text>
+
+  <!-- LEGEND -->
+  <g>
+    <rect x="920" y="480" width="220" height="90" fill="#ffffff" stroke="#bfbfbf" rx="4"/>
+    <text x="930" y="502" font-size="12" font-weight="bold" fill="#1a1a1a">Legenda</text>
+    <rect x="930" y="512" width="16" height="10" fill="#fff2cc" stroke="#bf9000"/><text x="954" y="521" font-size="11" fill="#333">Chave Primária (PK)</text>
+    <rect x="930" y="532" width="16" height="10" fill="#e2efda" stroke="#548235"/><text x="954" y="541" font-size="11" fill="#333">Chave Estrangeira (FK)</text>
+    <text x="930" y="560" font-size="11" fill="#333">1 ⋯◆ N   cardinalidade um-para-muitos</text>
+  </g>
+
+  <text x="20" y="700" font-size="11" fill="#555555">FK → Core: Assessment(school, academicYear, term, class, subject, teacher) · Schedule(school, academicYear, term, class, subject, teacher) · Result(school, academicYear, term, class, subject, student, teacher?) · Grade(assessment, student)</text>
+  <text x="20" y="718" font-size="11" fill="#555555">Regras de integridade (banco): NOT NULL + CHECK (maxScore&gt;0, weight&gt;0, 0≤score≤maxScore, start&lt;end, 0≤average≤100) + UNIQUE (assessmentId, studentId) e (studentId, classId, subjectId, termId)</text>
+</svg>

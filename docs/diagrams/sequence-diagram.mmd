@@ -1,0 +1,33 @@
+sequenceDiagram
+    autonumber
+    participant C as Cliente
+    participant R as Router (Express)
+    participant Z as Zod (schemas)
+    participant S as Service
+    participant D as Domain (evaluation.js)
+    participant P as Prisma
+    participant DB as PostgreSQL
+
+    C->>R: POST /api/v1/assessments/:id/grades {studentId, score}
+    R->>Z: validate(createGradeSchema, body)
+    alt payload inválido
+        Z-->>R: 400 VALIDATION_ERROR {details}
+        R-->>C: 400 envelope de erro
+    end
+    Z-->>R: payload validado
+    R->>S: createGrade(assessmentId, body)
+    S->>D: validateScore · validateWeight
+    D->>D: weightedAverage + resolveResultStatus
+    S->>P: prisma.$transaction(async tx => ...)
+    P->>DB: INSERT grade + UPSERT result
+    DB-->>P: ok
+    P-->>S: commit (notas + resultado atómicos)
+    S->>D: serialização gradeDto
+    S-->>R: gradeDto
+    R-->>C: 201 {data, meta{cross correlationId}}
+
+    rect rgb(253, 245, 245)
+        Note over S,DB: alt (falha -> ROLLBACK)
+        Note over S,DB: NOT_FOUND 404 · CONFLICT 409 (duplicado, OPEN, peso/maxScore imutável)
+        Note over S,DB: VALIDATION_ERROR 400 · P2002→409 · erro inesperado→500
+    end

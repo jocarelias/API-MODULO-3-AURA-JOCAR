@@ -1,0 +1,1 @@
+{"code":"VALIDATION_ERROR","message":"Dados inválidos","details":[{"field":"pageSize","message":"pageSize máximo 100"}],"correlationId":"c75956fa-bc83-4729-be86-5003da3f6496"}

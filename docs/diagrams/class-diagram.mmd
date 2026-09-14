@@ -1,0 +1,76 @@
+classDiagram
+    direction TB
+
+    class schemas_IndexJs {
+        +createAssessmentSchema
+        +createGradeSchema
+        +createScheduleSchema
+        +createResultSchema
+        +queryAssessmentsSchema
+        +paramsUuidSchema
+    }
+    class schedulesAssessmentsRouter {
+        +createSchedulesAssessmentsRouter() Router
+        +rotas assessments/schedules/results
+        +correlationId()
+        +envelope {data, meta}
+        +erro {code, message, details}
+        +404 do módulo
+    }
+    class schedulesAssessmentsService {
+        +listAssessments()
+        +getAssessment()
+        +createAssessment()
+        +updateAssessment()
+        +deleteAssessment()
+        +listGrades()
+        +createGrade()
+        +updateGrade()
+        +listSchedules()
+        +createSchedule()
+        +updateSchedule()
+        +deleteSchedule()
+        +listResults()
+        +getResult()
+        +createResults()
+        +patchResult()
+        +getPrintClassSchedule()
+        +getPrintClassPauta()
+        -_recalculateInTx(tx, assessment, studentIds)
+        -findConflicts()
+    }
+    class evaluation_domain {
+        +validateEvaluationType(type)
+        +validateWeight(weight) "peso > 0"
+        +validateScore(score, max)
+        +validateTimeRange(start, end)
+        +weightedAverage(grades)
+        +resolveResultStatus(...)
+        +constantes PASSING=10, RECOVERY=8
+    }
+    class infrastructure_prisma {
+        +PrismaClient singleton
+        +$transaction()
+    }
+    class httpError {
+        +toHttpError(error, correlationId)
+        +DomainError gt httpStatus
+        +P2002 gt 409
+    }
+    class shared_types {
+        +assessmentDto
+        +gradeDto
+        +scheduleDto
+        +resultDto
+        +campusModules.G3_AVALIACOES_HORARIOS
+        +TYPE_MAP TESTE-TEST
+    }
+
+    schedulesAssessmentsRouter --> schemas_IndexJs : valida
+    schedulesAssessmentsRouter --> schedulesAssessmentsService : invoca
+    schedulesAssessmentsRouter --> httpError : mapeia erros
+    schedulesAssessmentsService --> evaluation_domain : regras puras
+    schedulesAssessmentsService --> infrastructure_prisma : persiste (tx)
+    schedulesAssessmentsService --> shared_types : serializa DTOs
+
+    note for schedulesAssessmentsService "Média = Σ(nota×peso)/Σ(pesos) · transação ACID · nunca 401/403"

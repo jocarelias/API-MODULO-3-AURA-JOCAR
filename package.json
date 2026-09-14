@@ -1,0 +1,52 @@
+{
+  "name": "g3-avaliacoes-horarios",
+  "version": "1.0.0",
+  "description": "G3 — Avaliacoes, Horarios e Resultados (API aberta publica, TypeScript/Node.js/Express/Zod/Prisma)",
+  "author": "UCT-JAC",
+  "license": "UNLICENSED",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/src/main.js",
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "vitest run",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:studio": "prisma studio",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:reset": "prisma migrate reset",
+    "db:seed": "prisma db seed",
+    "typecheck": "tsc --noEmit"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.5.0",
+    "@types/express": "^5.0.1",
+    "@types/node": "^24.0.0",
+    "dotenv": "^17.4.1",
+    "express": "^5.2.1",
+    "swagger-ui-dist": "^5.20.0",
+    "typescript": "^5.8.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/supertest": "^6.0.2",
+    "prisma": "^6.5.0",
+    "supertest": "^7.0.0",
+    "tsx": "^4.19.0",
+    "vitest": "^3.2.7"
+  },
+  "allowScripts": {
+    "@prisma/client@6.19.3": true,
+    "prisma@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "esbuild@0.28.2": true
+  }
+}

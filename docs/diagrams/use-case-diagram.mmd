@@ -1,0 +1,30 @@
+userJourney title GPA do Módulo G3
+flowchart LR
+    Professor -->|API aberta| G3
+    Secretaria -->|API aberta| G3
+    Aluno -->|API aberta| G3
+    G3 --> AV["Avaliações"]
+    G3 --> HR["Horários"]
+    G3 --> RS["Resultados"]
+    AV --> AV1[Consultar]
+    AV --> AV2[Criar]
+    AV --> AV3[Actualizar]
+    AV --> AV4[Eliminar qd permitido]
+    AV --> AV5[Lançar nota]
+    AV --> AV6[Actualizar nota]
+    HR --> HR1[Consultar]
+    HR --> HR2[Criar]
+    HR --> HR3[Actualizar]
+    HR --> HR4[Eliminar qd permitido]
+    HR --> HR5["Conflito sala/prof/turma -> 409"]
+    RS --> RS1[Consultar]
+    RS --> RS2[Registar em lote]
+    RS --> RS3[Actualizar]
+    RS --> RS4["Calcular média ponderada"]
+    RS --> RS5[Imprimir pauta/horário]
+
+    AV5 -.refina.-> RS4
+    AV6 -.refina.-> RS4
+
+    classDef cpc fill:#1f4e79,color:#fff;
+    class G3 cpc

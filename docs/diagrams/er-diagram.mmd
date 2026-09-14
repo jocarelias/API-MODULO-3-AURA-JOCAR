@@ -1,0 +1,61 @@
+erDiagram
+    Assessment ||--o{ Grade : "tem (assessmentId)"
+    Assessment }o--|| Term : "pertence (termId)"
+    Assessment }o--|| Class : "referencia (classId)"
+    Assessment }o--|| Subject : "referencia (subjectId)"
+    Result ||--o{ Grade : "deriva das notas"
+    Result }o--|| Student : "de (studentId)"
+    Schedule }o--|| Term : "pertence (termId)"
+    Schedule }o--|| Class : "pertence (classId)"
+    Schedule }o--|| Subject : "pertence (subjectId)"
+
+    Assessment {
+        string id PK
+        assessment_type type "TEST|EXAM"
+        string termId FK
+        string classId FK
+        string subjectId FK
+        string title
+        dateTime startTime "UNIQUE(termId,classId,subjectId,title)"
+        dateTime endTime "CHECK end>start"
+        decimal maxScore "UNIQUE + CHECK >0"
+        decimal weight "CHECK >0"
+        gradeStatus status "OPEN|CLOSED|CANCELLED default OPEN"
+        dateTime createdAt
+        dateTime updatedAt
+    }
+
+    Grade {
+        string id PK
+        string assessmentId FK "UNIQUE(assessmentId,studentId) 1x aluno"
+        string studentId FK
+        decimal score "CHECK 0..maxScore"
+        dateTime createdAt
+    }
+
+    Result {
+        string id PK
+        string studentId FK
+        string termId FK
+        string classId FK
+        string subjectId FK
+        decimal average
+        resultStatus status "APPROVED|RECOVERY|FAILED|IN_PROGRESS|PENDING"
+        string statusReason
+        dateTime createdAt
+        dateTime updatedAt
+        string _UNIQUE "UNIQUE(studentId,termId,classId,subjectId)"
+    }
+
+    Schedule {
+        string id PK
+        string termId FK
+        string classId FK
+        string subjectId FK
+        dateTime startTime
+        dateTime endTime "CHECK end>start"
+        string room
+        string professorId FK "UNIQUE room/time - conflito 409"
+        dateTime createdAt
+        dateTime updatedAt
+    }

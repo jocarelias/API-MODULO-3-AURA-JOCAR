@@ -1,0 +1,17 @@
+graph TD
+    START([Início]) --> IN["Notas do aluno: [{score, weight}, …]<br/>peso > 0 · nota ∈ [0, maxScore]"]
+    IN --> D1{existem notas?<br/>grades.length > 0}
+    D1 -- Não --> PEND["average = null<br/>status = PENDING"] --> FIM([Fim])
+    D1 -- Sim --> SUM["SomaPesos = Σ weight<br/>SomaPonderada = Σ (score × weight)"]
+    SUM --> D2{SomaPesos > 0?}
+    D2 -- Não --> ARIT["média = Σ score / N<br/>(fallback aritmético)"] --> STAT
+    D2 -- Sim --> MED["média = Σ (score × weight) / Σ weight<br/>round2"]
+    MED --> STAT{faltam notas?<br/>missingCount > 0}
+    ARIT --> STAT
+    STAT -- Sim --> INP["status = IN_PROGRESS"]
+    STAT -- Não --> FINAL["APPROVED (≥10) · RECOVERY (≥8) · FAILED (<8)"]
+    INP --> UPS["UPSERT em results<br/>(studentId+termId+classId+subjectId)"]
+    FINAL --> UPS
+    UPS --> FIM
+
+    EX["Ex.: A1 15×2=30 · A2 17×1=17<br/>média = 47/3 = 15,67 · APPROVED"] -. exemplo .- MED
