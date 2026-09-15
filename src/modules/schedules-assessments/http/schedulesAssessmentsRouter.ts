@@ -14,6 +14,7 @@ import {
   createResultSchema,
   updateResultSchema,
   resultQuerySchema,
+  calculationInputSchema,
   idParamsSchema,
   assessmentIdParamsSchema,
   gradeParamsSchema,
@@ -222,6 +223,23 @@ export function createSchedulesAssessmentsRouter(): Router {
       const data = await service.listResults(query);
       const { rows, meta } = paginate(data, query);
       return success(res, rows, 200, req.correlationId, meta);
+    }),
+  );
+
+  router.get(
+    '/results/calculation-methods',
+    handler(async (_req, res) => {
+      const data = service.listCalculationMethods();
+      return success(res, data, 200, _req.correlationId);
+    }),
+  );
+
+  router.post(
+    '/results/calculate',
+    handler(async (req, res) => {
+      const body = validate(calculationInputSchema, req.body);
+      const data = await service.calculateResult(body);
+      return success(res, data, 200, req.correlationId);
     }),
   );
 

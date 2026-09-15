@@ -15,3 +15,20 @@ graph TD
     UPS --> FIM
 
     EX["Ex.: A1 15×2=30 · A2 17×1=17<br/>média = 47/3 = 15,67 · APPROVED"] -. exemplo .- MED
+
+    CALCEXT([POST /results/calculate]) --> CALCIN["Input: method, items[], components?[],<br/>formula?, rounding?, min/maxScore?"]
+    CALCIN --> CALCDISP{method?}
+    CALCDISP -- ARITHMETIC_MEAN --> AM["Σ score / N"]
+    CALCDISP -- WEIGHTED_PERCENTAGE --> WP["Σ (score×weight) / Σ weight<br/>pesos devem totalizar 100"]
+    CALCDISP -- PERCENTAGE_SUM --> PS["Σ (score×weight/100)<br/>pesos devem totalizar 100"]
+    CALCDISP -- NORMALIZED_WEIGHTED_MEAN --> NWM["pesos normalizados = w/Σw<br/>Σ (score×peso_normalizado)"]
+    CALCDISP -- COMPONENT_BASED --> CB["cada componente: weightedAverage<br/>resultado final: Σ (media×weight)"]
+    CALCDISP -- CUSTOM_WEIGHTED --> CW["registry: SUM/MAX/MIN/<br/>WEIGHTED_100/NORMALIZED_MEAN/<br/>MEAN_OF_TOP_K"]
+    AM --> ROUND["roundValue(value, decimals)<br/>decimals: 0|1|2"]
+    WP --> ROUND
+    PS --> ROUND
+    NWM --> ROUND
+    CB --> ROUND
+    CW --> ROUND
+    ROUND --> CALCOUT["CalculationResult:<br/>{method, value, decimals,<br/>breakdown[]}"]
+    CALCOUT --> CALCEND([Fim])

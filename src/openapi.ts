@@ -1,10 +1,12 @@
 import { EVALUATION_TYPES, EVALUATION_DEFAULT_MAX_SCORE } from './modules/schedules-assessments/domain/evaluation';
+import { CALCULATION_METHOD_CODES, CALCULATION_METHODS, CUSTOM_FORMULA_LIST } from './modules/schedules-assessments/domain/calculationEngine';
 
 const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
 const ASSESSMENT_DB_STATUS = ['DRAFT', 'SCHEDULED', 'OPEN', 'CLOSED', 'CANCELLED'];
 const SCHEDULE_DB_STATUS = ['ACTIVE', 'INACTIVE', 'CANCELLED'];
 const RESULT_STATUS = ['APPROVED', 'FAILED', 'RECOVERY', 'PENDING', 'IN_PROGRESS'];
 const GRADE_DB_STATUS = ['SUBMITTED', 'APPROVED', 'REVISED'];
+const calculationMethodEnum = CALCULATION_METHOD_CODES as unknown as string[];
 
 interface OpenApiSchema {
   type?: string;
@@ -150,6 +152,7 @@ const result: OpenApiSchema = {
     studentId: uuid,
     average: { type: 'number', nullable: true },
     finalScore: { type: 'number', nullable: true },
+    calculationMethod: { type: 'string', enum: calculationMethodEnum, nullable: true },
     status: { type: 'string', enum: RESULT_STATUS },
     calculatedAt: dateTime,
     weightedTotal: { type: 'number', nullable: true },
@@ -166,6 +169,99 @@ const resultBody: OpenApiSchema = {
     subjectId: uuid,
     termId: uuid,
     studentIds: { type: 'array', items: uuid },
+  },
+};
+
+const calculationItemSchema: OpenApiSchema = {
+  type: 'object',
+  required: ['score'],
+  properties: {
+    assessmentId: { ...uuid, description: 'UUID da avaliação (opcional)' },
+    name: { type: 'string', minLength: 1 },
+    type: { type: 'string', enum: EVALUATION_TYPES },
+    score: { type: 'number', minimum: 0 },
+    weight: { type: 'number', minimum: 0, maximum: 100, description: 'Peso percentual (0–100)' },
+  },
+};
+
+const calculationComponentSchema: OpenApiSchema = {
+  type: 'object',
+  required: ['weight'],
+  properties: {
+    id: { type: 'string', minLength: 1 },
+    assessmentId: uuid,
+    name: { type: 'string', minLength: 1 },
+    weight: { type: 'number', exclusiveMinimum: 0, maximum: 100 },
+    score: { type: 'number', minimum: 0, description: 'Nota (obrigatória nos nós-folha)' },
+    children: { type: 'array', items: { type: 'object' }, description: 'Sub-componentes (nível interno)' },
+  },
+};
+
+const calculationInputSchema: OpenApiSchema = {
+  type: 'object',
+  required: ['method', 'items'],
+  properties: {
+    method: { type: 'string', enum: calculationMethodEnum },
+    items: { type: 'array', items: calculationItemSchema, minLength: 1, description: 'Notas com pesos (mínimo 1 item)' },
+    components: { type: 'array', items: calculationComponentSchema, minLength: 1, description: 'Obrigatório para COMPONENT_BASED' },
+    formula: { type: 'string', minLength: 1, description: 'Código da fórmula registada (obrigatório para CUSTOM_WEIGHTED)' },
+    rounding: {
+      type: 'object',
+      properties: { decimals: { type: 'integer', enum: [0, 1, 2] } },
+      description: 'Precisão de arredondamento (0, 1 ou 2 casas decimais)',
+    },
+    minScore: { type: 'number', minimum: 0, description: 'Nota mínima do intervalo (padrão 0)' },
+    maxScore: { type: 'number', minimum: 1, description: 'Nota máxima do intervalo (padrão 20)' },
+    expectedTotal: { type: 'number', exclusiveMinimum: 0, description: 'Total esperado dos pesos (padrão 100)' },
+    allowNormalization: { type: 'boolean', description: 'Permitir normalização de pesos' },
+    top: { type: 'integer', minimum: 1, description: 'Número de melhores notas para MEAN_OF_TOP_K' },
+  },
+};
+
+const calculationBreakdownSchema: OpenApiSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    assessmentId: uuid,
+    name: { type: 'string' },
+    type: { type: 'string', enum: EVALUATION_TYPES },
+    label: { type: 'string' },
+    score: { type: 'number' },
+    weight: { type: 'number', nullable: true },
+    normalizedWeight: { type: 'number', nullable: true },
+    contribution: { type: 'number', nullable: true },
+    children: { type: 'array', items: { type: 'object' } },
+  },
+};
+
+const calculationResultSchema: OpenApiSchema = {
+  type: 'object',
+  properties: {
+    method: { type: 'string', enum: calculationMethodEnum },
+    value: { type: 'number' },
+    decimals: { type: 'integer' },
+    formula: { type: 'string', nullable: true },
+    breakdown: { type: 'array', items: calculationBreakdownSchema },
+  },
+};
+
+const calculationMethodMetaSchema: OpenApiSchema = {
+  type: 'object',
+  properties: {
+    code: { type: 'string', enum: calculationMethodEnum },
+    name: { type: 'string' },
+    description: { type: 'string' },
+    formula: { type: 'string' },
+  },
+};
+
+const customFormulaMetaSchema: OpenApiSchema = {
+  type: 'object',
+  properties: {
+    key: { type: 'string' },
+    name: { type: 'string' },
+    description: { type: 'string' },
+    requiresWeights: { type: 'boolean' },
   },
 };
 
@@ -228,6 +324,24 @@ export function buildOpenApi(): Record<string, unknown> {
         'API aberta para gestão de avaliações, notas, médias, horários, resultados e impressão de pautas/horários.',
     },
     paths: {
+      '/api/v1/results/calculation-methods': {
+        get: {
+          tags: ['Resultados'],
+          summary: 'Lista os métodos de cálculo disponíveis',
+          description: 'Retorna os 6 métodos de cálculo suportados pelo motor académico.',
+          responses: responses({ type: 'array', items: calculationMethodMetaSchema }),
+        },
+      },
+      '/api/v1/results/calculate': {
+        post: {
+          tags: ['Resultados'],
+          summary: 'Calcula a nota final usando um método de cálculo flexível',
+          description:
+            'Motor multi-método: permite escolher entre média aritmética, ponderada percentual, soma percentual, média normalizada, cálculo por componentes ou cálculo personalizado.',
+          requestBody: { required: true, content: { 'application/json': { schema: calculationInputSchema } } },
+          responses: responses(calculationResultSchema),
+        },
+      },
       '/api/v1/assessments': {
         get: {
           tags: ['Avaliações'],
@@ -407,6 +521,13 @@ export function buildOpenApi(): Record<string, unknown> {
         Result: result,
         ResultBody: resultBody,
         ResultStatus: { type: 'string', enum: RESULT_STATUS },
+        CalculationInput: calculationInputSchema,
+        CalculationItem: calculationItemSchema,
+        CalculationComponent: calculationComponentSchema,
+        CalculationResult: calculationResultSchema,
+        CalculationMethodMeta: calculationMethodMetaSchema,
+        CalculationMethod: { type: 'string', enum: calculationMethodEnum },
+        CustomFormulaMeta: customFormulaMetaSchema,
         Error: errorSchema,
       },
     },

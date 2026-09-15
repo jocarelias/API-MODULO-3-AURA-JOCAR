@@ -8,13 +8,16 @@ classDiagram
         +createResultSchema
         +queryAssessmentsSchema
         +paramsUuidSchema
+        +calculationInputSchema
+        +calculationMethodSchema
+        +roundingSchema
     }
     class schedulesAssessmentsRouter {
         +createSchedulesAssessmentsRouter() Router
-        +rotas assessments/schedules/results
+        +rotas assessments/schedules/results/calculate
         +correlationId()
-        +envelope {data, meta}
-        +erro {code, message, details}
+        +envelope "data+meta"
+        +erro "code+message+details"
         +404 do módulo
     }
     class schedulesAssessmentsService {
@@ -34,10 +37,26 @@ classDiagram
         +getResult()
         +createResults()
         +patchResult()
+        +calculateResult(input)
+        +listCalculationMethods()
         +getPrintClassSchedule()
         +getPrintClassPauta()
         -_recalculateInTx(tx, assessment, studentIds)
         -findConflicts()
+    }
+    class calculationEngine {
+        +calculate(input) CalculationResult
+        +CALCULATION_METHODS metadata
+        +CUSTOM_FORMULAS registry
+        +CalculationError
+        +ARITHMETIC_MEAN()
+        +WEIGHTED_PERCENTAGE()
+        +PERCENTAGE_SUM()
+        +NORMALIZED_WEIGHTED_MEAN()
+        +COMPONENT_BASED()
+        +CUSTOM_WEIGHTED()
+        +roundValue(value, decimals)
+        +normalizeScore(score, min, max)
     }
     class evaluation_domain {
         +validateEvaluationType(type)
@@ -62,6 +81,8 @@ classDiagram
         +gradeDto
         +scheduleDto
         +resultDto
+        +CalculationResultDto
+        +CalculationMethodMetaDto
         +campusModules.G3_AVALIACOES_HORARIOS
         +TYPE_MAP TESTE-TEST
     }
@@ -69,8 +90,11 @@ classDiagram
     schedulesAssessmentsRouter --> schemas_IndexJs : valida
     schedulesAssessmentsRouter --> schedulesAssessmentsService : invoca
     schedulesAssessmentsRouter --> httpError : mapeia erros
+    schedulesAssessmentsService --> calculationEngine : calcula notas
     schedulesAssessmentsService --> evaluation_domain : regras puras
     schedulesAssessmentsService --> infrastructure_prisma : persiste (tx)
     schedulesAssessmentsService --> shared_types : serializa DTOs
+    calculationEngine --> evaluation_domain : valida pesos/notas
 
+    note for calculationEngine "6 métodos · registry controlado (SUM/MAX/MIN/WEIGHTED_100/NORMALIZED_MEAN/MEAN_OF_TOP_K) · sem eval"
     note for schedulesAssessmentsService "Média = Σ(nota×peso)/Σ(pesos) · transação ACID · nunca 401/403"

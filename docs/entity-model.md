@@ -84,6 +84,7 @@ Baseado no `prisma/schema.prisma` real do projecto.
 | average | Decimal(5,2)? | CHECK >= 0 AND <= 100 OR NULL | Média ponderada |
 | finalScore | Decimal(5,2)? | | Pontuação final |
 | weightedTotal | Decimal(5,2)? | | Total ponderado |
+| calculationMethod | CalculationMethod? | ENUM, NULL (herdado) | Método de cálculo usado no resultado |
 | status | ResultStatus | ENUM, DEFAULT PENDING | Estado |
 | calculatedAt | DateTime? | | Data do cálculo |
 | createdAt | DateTime | DEFAULT now() | Criação |
@@ -131,6 +132,14 @@ Baseado no `prisma/schema.prisma` real do projecto.
 - `FAILED` — Reprovado (média < 8)
 - `PENDING` — Pendente
 - `IN_PROGRESS` — Em progresso (faltam notas)
+
+### CalculationMethod (Método de Cálculo)
+- `ARITHMETIC_MEAN` — Média aritmética (Σ score / N)
+- `WEIGHTED_PERCENTAGE` — Média ponderada (Σ(nota×peso)/Σ(pesos)) — padrão
+- `PERCENTAGE_SUM` — Soma de percentagens ponderadas (pesos = 100)
+- `NORMALIZED_WEIGHTED_MEAN` — Média ponderada com pesos normalizados
+- `COMPONENT_BASED` — Média por componentes (sub-avaliações)
+- `CUSTOM_WEIGHTED` — Cálculo personalizado (registry de fórmulas)
 
 ## Relações entre Entidades
 

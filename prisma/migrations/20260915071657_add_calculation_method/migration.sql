@@ -1,0 +1,5 @@
+-- CreateEnum
+CREATE TYPE "CalculationMethod" AS ENUM ('ARITHMETIC_MEAN', 'WEIGHTED_PERCENTAGE', 'PERCENTAGE_SUM', 'NORMALIZED_WEIGHTED_MEAN', 'COMPONENT_BASED', 'CUSTOM_WEIGHTED');
+
+-- AlterTable
+ALTER TABLE "results" ADD COLUMN     "calculationMethod" "CalculationMethod";

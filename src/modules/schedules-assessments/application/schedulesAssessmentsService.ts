@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient, EvaluationType, EvaluationStatus, GradeStatus, ScheduleStatus, DayOfWeek } from '@prisma/client';
+import { Prisma, PrismaClient, EvaluationType, EvaluationStatus, GradeStatus, ScheduleStatus, DayOfWeek, CalculationMethod } from '@prisma/client';
 import { prisma } from '../infrastructure/prisma';
 import {
   validateEvaluationType,
@@ -11,6 +11,15 @@ import {
   GradeInput,
 } from '../domain/evaluation';
 import {
+  calculate,
+  CalculationError,
+  CalculationErrorCode,
+  CALCULATION_METHODS,
+  CalculationInput,
+  CalculationResult,
+  CalculationMethodMeta,
+} from '../domain/calculationEngine';
+import {
   assessmentDto,
   gradeDto,
   scheduleDto,
@@ -19,6 +28,9 @@ import {
   GradeDto,
   ScheduleDto,
   ResultDto,
+  CalculationInputDto,
+  CalculationResultDto,
+  CalculationMethodMetaDto,
 } from '@smartcampus/shared-types';
 
 export const TYPE_MAP: Record<string, string> = {
@@ -40,6 +52,17 @@ export class DomainError extends Error {
     this.httpStatus = ({ NOT_FOUND: 404, CONFLICT: 409, VALIDATION_ERROR: 400, BAD_REQUEST: 400 } as Record<string, number>)[code] ?? 400;
   }
 }
+
+const CALCULATION_DOMAIN_CODE: Record<CalculationErrorCode, { code: string; httpStatus: number }> = {
+  EMPTY_ITEMS: { code: 'VALIDATION_ERROR', httpStatus: 400 },
+  INVALID_SCORE: { code: 'VALIDATION_ERROR', httpStatus: 400 },
+  INVALID_WEIGHT: { code: 'VALIDATION_ERROR', httpStatus: 400 },
+  WEIGHT_TOTAL_MISMATCH: { code: 'CONFLICT', httpStatus: 409 },
+  WEIGHT_SUM_MUST_BE_POSITIVE: { code: 'CONFLICT', httpStatus: 409 },
+  INVALID_COMPONENTS: { code: 'VALIDATION_ERROR', httpStatus: 400 },
+  COMPONENT_WEIGHT_MISMATCH: { code: 'CONFLICT', httpStatus: 409 },
+  FORMULA_NOT_REGISTERED: { code: 'VALIDATION_ERROR', httpStatus: 400 },
+};
 
 function withValidAssessmentType(type: string): string {
   const check = validateEvaluationType(type);
@@ -314,7 +337,7 @@ export class SchedulesAssessmentsService {
 
       await tx.result.upsert({
         where: { studentId_classId_subjectId_termId: { studentId, classId, subjectId, termId } },
-        update: { average, finalScore: average, status, calculatedAt: new Date() },
+        update: { average, finalScore: average, calculationMethod: 'WEIGHTED_PERCENTAGE' as CalculationMethod, status, calculatedAt: new Date() },
         create: {
           schoolId: assessment.schoolId ?? reference.schoolId,
           academicYearId: assessment.academicYearId ?? reference.academicYearId,
@@ -324,6 +347,7 @@ export class SchedulesAssessmentsService {
           studentId,
           average,
           finalScore: average,
+          calculationMethod: 'WEIGHTED_PERCENTAGE' as CalculationMethod,
           status,
           calculatedAt: new Date(),
         },
@@ -665,6 +689,54 @@ export class SchedulesAssessmentsService {
       }
       return resultDto(updated as unknown as Record<string, unknown>);
     });
+  }
+
+  async calculateResult(input: CalculationInputDto): Promise<CalculationResultDto> {
+    const aggregatedIds = new Set<string>();
+    input.items.forEach((item) => {
+      if (item.assessmentId) aggregatedIds.add(item.assessmentId);
+    });
+    const collectComponentIds = (components: { assessmentId?: string }[]): void => {
+      components.forEach((component) => {
+        if (component.assessmentId) aggregatedIds.add(component.assessmentId);
+        if ('children' in component && Array.isArray(component.children)) {
+          collectComponentIds(component.children as { assessmentId?: string }[]);
+        }
+      });
+    };
+    if (input.components) {
+      collectComponentIds(input.components);
+    }
+
+    const uniqueIds = Array.from(aggregatedIds);
+    if (uniqueIds.length > 0) {
+      const found = await this.prisma.assessment.findMany({ where: { id: { in: uniqueIds } }, select: { id: true } });
+      const foundIds = new Set(found.map((row) => row.id));
+      const missing = uniqueIds.filter((id) => !foundIds.has(id));
+      if (missing.length > 0) {
+        throw new DomainError(
+          'NOT_FOUND',
+          'Avaliação(ões) não encontrada(s)',
+          missing.map((id) => ({ assessmentId: id })),
+        );
+      }
+    }
+
+    try {
+      return calculate(input as unknown as CalculationInput);
+    } catch (error) {
+      if (error instanceof CalculationError) {
+        const mapping = CALCULATION_DOMAIN_CODE[error.code];
+        const domain = new DomainError(mapping.code, error.message);
+        domain.httpStatus = mapping.httpStatus;
+        throw domain;
+      }
+      throw error;
+    }
+  }
+
+  listCalculationMethods(): CalculationMethodMetaDto[] {
+    return CALCULATION_METHODS;
   }
 
   async getPrintClassSchedule(classId: string, termId?: string): Promise<Record<string, unknown>> {

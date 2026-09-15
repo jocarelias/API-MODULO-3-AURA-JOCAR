@@ -1,6 +1,6 @@
 # G3 — Avaliações, Horários e Resultados
 
-API aberta pública para gestão de **avaliações**, **lançamento de notas**, **cálculo de médias**, **horários** e **resultados académicos** — desenvolvida para a **Universidade de Ciências e Tecnologias Joaquim Alberto Chissano (UCT-JAC)**, curso de **Engenharia Informática**.
+API aberta pública para gestão de **avaliações**, **lançamento de notas**, **cálculo de médias**, **horários** e **resultados académicos** — desenvolvida para a **UJAC**, curso de **Engenharia Informática**.
 
 ## Stack
 
@@ -32,7 +32,7 @@ packages/
 prisma/
 ├── schema.prisma                                        # Assessment, Grade, Schedule, Result
 ├── migrations/
-└── seed.ts                                              # dados de demonstração (UCT-JAC)
+└── seed.ts                                              # dados de demonstração (UJAC)
 docs/                                                    # openapi.yaml, manual, diagramas, evidências
 ```
 
@@ -48,7 +48,7 @@ npm install
 # 3. gerar client Prisma
 npm run prisma:generate
 
-# 4. migrar + seed (dados UCT-JAC)
+# 4. migrar + seed (dados UJAC)
 npm run db:reset -- --force
 ```
 
@@ -76,8 +76,38 @@ npm run build && npm run start   # compilar TS e correr dist/
 | GET/PATCH/DELETE | `/api/v1/schedules/:id` | Detalhe, atualização, eliminação |
 | GET/POST | `/api/v1/results` | Lista resultados / recálculo em lote |
 | GET/PATCH | `/api/v1/results/:id` | Detalhe / recálculo individual |
+| GET | `/api/v1/results/calculation-methods` | Métodos de cálculo disponíveis |
+| POST | `/api/v1/results/calculate` | Calcula nota com método flexível |
 | GET | `/api/v1/print/class/:classId/schedule` | Horário da turma (impressão) |
 | GET | `/api/v1/print/class/:classId/pauta` | Pauta de notas da turma |
+
+## Motor de Cálculo de Notas
+
+A API suporta 6 métodos de cálculo de notas, expostos via `POST /api/v1/results/calculate`:
+
+| Método | Descrição |
+|---|---|
+| `ARITHMETIC_MEAN` | Média aritmética simples (`Σ score / N`) |
+| `WEIGHTED_PERCENTAGE` | Média ponderada (`Σ (score×weight) / Σ weight`) — método padrão |
+| `PERCENTAGE_SUM` | Soma de percentagens ponderadas — pesos devem totalizar 100 |
+| `NORMALIZED_WEIGHTED_MEAN` | Média ponderada com pesos normalizados (pesos relativos) |
+| `COMPONENT_BASED` | Média por componentes (ex.: AC + Exame, cada um com sub-notas) |
+| `CUSTOM_WEIGHTED` | Fórmula personalizada: `SUM`, `MAX`, `MIN`, `WEIGHTED_100`, `NORMALIZED_MEAN`, `MEAN_OF_TOP_K` |
+
+**Exemplo — Média ponderada:**
+```bash
+curl -X POST http://localhost:4100/api/v1/results/calculate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "method": "WEIGHTED_PERCENTAGE",
+    "items": [
+      { "assessmentId": "...", "score": 15, "weight": 2 },
+      { "assessmentId": "...", "score": 17, "weight": 1 }
+    ],
+    "rounding": { "decimals": 2 }
+  }'
+# → { "data": { "method": "WEIGHTED_PERCENTAGE", "value": 15.67, ... } }
+```
 
 Tipos de avaliação: `TESTE`, `EXAME_NORMAL`, `EXAME_RECURRENCIA` (armazenados como `TEST`/`EXAM`). Peso obrigatório **> 0**; média `Σ(nota×peso)/Σ(pesos)`.
 
@@ -117,9 +147,9 @@ Tipos de avaliação: `TESTE`, `EXAME_NORMAL`, `EXAME_RECURRENCIA` (armazenados 
 ## Testes
 
 ```bash
-npm run test          # 21 unit + 25 e2e = 46 testes
-npm run test:unit     # domínio: tipos, pesos (> 0), média, status, time range
-npm run test:e2e      # integração: contratos, CRUD+DELETE, 409s, recálculo, impressão, rollback ACID
+npm run test          # 75 unit + 46 e2e = 121 testes
+npm run test:unit     # domínio: tipos, pesos (> 0), média, status, time range + motor de cálculo (54)
+npm run test:e2e      # integração: contratos, CRUD+DELETE, 409s, recálculo, impressão, rollback ACID, cálculo flexível
 ```
 
 Pré-requisito dos testes e2e: banco migrado e com seed (`npm run db:reset -- --force`).

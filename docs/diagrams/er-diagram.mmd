@@ -1,12 +1,17 @@
 erDiagram
+    "Class" {
+        string id PK
+        string name
+        string grade
+    }
     Assessment ||--o{ Grade : "tem (assessmentId)"
     Assessment }o--|| Term : "pertence (termId)"
-    Assessment }o--|| Class : "referencia (classId)"
+    Assessment }o--|| "Class" : "referencia (classId)"
     Assessment }o--|| Subject : "referencia (subjectId)"
     Result ||--o{ Grade : "deriva das notas"
     Result }o--|| Student : "de (studentId)"
     Schedule }o--|| Term : "pertence (termId)"
-    Schedule }o--|| Class : "pertence (classId)"
+    Schedule }o--|| "Class" : "pertence (classId)"
     Schedule }o--|| Subject : "pertence (subjectId)"
 
     Assessment {
@@ -40,6 +45,7 @@ erDiagram
         string classId FK
         string subjectId FK
         decimal average
+        calculationMethod method "ARITHMETIC_MEAN|WEIGHTED_PERCENTAGE|..."
         resultStatus status "APPROVED|RECOVERY|FAILED|IN_PROGRESS|PENDING"
         string statusReason
         dateTime createdAt

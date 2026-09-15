@@ -8,6 +8,75 @@ export const RECOVERY_SCORE = 8;
 
 export const DAYS_OF_WEEK = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'] as const;
 
+export const CALCULATION_METHODS = [
+  'ARITHMETIC_MEAN',
+  'WEIGHTED_PERCENTAGE',
+  'PERCENTAGE_SUM',
+  'NORMALIZED_WEIGHTED_MEAN',
+  'COMPONENT_BASED',
+  'CUSTOM_WEIGHTED',
+] as const;
+
+export type CalculationMethod = (typeof CALCULATION_METHODS)[number];
+
+export interface CalculationItemDto {
+  assessmentId?: string;
+  name?: string;
+  type?: string;
+  score: number;
+  weight?: number;
+}
+
+export interface CalculationComponentDto {
+  id?: string;
+  assessmentId?: string;
+  name?: string;
+  weight: number;
+  score?: number;
+  children?: CalculationComponentDto[];
+}
+
+export interface CalculationInputDto {
+  method: CalculationMethod;
+  items: CalculationItemDto[];
+  components?: CalculationComponentDto[];
+  formula?: string;
+  rounding?: { decimals: 0 | 1 | 2 };
+  minScore?: number;
+  maxScore?: number;
+  expectedTotal?: number;
+  allowNormalization?: boolean;
+  top?: number;
+}
+
+export interface CalculationBreakdownEntryDto {
+  id?: string;
+  assessmentId?: string;
+  name?: string;
+  type?: string;
+  label?: string;
+  score: number;
+  weight?: number;
+  normalizedWeight?: number;
+  contribution?: number;
+  children?: CalculationBreakdownEntryDto[];
+}
+
+export interface CalculationResultDto {
+  method: CalculationMethod;
+  value: number;
+  decimals: number;
+  formula?: string;
+  breakdown: CalculationBreakdownEntryDto[];
+}
+
+export interface CalculationMethodMetaDto {
+  code: CalculationMethod;
+  name: string;
+  description: string;
+  formula: string;
+}
+
 export const ASSESSMENT_STATUS = ['DRAFT', 'SCHEDULED', 'OPEN', 'CLOSED', 'CANCELLED'] as const;
 export const GRADE_STATUS = ['SUBMITTED', 'APPROVED', 'REVISED'] as const;
 export const SCHEDULE_STATUS = ['ACTIVE', 'INACTIVE', 'CANCELLED'] as const;
@@ -88,6 +157,7 @@ export interface ResultDto {
   studentId: string;
   average: number | null;
   finalScore: number | null;
+  calculationMethod: string | null;
   status: string;
   calculatedAt: string | null;
 }
@@ -156,6 +226,7 @@ export function resultDto(record: Record<string, unknown>): ResultDto {
     studentId: record.studentId as string,
     average: toNumber(record.average),
     finalScore: toNumber(record.finalScore),
+    calculationMethod: record.calculationMethod === null || record.calculationMethod === undefined ? null : String(record.calculationMethod),
     status: record.status as string,
     calculatedAt: toIso(record.calculatedAt),
   };

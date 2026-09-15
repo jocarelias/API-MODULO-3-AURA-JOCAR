@@ -1,0 +1,328 @@
+{
+  "_comentario": "Exemplos JSON para executar no Swagger (http://localhost:4100/api/docs). IDs reais do seed UJAC. Para criar um novo registo, mude o 'name' (avaliações não podem duplicar name+classId+subjectId+termId).",
+  "_cadeiras": {
+    "PTP3_PTP_3": "subjectId 03e61c5c-446f-40c2-99ba-63aca10c6b9c | docente Armando Correia (9dee6e6d-...)",
+    "ADR_Administracao_de_Redes": "subjectId 72901889-0e70-42cf-9d88-fa29295883c0 | docente Fortunato Farao (e76a1d36-...)",
+    "PPAR_Programacao_Paralela": "subjectId 24fe9d64-0ac1-49bf-9be5-4e24986bc567 | docente Cidalia da Camara (7fc5fe51-...)"
+  },
+  "_ids_reais": {
+    "termId": "67bf93dc-7803-430c-9e03-0d34e450440f",
+    "academicYearId": "b2d77293-e7f2-4619-bac7-60ff266e8bd7",
+    "classId": "497ec6cc-2ba3-4777-abed-9f6a86c1dd52",
+    "subjectId_ptp3": "03e61c5c-446f-40c2-99ba-63aca10c6b9c",
+    "subjectId_adr": "72901889-0e70-42cf-9d88-fa29295883c0",
+    "subjectId_ppar": "24fe9d64-0ac1-49bf-9be5-4e24986bc567",
+    "teacherId_armando": "9dee6e6d-1c29-46c8-ae71-3b4489b3c918",
+    "teacherId_fortunato": "e76a1d36-b7ea-4269-8cc4-cec0f91af484",
+    "teacherId_cidalia": "7fc5fe51-1f2f-499e-ba63-a9f63b35584b",
+    "studentId": "c8bd7ad6-f707-4d61-ab2d-14beb16a1ab2",
+    "assessmentId_open": "f5770ad9-b701-4f2b-8f00-2481fa19d252",
+    "assessmentId_sem_notas": "fddfb6aa-c9b7-4217-8fd8-78c7f8bbacf0",
+    "scheduleId": "9f33465c-e751-4b23-ae7c-82d714ba9f49",
+    "resultId": "44c84272-1590-4bbb-beed-d20da30dd819",
+    "gradeId": "ec64c9a6-c181-4734-a1cc-4eb7ccf9823e"
+  },
+  "exemplos": [
+    {
+      "endpoint": "GET /api/v1/health",
+      "metodo": "GET",
+      "path": "/api/v1/health",
+      "query": {},
+      "descricao": "Verifica se a API está viva. Deve responder 200 {data:{status:'ok'}}"
+    },
+    {
+      "endpoint": "GET /api/v1/assessments",
+      "metodo": "GET",
+      "path": "/api/v1/assessments",
+      "query": {
+        "termId": "67bf93dc-7803-430c-9e03-0d34e450440f",
+        "classId": "497ec6cc-2ba3-4777-abed-9f6a86c1dd52",
+        "subjectId": "03e61c5c-446f-40c2-99ba-63aca10c6b9c",
+        "page": 1,
+        "pageSize": 5
+      },
+      "descricao": "Lista avaliações com filtros e paginação"
+    },
+    {
+      "endpoint": "POST /api/v1/assessments",
+      "metodo": "POST",
+      "path": "/api/v1/assessments",
+      "query": {},
+      "body": {
+        "termId": "67bf93dc-7803-430c-9e03-0d34e450440f",
+        "academicYearId": "b2d77293-e7f2-4619-bac7-60ff266e8bd7",
+        "classId": "497ec6cc-2ba3-4777-abed-9f6a86c1dd52",
+        "subjectId": "03e61c5c-446f-40c2-99ba-63aca10c6b9c",
+        "teacherId": "9dee6e6d-1c29-46c8-ae71-3b4489b3c918",
+        "name": "Teste 2 - PTP 3 (Swagger)",
+        "type": "TESTE",
+        "description": "Avaliação de exemplo criada pelo Swagger",
+        "date": "2026-07-20T08:00:00.000Z",
+        "maxScore": 20,
+        "weight": 2,
+        "status": "OPEN"
+      },
+      "descricao": "Cria avaliação (201). Mude o 'name' em cada execução (duplicado -> 409). Peso > 0 é obrigatório."
+    },
+    {
+      "endpoint": "POST /api/v1/assessments (Administração de Redes - Fortunato Farao)",
+      "metodo": "POST",
+      "path": "/api/v1/assessments",
+      "query": {},
+      "body": {
+        "termId": "67bf93dc-7803-430c-9e03-0d34e450440f",
+        "academicYearId": "b2d77293-e7f2-4619-bac7-60ff266e8bd7",
+        "classId": "497ec6cc-2ba3-4777-abed-9f6a86c1dd52",
+        "subjectId": "72901889-0e70-42cf-9d88-fa29295883c0",
+        "teacherId": "e76a1d36-b7ea-4269-8cc4-cec0f91af484",
+        "name": "Teste 1 - Administração de Redes (Swagger)",
+        "type": "TESTE",
+        "description": "Avaliação de exemplo criada pelo Swagger",
+        "date": "2026-07-21T08:00:00.000Z",
+        "maxScore": 20,
+        "weight": 1,
+        "status": "OPEN"
+      },
+      "descricao": "Cria avaliação da cadeira Administração de Redes (docente Fortunato Farao)."
+    },
+    {
+      "endpoint": "POST /api/v1/assessments (Programação Paralela - Cidalia da Camara)",
+      "metodo": "POST",
+      "path": "/api/v1/assessments",
+      "query": {},
+      "body": {
+        "termId": "67bf93dc-7803-430c-9e03-0d34e450440f",
+        "academicYearId": "b2d77293-e7f2-4619-bac7-60ff266e8bd7",
+        "classId": "497ec6cc-2ba3-4777-abed-9f6a86c1dd52",
+        "subjectId": "24fe9d64-0ac1-49bf-9be5-4e24986bc567",
+        "teacherId": "7fc5fe51-1f2f-499e-ba63-a9f63b35584b",
+        "name": "Teste 1 - Programação Paralela (Swagger)",
+        "type": "TESTE",
+        "description": "Avaliação de exemplo criada pelo Swagger",
+        "date": "2026-07-22T08:00:00.000Z",
+        "maxScore": 20,
+        "weight": 1,
+        "status": "OPEN"
+      },
+      "descricao": "Cria avaliação da cadeira Programação Paralela (docente Cidalia da Camara)."
+    },
+    {
+      "endpoint": "GET /api/v1/assessments/:id",
+      "metodo": "GET",
+      "path": "/api/v1/assessments/f5770ad9-b701-4f2b-8f00-2481fa19d252",
+      "query": {},
+      "descricao": "Detalhe de uma avaliação (200)"
+    },
+    {
+      "endpoint": "PATCH /api/v1/assessments/:id",
+      "metodo": "PATCH",
+      "path": "/api/v1/assessments/f5770ad9-b701-4f2b-8f00-2481fa19d252",
+      "query": {},
+      "body": {
+        "name": "Teste 1 - PTP 3 (atualizado)",
+        "description": "Atualizado via Swagger",
+        "status": "SCHEDULED"
+      },
+      "descricao": "Atualiza avaliação (200). NÃO alterar maxScore/weight se já existirem notas (409)."
+    },
+    {
+      "endpoint": "DELETE /api/v1/assessments/:id",
+      "metodo": "DELETE",
+      "path": "/api/v1/assessments/f5770ad9-b701-4f2b-8f00-2481fa19d252",
+      "query": {},
+      "descricao": "Apaga avaliação. Já tem notas? -> 409. Sem notas -> 200 {deleted:true}."
+    },
+    {
+      "endpoint": "GET /api/v1/assessments/:assessmentId/grades",
+      "metodo": "GET",
+      "path": "/api/v1/assessments/f5770ad9-b701-4f2b-8f00-2481fa19d252/grades",
+      "query": {},
+      "descricao": "Lista notas de uma avaliação (200)"
+    },
+    {
+      "endpoint": "POST /api/v1/assessments/:assessmentId/grades",
+      "metodo": "POST",
+      "path": "/api/v1/assessments/fddfb6aa-c9b7-4217-8fd8-78c7f8bbacf0/grades",
+      "query": {},
+      "body": {
+        "studentId": "c8bd7ad6-f707-4d61-ab2d-14beb16a1ab2",
+        "score": 15,
+        "comment": "Excelente desempenho"
+      },
+      "descricao": "Lança nota (201). Aluno tem de estar matriculado e a avaliação tem de estar OPEN. Nota dentro de [0, maxScore]. Uma nota por aluno/avaliação (duplicado -> 409). Recalcula resultados automaticamente."
+    },
+    {
+      "endpoint": "PATCH /api/v1/assessments/:assessmentId/grades/:gradeId",
+      "metodo": "PATCH",
+      "path": "/api/v1/assessments/f5770ad9-b701-4f2b-8f00-2481fa19d252/grades/ec64c9a6-c181-4734-a1cc-4eb7ccf9823e",
+      "query": {},
+      "body": {
+        "score": 17,
+        "status": "REVISED"
+      },
+      "descricao": "Atualiza nota (200). Recalcula o resultado do aluno."
+    },
+    {
+      "endpoint": "GET /api/v1/schedules",
+      "metodo": "GET",
+      "path": "/api/v1/schedules",
+      "query": {
+        "termId": "67bf93dc-7803-430c-9e03-0d34e450440f",
+        "classId": "497ec6cc-2ba3-4777-abed-9f6a86c1dd52",
+        "page": 1,
+        "pageSize": 10
+      },
+      "descricao": "Lista horários com filtros e paginação"
+    },
+    {
+      "endpoint": "POST /api/v1/schedules",
+      "metodo": "POST",
+      "path": "/api/v1/schedules",
+      "query": {},
+      "body": {
+        "termId": "67bf93dc-7803-430c-9e03-0d34e450440f",
+        "academicYearId": "b2d77293-e7f2-4619-bac7-60ff266e8bd7",
+        "classId": "497ec6cc-2ba3-4777-abed-9f6a86c1dd52",
+        "subjectId": "03e61c5c-446f-40c2-99ba-63aca10c6b9c",
+        "teacherId": "9dee6e6d-1c29-46c8-ae71-3b4489b3c918",
+        "dayOfWeek": "SATURDAY",
+        "startTime": "10:00",
+        "endTime": "11:40",
+        "room": "Laboratório de Informática B",
+        "status": "ACTIVE"
+      },
+      "descricao": "Cria horário (201). Sábado evita conflito com o seed (MON/WED/FRI). Conflito de professor/turma/sala -> 409."
+    },
+    {
+      "endpoint": "GET /api/v1/schedules/:id",
+      "metodo": "GET",
+      "path": "/api/v1/schedules/9f33465c-e751-4b23-ae7c-82d714ba9f49",
+      "query": {},
+      "descricao": "Detalhe de um horário (200)"
+    },
+    {
+      "endpoint": "PATCH /api/v1/schedules/:id",
+      "metodo": "PATCH",
+      "path": "/api/v1/schedules/9f33465c-e751-4b23-ae7c-82d714ba9f49",
+      "query": {},
+      "body": {
+        "room": "Sala 202",
+        "status": "ACTIVE"
+      },
+      "descricao": "Atualiza horário (200)"
+    },
+    {
+      "endpoint": "DELETE /api/v1/schedules/:id",
+      "metodo": "DELETE",
+      "path": "/api/v1/schedules/9f33465c-e751-4b23-ae7c-82d714ba9f49",
+      "query": {},
+      "descricao": "Apaga horário (200). DELETE de horário é sempre permitido."
+    },
+    {
+      "endpoint": "GET /api/v1/results",
+      "metodo": "GET",
+      "path": "/api/v1/results",
+      "query": {
+        "termId": "67bf93dc-7803-430c-9e03-0d34e450440f",
+        "classId": "497ec6cc-2ba3-4777-abed-9f6a86c1dd52",
+        "subjectId": "03e61c5c-446f-40c2-99ba-63aca10c6b9c",
+        "studentId": "c8bd7ad6-f707-4d61-ab2d-14beb16a1ab2",
+        "page": 1,
+        "pageSize": 10
+      },
+      "descricao": "Lista resultados com filtros e paginação"
+    },
+    {
+      "endpoint": "GET /api/v1/results/:id",
+      "metodo": "GET",
+      "path": "/api/v1/results/44c84272-1590-4bbb-beed-d20da30dd819",
+      "query": {},
+      "descricao": "Detalhe de um resultado (200)"
+    },
+    {
+      "endpoint": "POST /api/v1/results",
+      "metodo": "POST",
+      "path": "/api/v1/results",
+      "query": {},
+      "body": {
+        "classId": "497ec6cc-2ba3-4777-abed-9f6a86c1dd52",
+        "subjectId": "03e61c5c-446f-40c2-99ba-63aca10c6b9c",
+        "termId": "67bf93dc-7803-430c-9e03-0d34e450440f"
+      },
+      "descricao": "Recalcula resultados em lote para a turma/disciplina/período (201)"
+    },
+    {
+      "endpoint": "PATCH /api/v1/results/:id",
+      "metodo": "PATCH",
+      "path": "/api/v1/results/44c84272-1590-4bbb-beed-d20da30dd819",
+      "query": {},
+      "body": {},
+      "descricao": "Recalcula um resultado individual (200). Body vazio {} (schema strict)."
+    },
+    {
+      "endpoint": "GET /api/v1/print/class/:classId/schedule",
+      "metodo": "GET",
+      "path": "/api/v1/print/class/497ec6cc-2ba3-4777-abed-9f6a86c1dd52/schedule",
+      "query": {
+        "termId": "67bf93dc-7803-430c-9e03-0d34e450440f"
+      },
+      "descricao": "Impressão do horário da turma (200)"
+    },
+    {
+      "endpoint": "GET /api/v1/print/class/:classId/pauta",
+      "metodo": "GET",
+      "path": "/api/v1/print/class/497ec6cc-2ba3-4777-abed-9f6a86c1dd52/pauta",
+      "query": {
+        "termId": "67bf93dc-7803-430c-9e03-0d34e450440f",
+        "subjectId": "03e61c5c-446f-40c2-99ba-63aca10c6b9c"
+      },
+      "descricao": "Pauta de notas da turma (200). subjectId e termId são obrigatórios aqui (400 sem eles)."
+    }
+  ],
+  "erros_esperados": [
+    {
+      "endpoint": "POST /api/v1/assessments (peso zero)",
+      "metodo": "POST",
+      "path": "/api/v1/assessments",
+      "body": {
+        "termId": "67bf93dc-7803-430c-9e03-0d34e450440f",
+        "academicYearId": "b2d77293-e7f2-4619-bac7-60ff266e8bd7",
+        "classId": "497ec6cc-2ba3-4777-abed-9f6a86c1dd52",
+        "subjectId": "03e61c5c-446f-40c2-99ba-63aca10c6b9c",
+        "teacherId": "9dee6e6d-1c29-46c8-ae71-3b4489b3c918",
+        "name": "Teste peso zero",
+        "type": "TESTE",
+        "date": "2026-07-20T08:00:00.000Z",
+        "weight": 0
+      },
+      "descricao": "Esperado 400 VALIDATION_ERROR"
+    },
+    {
+      "endpoint": "POST /api/v1/assessments/:id/grades (nota fora da escala)",
+      "metodo": "POST",
+      "path": "/api/v1/assessments/fddfb6aa-c9b7-4217-8fd8-78c7f8bbacf0/grades",
+      "body": {
+        "studentId": "c8bd7ad6-f707-4d61-ab2d-14beb16a1ab2",
+        "score": 25
+      },
+      "descricao": "Esperado 400 VALIDATION_ERROR (maxScore é 20)"
+    },
+    {
+      "endpoint": "POST /api/v1/schedules (conflito de horário)",
+      "metodo": "POST",
+      "path": "/api/v1/schedules",
+      "body": {
+        "termId": "67bf93dc-7803-430c-9e03-0d34e450440f",
+        "academicYearId": "b2d77293-e7f2-4619-bac7-60ff266e8bd7",
+        "classId": "497ec6cc-2ba3-4777-abed-9f6a86c1dd52",
+        "subjectId": "03e61c5c-446f-40c2-99ba-63aca10c6b9c",
+        "teacherId": "9dee6e6d-1c29-46c8-ae71-3b4489b3c918",
+        "dayOfWeek": "MONDAY",
+        "startTime": "08:00",
+        "endTime": "09:40",
+        "room": "Sala 999"
+      },
+      "descricao": "Esperado 409 CONFLICT (professor/turma já têm aula segunda 08:00-09:40 no seed)."
+    }
+  ]
+}

@@ -85,6 +85,18 @@ API REST aberta para gestão académica de avaliações, notas, horários e resu
 - **Objectivo:** Recalcular um resultado individual
 - **Transacção atómica**
 
+### GET /api/v1/results/calculation-methods
+- **Objectivo:** Listar métodos de cálculo disponíveis
+- **Response:** `{ data: CalculationMethodMeta[], meta: { correlationId } }`
+- Retorna os 6 métodos com nome, descrição, campos requeridos e fórmulas customizadas suportadas
+
+### POST /api/v1/results/calculate
+- **Objectivo:** Calcular nota com método flexível (sem persistir — calculadora in-memory)
+- **Body:** `{ method, items[], components?[], formula?, rounding?, minScore?, maxScore?, expectedTotal? }`
+- **Métodos:** `ARITHMETIC_MEAN`, `WEIGHTED_PERCENTAGE`, `PERCENTAGE_SUM`, `NORMALIZED_WEIGHTED_MEAN`, `COMPONENT_BASED`, `CUSTOM_WEIGHTED`
+- **Response:** `{ data: { method, value, decimals, breakdown[] }, meta: { correlationId } }`
+- **Erros:** 400 VALIDATION_ERROR (método inválido, lista vazia, nota/peso inválido, COMPONENT_BASED sem componentes, fórmula não registada), 409 CONFLICT (pesos incompatíveis), 404 NOT_FOUND (assessmentId inexistente)
+
 ### GET /api/v1/print/class/:classId/schedule
 - **Objectivo:** Dados para impressão do horário da turma
 

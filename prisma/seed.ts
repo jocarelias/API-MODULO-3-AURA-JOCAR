@@ -13,8 +13,8 @@ const TEACHER_IDS = [randomUUID(), randomUUID(), randomUUID(), randomUUID(), ran
 const STUDENT_IDS = Array.from({ length: 10 }, () => randomUUID());
 
 const CLASS_NAMES = ['10ª Classe A', '10ª Classe B', '11ª Classe A'];
-const SUBJECT_NAMES = ['Programação I', 'Matemática', 'Física'];
-const TEACHER_NAMES = ['Prof. João Silva', 'Prof. Maria Santos', 'Prof. Carlos JAC', 'Prof. Ana UFMA', 'Prof. Pedro MIT'];
+const SUBJECT_NAMES = ['PTP 3', 'Administração de Redes', 'Programação Paralela'];
+const TEACHER_NAMES = ['Armando Correia', 'Leandro Titos', 'Carsolino Sambo', 'Cidalia da Camara', 'Fortunato Farao'];
 const STUDENT_NAMES = [
   'Ana JAC', 'Berto Catarina', 'Carlos UC', 'Diana Maputo', 'Eduardo Matola',
   'Fátima Nampula', 'Gabriel Beira', 'Helena Tete', 'Ivan Sofala', 'Julia Zambezia',
@@ -24,7 +24,7 @@ async function seed() {
   console.log('🌱 A iniciar seed G3 — Avaliações e Horários...');
 
   await prisma.school.create({
-    data: { id: SCHOOL_ID, name: 'UCT-JAC — Universidade Católica de Moçambique', code: 'UCT-JAC', status: 'ACTIVE' },
+    data: { id: SCHOOL_ID, name: 'UJAC', code: 'UJAC', status: 'ACTIVE' },
   });
 
   await prisma.academicYear.create({
@@ -75,11 +75,11 @@ async function seed() {
   }
 
   const assessmentDefs = [
-    { classId: CLASS_IDS[0], subjectId: SUBJECT_IDS[0], teacherId: TEACHER_IDS[0], name: 'Teste 1 - Programação I', type: 'TEST' as EvaluationType, weight: 1, status: 'OPEN' as EvaluationStatus },
-    { classId: CLASS_IDS[0], subjectId: SUBJECT_IDS[1], teacherId: TEACHER_IDS[1], name: 'Teste 1 - Matemática', type: 'TEST' as EvaluationType, weight: 1, status: 'OPEN' as EvaluationStatus },
-    { classId: CLASS_IDS[1], subjectId: SUBJECT_IDS[0], teacherId: TEACHER_IDS[0], name: 'Exame Final - Programação I', type: 'EXAM' as EvaluationType, weight: 2, status: 'OPEN' as EvaluationStatus },
-    { classId: CLASS_IDS[0], subjectId: SUBJECT_IDS[2], teacherId: TEACHER_IDS[2], name: 'Teste 1 - Física', type: 'TEST' as EvaluationType, weight: 1, status: 'OPEN' as EvaluationStatus },
-    { classId: CLASS_IDS[0], subjectId: SUBJECT_IDS[0], teacherId: TEACHER_IDS[0], name: 'Projeto Final - POO', type: 'TEST' as EvaluationType, weight: 2, status: 'DRAFT' as EvaluationStatus },
+    { classId: CLASS_IDS[0], subjectId: SUBJECT_IDS[0], teacherId: TEACHER_IDS[0], name: 'Teste 1 - PTP 3', type: 'TEST' as EvaluationType, weight: 1, status: 'OPEN' as EvaluationStatus },
+    { classId: CLASS_IDS[0], subjectId: SUBJECT_IDS[1], teacherId: TEACHER_IDS[4], name: 'Teste 1 - Administração de Redes', type: 'TEST' as EvaluationType, weight: 1, status: 'OPEN' as EvaluationStatus },
+    { classId: CLASS_IDS[1], subjectId: SUBJECT_IDS[0], teacherId: TEACHER_IDS[0], name: 'Exame Final - PTP 3', type: 'EXAM' as EvaluationType, weight: 2, status: 'OPEN' as EvaluationStatus },
+    { classId: CLASS_IDS[0], subjectId: SUBJECT_IDS[2], teacherId: TEACHER_IDS[3], name: 'Teste 1 - Programação Paralela', type: 'TEST' as EvaluationType, weight: 1, status: 'OPEN' as EvaluationStatus },
+    { classId: CLASS_IDS[0], subjectId: SUBJECT_IDS[0], teacherId: TEACHER_IDS[0], name: 'Projeto Final - PTP 3', type: 'TEST' as EvaluationType, weight: 2, status: 'DRAFT' as EvaluationStatus },
   ];
 
   const assessmentIds: string[] = [];
@@ -88,7 +88,7 @@ async function seed() {
       data: {
         schoolId: SCHOOL_ID, academicYearId: AY_ID, termId: TERM_ID,
         ...def,
-        description: 'Avaliação de exemplo gerada pelo seed (UCT-JAC)',
+        description: 'Avaliação de exemplo gerada pelo seed (UJAC)',
         date: new Date('2026-03-10T10:00:00Z'),
         maxScore: 20,
       },

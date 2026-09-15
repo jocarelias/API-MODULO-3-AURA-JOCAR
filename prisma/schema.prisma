@@ -128,6 +128,15 @@ enum ResultStatus {
   IN_PROGRESS
 }
 
+enum CalculationMethod {
+  ARITHMETIC_MEAN
+  WEIGHTED_PERCENTAGE
+  PERCENTAGE_SUM
+  NORMALIZED_WEIGHTED_MEAN
+  COMPONENT_BASED
+  CUSTOM_WEIGHTED
+}
+
 // ============================================================
 // NÚCLEO / MULTI-TENANCY
 // ============================================================
@@ -491,6 +500,7 @@ model Result {
   average        Decimal?     @db.Decimal(5, 2)
   finalScore     Decimal?     @db.Decimal(5, 2)
   weightedTotal  Decimal?     @db.Decimal(5, 2)
+  calculationMethod CalculationMethod?
   status         ResultStatus @default(PENDING)
   calculatedAt   DateTime?
   createdAt      DateTime     @default(now())

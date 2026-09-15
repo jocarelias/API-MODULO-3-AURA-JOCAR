@@ -164,6 +164,14 @@ export class SmartCampusApiClient {
   printClassPauta<T>(classId: string, { termId, subjectId }: { termId?: string; subjectId?: string } = {}): Promise<T> {
     return this.get<T>(`/print/class/${classId}/pauta`, { termId, subjectId });
   }
+
+  listCalculationMethods<T>(): Promise<T> {
+    return this.get<T>('/results/calculation-methods');
+  }
+
+  calculate<T>(payload: unknown): Promise<T> {
+    return this.post<T>('/results/calculate', payload);
+  }
 }
 
 export { campusModules };

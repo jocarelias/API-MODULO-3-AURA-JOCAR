@@ -13,7 +13,7 @@
 
 - **Assessments** — avaliação (TEST/EXAM). Campos: `id`, `type`, `termId`, `classId`, `subjectId`, `title`, `startTime`, `endTime`, `maxScore`, `weight`, `status`, `createdAt`, `updatedAt`. Unicidade composta `(termId, classId, subjectId, title)`. Checks: `endTime > startTime`, `maxScore > 0`, `weight > 0`.
 - **Grades** — nota de um aluno numa avaliação. `id`, `assessmentId` (FK→Assessments), `studentId`, `score`, `createdAt`. Unicidade composta `(assessmentId, studentId)` → **1 nota por aluno por avaliação**. `score ∈ [0, maxScore]`.
-- **Results** — resultado agregado do aluno. `id`, `studentId`, `termId`, `classId`, `subjectId`, `average`, `status`, `statusReason`, `createdAt`, `updatedAt`. Unicidade `(studentId, termId, classId, subjectId)`. **Deriva das notas** (média ponderada).
+- **Results** — resultado agregado do aluno. `id`, `studentId`, `termId`, `classId`, `subjectId`, `average`, `calculationMethod` (método de cálculo usado, ex.: `WEIGHTED_PERCENTAGE`), `status`, `statusReason`, `createdAt`, `updatedAt`. Unicidade `(studentId, termId, classId, subjectId)`. **Deriva das notas** (média ponderada).
 - **Schedules** — horário. `id`, `termId`, `classId`, `subjectId`, `startTime`, `endTime`, `room`, `professorId`, `createdAt`, `updatedAt`. Conflito de professor/turma/sala → 409 (regra no service).
 
 ## Relações (cardinalidades)
@@ -22,9 +22,13 @@
 - `Grade *─1 Result` (as notas derivam o resultado) — seta tracejada no diagrama
 - Assessment/Result/Schedule referenciam **Term, Class, Subject, Student** (entidades externas partilhadas, fora do módulo G3)
 
-## Como regenerar o PNG
+## Como regenerar o SVG
 
-Mermaid CLI está indisponível neste ambiente (npm bloqueado). O ficheiro `.mml`/`.mmd` pode ser visualizado em [mermaid.live] ou editado no draw.io pelo `.drawio`. O SVG foi escrito à mão como entregável estático.
+```bash
+npx mmdc -i docs/diagrams/er-diagram.mmd -o docs/diagrams/er-diagram.svg -b transparent
+```
+
+O `.mmd` também pode ser visualizado em [mermaid.live] ou editado no draw.io pelo `.drawio`.
 
 ## Regras de negócio associadas
 
