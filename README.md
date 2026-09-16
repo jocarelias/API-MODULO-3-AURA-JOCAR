@@ -163,8 +163,11 @@ Ver `docs/` — `openapi.yaml`, `entity-model.md`, `manual-apis-core.md`, `refle
 ### Ficha de exercícios — respostas e evidências
 
 | Artefacto | Descrição |
-|---|---|
+|---|---|---|
 | `docs/G3-exercicios-respostas.md` | Respostas consolidadas dos 7 exercícios (markdown) |
+| `docs/API_TESTS_JSON.md` | Exemplos JSON (pedido+resposta) de **todos** os endpoints |
+| `docs/UUID_REFERENCE.md` / `.docx` | Todos os UUID do banco (seed UJAC) |
+| `docs/test-payloads/` | JSONs de pedido prontos (validados contra Zod) |
 | `docs/G3_HORARIO_AVALIACOES_TYPE_FINAL.md` / `.docx` | Documentação final completa (24 secções) |
 | `docs/G3_Horario_Avaliacoes_Type_Documentacao.docx` | Versão Word com evidências e imagens reais |
 | `docs/diagrams/er-diagram-humanized.md` | Diagrama ER em caixas ASCII (preto-e-branco) |
