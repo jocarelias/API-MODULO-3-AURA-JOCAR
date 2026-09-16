@@ -133,6 +133,16 @@ export const classIdParamsSchema = z.object({ classId: uuidSchema }).strict();
 export const printPautaQuerySchema = z.object({ termId: optionalUuid, subjectId: optionalUuid }).strict();
 export const printScheduleQuerySchema = z.object({ termId: optionalUuid }).strict();
 
+export const catalogQuerySchema = z
+  .object({
+    academicYearId: optionalUuid,
+    termId: optionalUuid,
+    classId: optionalUuid,
+    page: pageSchema,
+    pageSize: pageSizeSchema,
+  })
+  .strict();
+
 export const calculationMethodSchema = z.enum(CALCULATION_METHOD_CODES, {
   errorMap: () => ({ message: 'Método de cálculo inválido' }),
 });

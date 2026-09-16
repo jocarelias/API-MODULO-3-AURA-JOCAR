@@ -344,6 +344,65 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
+  /api/v1/schools:
+    get:
+      tags: [Catálogo]
+      summary: Lista escolas (catálogo)
+      responses:
+        '200':
+          $ref: '#/components/responses/ListOk'
+  /api/v1/academic-years:
+    get:
+      tags: [Catálogo]
+      summary: Lista anos letivos (catálogo)
+      responses:
+        '200':
+          $ref: '#/components/responses/ListOk'
+  /api/v1/terms:
+    get:
+      tags: [Catálogo]
+      summary: Lista períodos/termos letivos (catálogo)
+      parameters:
+        - $ref: '#/components/parameters/AcademicYearIdQuery'
+      responses:
+        '200':
+          $ref: '#/components/responses/ListOk'
+  /api/v1/classes:
+    get:
+      tags: [Catálogo]
+      summary: Lista turmas (catálogo)
+      description: Filtros opcionais por período ou ano letivo.
+      parameters:
+        - $ref: '#/components/parameters/TermIdQuery'
+        - $ref: '#/components/parameters/AcademicYearIdQuery'
+      responses:
+        '200':
+          $ref: '#/components/responses/ListOk'
+  /api/v1/subjects:
+    get:
+      tags: [Catálogo]
+      summary: Lista disciplinas (catálogo)
+      responses:
+        '200':
+          $ref: '#/components/responses/ListOk'
+  /api/v1/teachers:
+    get:
+      tags: [Catálogo]
+      summary: Lista professores (catálogo)
+      responses:
+        '200':
+          $ref: '#/components/responses/ListOk'
+  /api/v1/students:
+    get:
+      tags: [Catálogo]
+      summary: Lista alunos (catálogo)
+      description: Filtros opcionais por turma ou período (matrículas ativas).
+      parameters:
+        - $ref: '#/components/parameters/ClassIdQuery'
+        - $ref: '#/components/parameters/TermIdQuery'
+      responses:
+        '200':
+          $ref: '#/components/responses/ListOk'
 
 components:
   securitySchemes: {}
@@ -421,6 +480,12 @@ components:
       schema:
         type: string
         format: uuid
+    AcademicYearIdQuery:
+      name: academicYearId
+      in: query
+      schema:
+        type: string
+        format: uuid
   schemas:
     Uuid:
       type: string
@@ -431,10 +496,15 @@ components:
         id: { $ref: '#/components/schemas/Uuid' }
         schoolId: { $ref: '#/components/schemas/Uuid' }
         academicYearId: { $ref: '#/components/schemas/Uuid' }
+        academicYearName: { type: string, nullable: true }
         termId: { $ref: '#/components/schemas/Uuid' }
+        termName: { type: string, nullable: true }
         classId: { $ref: '#/components/schemas/Uuid' }
+        className: { type: string, nullable: true }
         subjectId: { $ref: '#/components/schemas/Uuid' }
+        subjectName: { type: string, nullable: true }
         teacherId: { $ref: '#/components/schemas/Uuid' }
+        teacherName: { type: string, nullable: true }
         name: { type: string }
         type: { type: string, enum: [TESTE, EXAME_NORMAL, EXAME_RECURRENCIA] }
         description: { type: string, nullable: true }
@@ -466,7 +536,9 @@ components:
       properties:
         id: { $ref: '#/components/schemas/Uuid' }
         assessmentId: { $ref: '#/components/schemas/Uuid' }
+        assessmentName: { type: string, nullable: true }
         studentId: { $ref: '#/components/schemas/Uuid' }
+        studentName: { type: string, nullable: true }
         score: { type: number }
         comment: { type: string, nullable: true }
         status: { type: string, enum: [SUBMITTED, APPROVED, REVISED] }
@@ -487,9 +559,13 @@ components:
         schoolId: { $ref: '#/components/schemas/Uuid' }
         academicYearId: { $ref: '#/components/schemas/Uuid' }
         termId: { $ref: '#/components/schemas/Uuid' }
+        termName: { type: string, nullable: true }
         classId: { $ref: '#/components/schemas/Uuid' }
+        className: { type: string, nullable: true }
         subjectId: { $ref: '#/components/schemas/Uuid' }
+        subjectName: { type: string, nullable: true }
         teacherId: { $ref: '#/components/schemas/Uuid' }
+        teacherName: { type: string, nullable: true }
         dayOfWeek: { type: string, enum: [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY] }
         startTime: { type: string, pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' }
         endTime: { type: string, pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' }
@@ -519,9 +595,13 @@ components:
         schoolId: { $ref: '#/components/schemas/Uuid' }
         academicYearId: { $ref: '#/components/schemas/Uuid' }
         termId: { $ref: '#/components/schemas/Uuid' }
+        termName: { type: string, nullable: true }
         classId: { $ref: '#/components/schemas/Uuid' }
+        className: { type: string, nullable: true }
         subjectId: { $ref: '#/components/schemas/Uuid' }
+        subjectName: { type: string, nullable: true }
         studentId: { $ref: '#/components/schemas/Uuid' }
+        studentName: { type: string, nullable: true }
         average: { type: number, nullable: true }
         finalScore: { type: number, nullable: true }
         status: { type: string, enum: [APPROVED, FAILED, RECOVERY, PENDING, IN_PROGRESS] }
@@ -617,6 +697,61 @@ components:
         requiredFields: { type: array, items: { type: string } }
         supportedFormulas: { type: array, items: { type: string } }
       required: [method, name, description, requiredFields]
+    School:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        name: { type: string }
+        code: { type: string }
+        phone: { type: string, nullable: true }
+    AcademicYear:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        schoolId: { $ref: '#/components/schemas/Uuid' }
+        name: { type: string }
+    Term:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        schoolId: { $ref: '#/components/schemas/Uuid' }
+        academicYearId: { $ref: '#/components/schemas/Uuid' }
+        name: { type: string }
+        startDate: { type: string, format: date-time }
+        endDate: { type: string, format: date-time }
+        status: { type: string }
+    Class:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        schoolId: { $ref: '#/components/schemas/Uuid' }
+        academicYearId: { $ref: '#/components/schemas/Uuid' }
+        name: { type: string }
+        grade: { type: string, nullable: true }
+        shift: { type: string, nullable: true }
+        room: { type: string, nullable: true }
+    Subject:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        schoolId: { $ref: '#/components/schemas/Uuid' }
+        name: { type: string }
+        code: { type: string, nullable: true }
+    Teacher:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        schoolId: { $ref: '#/components/schemas/Uuid' }
+        name: { type: string }
+        email: { type: string, nullable: true }
+    Student:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        schoolId: { $ref: '#/components/schemas/Uuid' }
+        name: { type: string }
+        email: { type: string, nullable: true }
+        enrollmentNumber: { type: string, nullable: true }
     Error:
       type: object
       properties:
@@ -679,3 +814,4 @@ components:
     ResultList: { $ref: '#/components/responses/Envelope' }
     PrintOk: { $ref: '#/components/responses/Envelope' }
     DeletedOk: { $ref: '#/components/responses/Envelope' }
+    ListOk: { $ref: '#/components/responses/Envelope' }

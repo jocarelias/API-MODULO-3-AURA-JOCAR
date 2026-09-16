@@ -33,10 +33,15 @@ Resposta:
       "id": "595b586c-ceac-4722-9ac0-49c5501d451d",
       "schoolId": "c5b3ffee-3ac9-4d6e-9496-5ff73d86a8c1",
       "academicYearId": "7059d983-da71-4221-9541-afacb32316c3",
+      "academicYearName": "2026",
       "termId": "b1ec59f2-8ae4-48e2-b9b0-24172da51ce8",
+      "termName": "1º Trimestre",
       "classId": "df12a7a2-b47b-413e-8308-b0d5b6ef53dd",
+      "className": "Engenharia Informática - 1º Ano",
       "subjectId": "26c5ef3c-67ce-436c-9c45-c2a4cf28ceaf",
+      "subjectName": "PTP 3",
       "teacherId": "e79e30fb-b3e6-4113-ad47-c212aefca3ac",
+      "teacherName": "Armando Correia",
       "name": "Teste 1 - PTP 3",
       "type": "TESTE",
       "description": "Avaliação de exemplo gerada pelo seed (UJAC)",
@@ -267,7 +272,9 @@ Resposta:
     {
       "id": "53e13f59-77bb-4394-8f5d-c3dfa673ef14",
       "assessmentId": "5f290cf0-9a8d-480b-bf02-0adb9b8f72cd",
+      "assessmentName": "Teste 1 - PTP 3",
       "studentId": "fc8221bd-1f2b-425a-8b5e-687573ab7731",
+      "studentName": "Ana JAC",
       "score": 20,
       "comment": null,
       "status": "SUBMITTED",
@@ -412,9 +419,13 @@ Resposta:
       "schoolId": "c5b3ffee-3ac9-4d6e-9496-5ff73d86a8c1",
       "academicYearId": "7059d983-da71-4221-9541-afacb32316c3",
       "termId": "b1ec59f2-8ae4-48e2-b9b0-24172da51ce8",
+      "termName": "1º Trimestre",
       "classId": "df12a7a2-b47b-413e-8308-b0d5b6ef53dd",
+      "className": "Engenharia Informática - 1º Ano",
       "subjectId": "26c5ef3c-67ce-436c-9c45-c2a4cf28ceaf",
+      "subjectName": "PTP 3",
       "teacherId": "e79e30fb-b3e6-4113-ad47-c212aefca3ac",
+      "teacherName": "Armando Correia",
       "dayOfWeek": "MONDAY",
       "startTime": "08:00",
       "endTime": "09:40",
@@ -567,9 +578,13 @@ Resposta:
       "schoolId": "c5b3ffee-3ac9-4d6e-9496-5ff73d86a8c1",
       "academicYearId": "7059d983-da71-4221-9541-afacb32316c3",
       "termId": "b1ec59f2-8ae4-48e2-b9b0-24172da51ce8",
+      "termName": "1º Trimestre",
       "classId": "df12a7a2-b47b-413e-8308-b0d5b6ef53dd",
+      "className": "Engenharia Informática - 1º Ano",
       "subjectId": "eb659aed-8388-449b-95f6-65d7eb1041b8",
+      "subjectName": "Administração de Redes",
       "studentId": "99cf22c6-9ad1-4e3b-8402-16de34051558",
+      "studentName": "Ana JAC",
       "average": 19,
       "finalScore": 19,
       "calculationMethod": null,
@@ -612,9 +627,13 @@ Resposta:
       "schoolId": "c5b3ffee-3ac9-4d6e-9496-5ff73d86a8c1",
       "academicYearId": "7059d983-da71-4221-9541-afacb32316c3",
       "termId": "b1ec59f2-8ae4-48e2-b9b0-24172da51ce8",
+      "termName": "1º Trimestre",
       "classId": "df12a7a2-b47b-413e-8308-b0d5b6ef53dd",
+      "className": "Engenharia Informática - 1º Ano",
       "subjectId": "eb659aed-8388-449b-95f6-65d7eb1041b8",
+      "subjectName": "Administração de Redes",
       "studentId": "99cf22c6-9ad1-4e3b-8402-16de34051558",
+      "studentName": "Ana JAC",
       "average": 19,
       "finalScore": 19,
       "calculationMethod": null,
@@ -1037,6 +1056,149 @@ Resposta:
 ```
 
 > Resposta inclui header `x-request-id: meu-id-custom`
+
+---
+
+## 8. Catálogo (referência para montar formulários)
+
+> Todos devolvem `id` + `name`. Usados para obter os UUID antes de criar/avaliar horários ou notas.
+
+### 8.1 GET /schools — Escolas
+
+**GET** `http://localhost:4100/api/v1/schools`  → **200**
+
+Resposta:
+```json
+{
+  "data": [
+    {
+      "id": "c5b3ffee-3ac9-4d6e-9496-5ff73d86a8c1",
+      "name": "UJAC",
+      "code": "UJAC",
+      "phone": null
+    }
+  ],
+  "meta": { "correlationId": "e9f8a2b1-c123-4d5e-9f0a-1b2c3d4e5f60", "page": 1, "pageSize": 1, "total": 1 }
+}
+```
+
+### 8.2 GET /academic-years — Anos letivos
+
+**GET** `http://localhost:4100/api/v1/academic-years`  → **200**
+
+```json
+{
+  "data": [
+    { "id": "7059d983-da71-4221-9541-afacb32316c3", "schoolId": "c5b3ffee-3ac9-4d6e-9496-5ff73d86a8c1", "name": "2026" }
+  ],
+  "meta": { "correlationId": "e9f8a2b1-c123-4d5e-9f0a-1b2c3d4e5f60", "page": 1, "pageSize": 1, "total": 1 }
+}
+```
+
+### 8.3 GET /terms — Períodos letivos
+
+**GET** `http://localhost:4100/api/v1/terms?academicYearId=7059d983-da71-4221-9541-afacb32316c3`  → **200**
+
+```json
+{
+  "data": [
+    {
+      "id": "b1ec59f2-8ae4-48e2-b9b0-24172da51ce8",
+      "schoolId": "c5b3ffee-3ac9-4d6e-9496-5ff73d86a8c1",
+      "academicYearId": "7059d983-da71-4221-9541-afacb32316c3",
+      "name": "1º Trimestre",
+      "startDate": "2026-01-15T00:00:00.000Z",
+      "endDate": "2026-04-15T00:00:00.000Z",
+      "status": "ACTIVE"
+    }
+  ],
+  "meta": { "correlationId": "e9f8a2b1-c123-4d5e-9f0a-1b2c3d4e5f60", "page": 1, "pageSize": 1, "total": 1 }
+}
+```
+
+### 8.4 GET /classes — Turmas
+
+**GET** `http://localhost:4100/api/v1/classes?termId=b1ec59f2-8ae4-48e2-b9b0-24172da51ce8`  → **200**
+
+```json
+{
+  "data": [
+    {
+      "id": "df12a7a2-b47b-413e-8308-b0d5b6ef53dd",
+      "schoolId": "c5b3ffee-3ac9-4d6e-9496-5ff73d86a8c1",
+      "academicYearId": "7059d983-da71-4221-9541-afacb32316c3",
+      "name": "Engenharia Informática - 1º Ano",
+      "grade": "1",
+      "shift": "Manhã",
+      "room": "Sala 204"
+    }
+  ],
+  "meta": { "correlationId": "e9f8a2b1-c123-4d5e-9f0a-1b2c3d4e5f60", "page": 1, "pageSize": 1, "total": 1 }
+}
+```
+
+### 8.5 GET /subjects — Disciplinas
+
+**GET** `http://localhost:4100/api/v1/subjects`  → **200**
+
+```json
+{
+  "data": [
+    {
+      "id": "26c5ef3c-67ce-436c-9c45-c2a4cf28ceaf",
+      "schoolId": "c5b3ffee-3ac9-4d6e-9496-5ff73d86a8c1",
+      "name": "PTP 3",
+      "code": "SUBJ1"
+    }
+  ],
+  "meta": { "correlationId": "e9f8a2b1-c123-4d5e-9f0a-1b2c3d4e5f60", "page": 1, "pageSize": 1, "total": 1 }
+}
+```
+
+### 8.6 GET /teachers — Professores
+
+**GET** `http://localhost:4100/api/v1/teachers`  → **200**
+
+```json
+{
+  "data": [
+    {
+      "id": "e79e30fb-b3e6-4113-ad47-c212aefca3ac",
+      "schoolId": "c5b3ffee-3ac9-4d6e-9496-5ff73d86a8c1",
+      "name": "Armando Correia",
+      "email": "prof1@ucjac.ac.mz"
+    }
+  ],
+  "meta": { "correlationId": "e9f8a2b1-c123-4d5e-9f0a-1b2c3d4e5f60", "page": 1, "pageSize": 1, "total": 1 }
+}
+```
+
+### 8.7 GET /students — Alunos
+
+**GET** `http://localhost:4100/api/v1/students?classId=df12a7a2-b47b-413e-8308-b0d5b6ef53dd`  → **200**
+
+```json
+{
+  "data": [
+    {
+      "id": "99cf22c6-9ad1-4e3b-8402-16de34051558",
+      "schoolId": "c5b3ffee-3ac9-4d6e-9496-5ff73d86a8c1",
+      "name": "Ana JAC",
+      "email": "aluno1@student.ucjac.ac.mz",
+      "enrollmentNumber": "UCJAC-2026-001"
+    }
+  ],
+  "meta": { "correlationId": "e9f8a2b1-c123-4d5e-9f0a-1b2c3d4e5f60", "page": 1, "pageSize": 1, "total": 1 }
+}
+```
+
+### 8.8 Exemplo de fluxo — obter UUID com nome e criar avaliação
+
+1. `GET /api/v1/terms` → escolher `termId` (ex.: 1º Trimestre).
+2. `GET /api/v1/classes?termId=...` → escolher `classId` (ex.: Eng. Informática - 1º Ano).
+3. `GET /api/v1/subjects` → escolher `subjectId` (ex.: PTP 3).
+4. `GET /api/v1/teachers` → escolher `teacherId` (ex.: Armando Correia).
+5. `POST /api/v1/assessments` com esses UUID + `academicYearId` (de `/academic-years`).
 
 ---
 

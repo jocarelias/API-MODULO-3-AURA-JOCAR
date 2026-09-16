@@ -280,14 +280,21 @@ Todas as rotas em `/api/v1`. Listas suportam paginação `page` (≥1) e `pageSi
 | `/results/calculate` | POST | Calcular nota com método flexível (sem persistir) |
 | `/print/class/:classId/schedule` | GET | Horário imprimível da turma |
 | `/print/class/:classId/pauta` | GET | Pauta imprimível da turma (recalculada na hora) |
+| `/schools`, `/academic-years`, `/terms`, `/classes`, `/subjects`, `/teachers`, `/students` | GET | **Catálogo** (id + nome) para montar formulários sem decorar UUIDs |
 | `/health` | GET | Health check |
 
 **Contrato de resposta:** sucesso `{ data, meta: { correlationId, [page, pageSize, total] } }`;
 erro `{ code, message, details, correlationId }`.
 
+**Nomes legíveis:** todas as respostas de `assessments`, `grades`, `schedules` e `results` incluem
+os nomes (`className`, `subjectName`, `teacherName`, `studentName`, `termName`) ao lado dos UUID —
+para qualquer cliente conseguir usar a API directamente sem tabelas de referência.
+
 **`@smartcampus/api-client`:** cliente tipado com `listAssessments`, `createAssessment`,
 `createGrade`, `updateGrade`, `listSchedules`, `createResults`, `patchResult`/`updateResult`,
-`deleteResult`, `printClassPauta`, `calculate`, `listCalculationMethods`.
+`deleteResult`, `printClassPauta`, `calculate`, `listCalculationMethods` e catálogos
+(`listSchools`, `listAcademicYears`, `listTerms`, `listClasses`, `listSubjects`, `listTeachers`,
+`listStudents`).
 
 ## 12. Validação e Schemas (Zod)
 
@@ -428,7 +435,7 @@ código → status HTTP num único sítio.
 
 ## 18. Testes Automatizados
 
-**127 testes a passar (75 unitários + 52 e2e).**
+**142 testes a passar (75 unitários + 67 e2e).**
 
 | Suite | Ficheiro | Testes | Cobre |
 |---|---|---|---|
@@ -513,7 +520,7 @@ imprimir pauta).
 
 O módulo **G3 — Avaliações e Horários** está **completo e validado**:
 
-- **127 testes verdes** (75 unit + 52 e2e) e `typecheck` limpo.
+- **142 testes verdes** (75 unit + 67 e2e) e `typecheck` limpo.
 - **Transacções ACID** provadas com rollback forçado.
 - **API aberta** (sem auth), contrato documentado e clientes tipados.
 - **Diagramas ER/UML** humanizados e editáveis; **evidências reais** de execução.

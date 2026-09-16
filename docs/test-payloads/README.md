@@ -46,4 +46,22 @@ curl -s -X POST "$BASE/results/calculate" \
 curl -s "$BASE/print/class/df12a7a2-b47b-413e-8308-b0d5b6ef53dd/pauta?subjectId=26c5ef3c-67ce-436c-9c45-c2a4cf28ceaf&termId=b1ec59f2-8ae4-48e2-b9b0-24172da51ce8"
 ```
 
+## Catálogo (obter UUIDs com nome para montar formulários)
+
+```bash
+BASE=http://localhost:4100/api/v1
+
+curl -s "$BASE/schools"                                      # escolas (id + nome)
+curl -s "$BASE/academic-years"                               # anos letivos
+curl -s "$BASE/terms"                                        # períodos (?academicYearId=)
+curl -s "$BASE/classes?termId=b1ec59f2-8ae4-48e2-b9b0-24172da51ce8"  # turmas do período
+curl -s "$BASE/subjects"                                     # disciplinas
+curl -s "$BASE/teachers"                                     # professores
+curl -s "$BASE/students?classId=df12a7a2-b47b-413e-8308-b0d5b6ef53dd" # alunos da turma
+```
+
+> Desde a refatoração de catálogo, **todas** as respostas (`assessments`, `grades`, `schedules`,
+> `results`) também devolvem os nomes (`className`, `subjectName`, `teacherName`, `studentName`,
+> `termName`) ao lado dos UUID.
+
 > Todos os UUID de referência estão em `docs/UUID_REFERENCE.md`.

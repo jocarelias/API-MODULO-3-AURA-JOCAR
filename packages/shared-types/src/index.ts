@@ -100,14 +100,24 @@ function apiAssessmentType(dbType: string): string {
   return DB_TYPE_TO_API[dbType] ?? dbType;
 }
 
+function relName(record: Record<string, unknown>, key: string): string | null {
+  const relation = record[key] as { name?: unknown } | null | undefined;
+  return relation && typeof relation.name === 'string' ? relation.name : null;
+}
+
 export interface AssessmentDto {
   id: string;
   schoolId: string;
   academicYearId: string;
+  academicYearName: string | null;
   termId: string;
+  termName: string | null;
   classId: string;
+  className: string | null;
   subjectId: string;
+  subjectName: string | null;
   teacherId: string;
+  teacherName: string | null;
   name: string;
   type: string;
   description: string | null;
@@ -122,7 +132,9 @@ export interface AssessmentDto {
 export interface GradeDto {
   id: string;
   assessmentId: string;
+  assessmentName: string | null;
   studentId: string;
+  studentName: string | null;
   score: number | null;
   comment: string | null;
   status: string;
@@ -135,9 +147,13 @@ export interface ScheduleDto {
   schoolId: string;
   academicYearId: string;
   termId: string;
+  termName: string | null;
   classId: string;
+  className: string | null;
   subjectId: string;
+  subjectName: string | null;
   teacherId: string;
+  teacherName: string | null;
   dayOfWeek: string;
   startTime: string;
   endTime: string;
@@ -152,9 +168,13 @@ export interface ResultDto {
   schoolId: string;
   academicYearId: string;
   termId: string;
+  termName: string | null;
   classId: string;
+  className: string | null;
   subjectId: string;
+  subjectName: string | null;
   studentId: string;
+  studentName: string | null;
   average: number | null;
   finalScore: number | null;
   calculationMethod: string | null;
@@ -167,10 +187,15 @@ export function assessmentDto(record: Record<string, unknown>): AssessmentDto {
     id: record.id as string,
     schoolId: record.schoolId as string,
     academicYearId: record.academicYearId as string,
+    academicYearName: relName(record, 'academicYear'),
     termId: record.termId as string,
+    termName: relName(record, 'term'),
     classId: record.classId as string,
+    className: relName(record, 'class'),
     subjectId: record.subjectId as string,
+    subjectName: relName(record, 'subject'),
     teacherId: record.teacherId as string,
+    teacherName: relName(record, 'teacher'),
     name: record.name as string,
     type: apiAssessmentType(record.type as string),
     description: record.description as string | null,
@@ -187,7 +212,9 @@ export function gradeDto(record: Record<string, unknown>): GradeDto {
   return {
     id: record.id as string,
     assessmentId: record.assessmentId as string,
+    assessmentName: relName(record, 'assessment'),
     studentId: record.studentId as string,
+    studentName: relName(record, 'student'),
     score: toNumber(record.score),
     comment: record.comment as string | null,
     status: record.status as string,
@@ -202,9 +229,13 @@ export function scheduleDto(record: Record<string, unknown>): ScheduleDto {
     schoolId: record.schoolId as string,
     academicYearId: record.academicYearId as string,
     termId: record.termId as string,
+    termName: relName(record, 'term'),
     classId: record.classId as string,
+    className: relName(record, 'class'),
     subjectId: record.subjectId as string,
+    subjectName: relName(record, 'subject'),
     teacherId: record.teacherId as string,
+    teacherName: relName(record, 'teacher'),
     dayOfWeek: record.dayOfWeek as string,
     startTime: record.startTime as string,
     endTime: record.endTime as string,
@@ -221,14 +252,142 @@ export function resultDto(record: Record<string, unknown>): ResultDto {
     schoolId: record.schoolId as string,
     academicYearId: record.academicYearId as string,
     termId: record.termId as string,
+    termName: relName(record, 'term'),
     classId: record.classId as string,
+    className: relName(record, 'class'),
     subjectId: record.subjectId as string,
+    subjectName: relName(record, 'subject'),
     studentId: record.studentId as string,
+    studentName: relName(record, 'student'),
     average: toNumber(record.average),
     finalScore: toNumber(record.finalScore),
     calculationMethod: record.calculationMethod === null || record.calculationMethod === undefined ? null : String(record.calculationMethod),
     status: record.status as string,
     calculatedAt: toIso(record.calculatedAt),
+  };
+}
+
+export interface SchoolDto {
+  id: string;
+  name: string;
+  code: string;
+  phone: string | null;
+}
+
+export interface AcademicYearDto {
+  id: string;
+  schoolId: string;
+  name: string;
+}
+
+export interface TermDto {
+  id: string;
+  schoolId: string;
+  academicYearId: string;
+  name: string;
+  startDate: string | null;
+  endDate: string | null;
+  status: string;
+}
+
+export interface ClassDto {
+  id: string;
+  schoolId: string;
+  academicYearId: string;
+  name: string;
+  grade: string | null;
+  shift: string | null;
+  room: string | null;
+}
+
+export interface SubjectDto {
+  id: string;
+  schoolId: string;
+  name: string;
+  code: string | null;
+}
+
+export interface TeacherDto {
+  id: string;
+  schoolId: string;
+  name: string;
+  email: string | null;
+}
+
+export interface StudentDto {
+  id: string;
+  schoolId: string;
+  name: string;
+  email: string | null;
+  enrollmentNumber: string | null;
+}
+
+export function schoolDto(record: Record<string, unknown>): SchoolDto {
+  return {
+    id: record.id as string,
+    name: record.name as string,
+    code: record.code as string,
+    phone: record.phone as string | null,
+  };
+}
+
+export function academicYearDto(record: Record<string, unknown>): AcademicYearDto {
+  return {
+    id: record.id as string,
+    schoolId: record.schoolId as string,
+    name: record.name as string,
+  };
+}
+
+export function termDto(record: Record<string, unknown>): TermDto {
+  return {
+    id: record.id as string,
+    schoolId: record.schoolId as string,
+    academicYearId: record.academicYearId as string,
+    name: record.name as string,
+    startDate: toIso(record.startDate),
+    endDate: toIso(record.endDate),
+    status: record.status as string,
+  };
+}
+
+export function classDto(record: Record<string, unknown>): ClassDto {
+  return {
+    id: record.id as string,
+    schoolId: record.schoolId as string,
+    academicYearId: record.academicYearId as string,
+    name: record.name as string,
+    grade: record.grade as string | null,
+    shift: record.shift as string | null,
+    room: record.room as string | null,
+  };
+}
+
+export function subjectDto(record: Record<string, unknown>): SubjectDto {
+  return {
+    id: record.id as string,
+    schoolId: record.schoolId as string,
+    name: record.name as string,
+    code: record.code as string | null,
+  };
+}
+
+export function teacherDto(record: Record<string, unknown>): TeacherDto {
+  return {
+    id: record.id as string,
+    schoolId: record.schoolId as string,
+    name: record.name as string,
+    email: record.email as string | null,
+  };
+}
+
+export function studentDto(record: Record<string, unknown>): StudentDto {
+  return {
+    id: record.id as string,
+    schoolId: record.schoolId as string,
+    name: record.name as string,
+    email: record.email as string | null,
+    enrollmentNumber: record.enrollmentNumber as string | null,
   };
 }
 

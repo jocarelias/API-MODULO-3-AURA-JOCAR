@@ -38,16 +38,97 @@ const errorSchema: OpenApiSchema = {
   },
 };
 
+const school: OpenApiSchema = {
+  type: 'object',
+  properties: {
+    id: uuid,
+    name: { type: 'string' },
+    code: { type: 'string' },
+    phone: { type: 'string', nullable: true },
+  },
+};
+
+const academicYear: OpenApiSchema = {
+  type: 'object',
+  properties: {
+    id: uuid,
+    schoolId: uuid,
+    name: { type: 'string' },
+  },
+};
+
+const term: OpenApiSchema = {
+  type: 'object',
+  properties: {
+    id: uuid,
+    schoolId: uuid,
+    academicYearId: uuid,
+    name: { type: 'string' },
+    startDate: dateTime,
+    endDate: dateTime,
+    status: { type: 'string' },
+  },
+};
+
+const classSchema: OpenApiSchema = {
+  type: 'object',
+  properties: {
+    id: uuid,
+    schoolId: uuid,
+    academicYearId: uuid,
+    name: { type: 'string' },
+    grade: { type: 'string', nullable: true },
+    shift: { type: 'string', nullable: true },
+    room: { type: 'string', nullable: true },
+  },
+};
+
+const subject: OpenApiSchema = {
+  type: 'object',
+  properties: {
+    id: uuid,
+    schoolId: uuid,
+    name: { type: 'string' },
+    code: { type: 'string', nullable: true },
+  },
+};
+
+const teacher: OpenApiSchema = {
+  type: 'object',
+  properties: {
+    id: uuid,
+    schoolId: uuid,
+    name: { type: 'string' },
+    email: { type: 'string', nullable: true },
+  },
+};
+
+const student: OpenApiSchema = {
+  type: 'object',
+  properties: {
+    id: uuid,
+    schoolId: uuid,
+    name: { type: 'string' },
+    email: { type: 'string', nullable: true },
+    enrollmentNumber: { type: 'string', nullable: true },
+  },
+};
+
 const assessment: OpenApiSchema = {
   type: 'object',
   properties: {
     id: uuid,
     schoolId: uuid,
     academicYearId: uuid,
+    academicYearName: { type: 'string', nullable: true },
     termId: uuid,
+    termName: { type: 'string', nullable: true },
     classId: uuid,
+    className: { type: 'string', nullable: true },
     subjectId: uuid,
+    subjectName: { type: 'string', nullable: true },
     teacherId: uuid,
+    teacherName: { type: 'string', nullable: true },
     name: { type: 'string' },
     type: { type: 'string', enum: EVALUATION_TYPES },
     description: { type: 'string', nullable: true },
@@ -84,7 +165,9 @@ const grade: OpenApiSchema = {
   properties: {
     id: uuid,
     assessmentId: uuid,
+    assessmentName: { type: 'string', nullable: true },
     studentId: uuid,
+    studentName: { type: 'string', nullable: true },
     score: { type: 'number' },
     comment: { type: 'string', nullable: true },
     status: { type: 'string', enum: GRADE_DB_STATUS },
@@ -110,9 +193,13 @@ const schedule: OpenApiSchema = {
     schoolId: uuid,
     academicYearId: uuid,
     termId: uuid,
+    termName: { type: 'string', nullable: true },
     classId: uuid,
+    className: { type: 'string', nullable: true },
     subjectId: uuid,
+    subjectName: { type: 'string', nullable: true },
     teacherId: uuid,
+    teacherName: { type: 'string', nullable: true },
     dayOfWeek: { type: 'string', enum: DAYS },
     startTime: hhmm,
     endTime: hhmm,
@@ -147,9 +234,13 @@ const result: OpenApiSchema = {
     schoolId: uuid,
     academicYearId: uuid,
     termId: uuid,
+    termName: { type: 'string', nullable: true },
     classId: uuid,
+    className: { type: 'string', nullable: true },
     subjectId: uuid,
+    subjectName: { type: 'string', nullable: true },
     studentId: uuid,
+    studentName: { type: 'string', nullable: true },
     average: { type: 'number', nullable: true },
     finalScore: { type: 'number', nullable: true },
     calculationMethod: { type: 'string', enum: calculationMethodEnum, nullable: true },
@@ -515,6 +606,66 @@ export function buildOpenApi(): Record<string, unknown> {
           responses: responses({ type: 'object' }),
         },
       },
+      '/api/v1/schools': {
+        get: {
+          tags: ['Catálogo'],
+          summary: 'Lista escolas (catálogo)',
+          description: 'Referência para montar formulários: id + nome + código.',
+          parameters: [pageParam, pageSizeParam],
+          responses: responses({ type: 'array', items: school }),
+        },
+      },
+      '/api/v1/academic-years': {
+        get: {
+          tags: ['Catálogo'],
+          summary: 'Lista anos letivos (catálogo)',
+          parameters: [pageParam, pageSizeParam],
+          responses: responses({ type: 'array', items: academicYear }),
+        },
+      },
+      '/api/v1/terms': {
+        get: {
+          tags: ['Catálogo'],
+          summary: 'Lista períodos/termos letivos (catálogo)',
+          description: 'Filtro opcional por ano letivo.',
+          parameters: [queryParam('academicYearId'), pageParam, pageSizeParam],
+          responses: responses({ type: 'array', items: term }),
+        },
+      },
+      '/api/v1/classes': {
+        get: {
+          tags: ['Catálogo'],
+          summary: 'Lista turmas (catálogo)',
+          description: 'Filtros opcionais por período ou ano letivo.',
+          parameters: [queryParam('termId'), queryParam('academicYearId'), pageParam, pageSizeParam],
+          responses: responses({ type: 'array', items: classSchema }),
+        },
+      },
+      '/api/v1/subjects': {
+        get: {
+          tags: ['Catálogo'],
+          summary: 'Lista disciplinas (catálogo)',
+          parameters: [pageParam, pageSizeParam],
+          responses: responses({ type: 'array', items: subject }),
+        },
+      },
+      '/api/v1/teachers': {
+        get: {
+          tags: ['Catálogo'],
+          summary: 'Lista professores (catálogo)',
+          parameters: [pageParam, pageSizeParam],
+          responses: responses({ type: 'array', items: teacher }),
+        },
+      },
+      '/api/v1/students': {
+        get: {
+          tags: ['Catálogo'],
+          summary: 'Lista alunos (catálogo)',
+          description: 'Filtros opcionais por turma ou período (usa matrículas ativas).',
+          parameters: [queryParam('classId'), queryParam('termId'), pageParam, pageSizeParam],
+          responses: responses({ type: 'array', items: student }),
+        },
+      },
     },
     components: {
       schemas: {
@@ -534,6 +685,13 @@ export function buildOpenApi(): Record<string, unknown> {
         CalculationMethodMeta: calculationMethodMetaSchema,
         CalculationMethod: { type: 'string', enum: calculationMethodEnum },
         CustomFormulaMeta: customFormulaMetaSchema,
+        School: school,
+        AcademicYear: academicYear,
+        Term: term,
+        Class: classSchema,
+        Subject: subject,
+        Teacher: teacher,
+        Student: student,
         Error: errorSchema,
       },
     },

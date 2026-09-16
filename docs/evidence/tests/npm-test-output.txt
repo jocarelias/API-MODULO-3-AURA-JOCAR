@@ -5,13 +5,13 @@
 
  RUN  v3.2.7 /home/Jocarelias/Documents/API HORARIOS
 
- ✓ src/modules/schedules-assessments/domain/evaluation.test.ts (21 tests) 23ms
- ✓ src/modules/schedules-assessments/domain/calculationEngine.test.ts (54 tests) 37ms
+ ✓ src/modules/schedules-assessments/domain/evaluation.test.ts (21 tests) 29ms
+ ✓ src/modules/schedules-assessments/domain/calculationEngine.test.ts (54 tests) 61ms
 
  Test Files  2 passed (2)
       Tests  75 passed (75)
-   Start at  12:10:53
-   Duration  801ms (transform 261ms, setup 0ms, collect 378ms, tests 60ms, environment 1ms, prepare 283ms)
+   Start at  13:18:48
+   Duration  919ms (transform 334ms, setup 0ms, collect 422ms, tests 90ms, environment 1ms, prepare 311ms)
 
 
 > g3-avaliacoes-horarios@1.0.0 test:e2e
@@ -20,14 +20,15 @@
 
  RUN  v3.2.7 /home/Jocarelias/Documents/API HORARIOS
 
- ✓ src/modules/schedules-assessments/tests/g3.transaction.e2e.test.ts (2 tests) 423ms
-   ✓ G3 transações ACID (nível de serviço) > lançar nota + recálculo é atómico: falha no recálculo faz rollback total  353ms
- ✓ src/modules/schedules-assessments/tests/error-scenarios.e2e.test.ts (3 tests) 228ms
- ✓ src/modules/schedules-assessments/tests/calculation.e2e.test.ts (18 tests) 245ms
- ✓ src/modules/schedules-assessments/tests/g3.e2e.test.ts (29 tests) 1455ms
+ ✓ src/modules/schedules-assessments/tests/error-scenarios.e2e.test.ts (3 tests) 187ms
+ ✓ src/modules/schedules-assessments/tests/g3.transaction.e2e.test.ts (2 tests) 434ms
+   ✓ G3 transações ACID (nível de serviço) > lançar nota + recálculo é atómico: falha no recálculo faz rollback total  335ms
+ ✓ src/modules/schedules-assessments/tests/calculation.e2e.test.ts (18 tests) 358ms
+ ✓ src/modules/schedules-assessments/tests/g3.catalog.e2e.test.ts (15 tests) 615ms
+ ✓ src/modules/schedules-assessments/tests/g3.e2e.test.ts (29 tests) 1877ms
 
- Test Files  4 passed (4)
-      Tests  52 passed (52)
-   Start at  12:10:55
-   Duration  2.77s (transform 573ms, setup 0ms, collect 2.17s, tests 2.35s, environment 2ms, prepare 894ms)
+ Test Files  5 passed (5)
+      Tests  67 passed (67)
+   Start at  13:18:51
+   Duration  3.15s (transform 608ms, setup 0ms, collect 2.82s, tests 3.47s, environment 2ms, prepare 982ms)
 

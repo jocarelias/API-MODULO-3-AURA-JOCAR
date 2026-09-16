@@ -3,7 +3,7 @@
 Documento produzido pelo **RepositoryAuditAgent**. Cada problema foi **identificado, explicado, corrigido, testado e documentado** — conforme a regra de execução da ficha.
 
 Data da auditoria: 2026-09-16
-Estado final: **127 testes verdes (75 unit + 52 e2e)**, typecheck limpo, migrations aplicadas.
+Estado final: **142 testes verdes (75 unit + 67 e2e)**, typecheck limpo, migrations aplicadas.
 
 ---
 
@@ -66,10 +66,10 @@ Estado final: **127 testes verdes (75 unit + 52 e2e)**, typecheck limpo, migrati
 
 | Ficheiro | Classificação | Problema | Correcção |
 |---|---|---|---|
-| `G3_FINAL_REPORT.md` | ⚠️ INCONSISTENTE | Referia `.js`, contagens 21/25, faltava DELETE results | ✅ Actualizado para `.ts`, **75/52**, rota DELETE |
+| `G3_FINAL_REPORT.md` | ⚠️ INCONSISTENTE | Referia `.js`, contagens 21/25, faltava DELETE results | ✅ Actualizado para `.ts`, **75/67**, rota DELETE |
 | `docs/REPOSITORY_ANALYSIS.md` | ⚠️ INCONSISTENTE | Dizia «proibido TypeScript», referia `.js` | ✅ Reescrito com stack real TypeScript |
 | `docs/diagrams/er-diagram.md` | ⚠️ INCONSISTENTE | Campos `title/startTime/professorId` desactualizados (Prisma usa `name/date/teacherId`) | ✅ Alinhado com o schema real |
-| `docs/evidence/README.md` | ⚠️ INCONSISTENTE | Contagens 21/25, comandos `node src/main.js` | ✅ Actualizado para 75/52 e `npx tsx src/main.ts` |
+| `docs/evidence/README.md` | ⚠️ INCONSISTENTE | Contagens 21/25, comandos `node src/main.js` | ✅ Actualizado para 75/67 e `npx tsx src/main.ts` |
 | `docs/manual-apis-core.md` | ✅ CORRECTO | Já tinha DELETE results documentado (working diff) | — |
 
 ### Artefactos em falta (adicionados nesta revisão)
@@ -97,7 +97,7 @@ Estado final: **127 testes verdes (75 unit + 52 e2e)**, typecheck limpo, migrati
 
 **Solução:** Guardas condicionais (`if (!ids.seedResult) return;`), fallback para `studentResults[0]` e comparação tolerante a `resultBefore` nulo na transacção.
 
-**Alteração realizada:** Corrigido. `npm run test:e2e` → **52 passed**.
+**Alteração realizada:** Corrigido. `npm run test:e2e` → **67 passed**.
 
 ### P2 — `deleteResult` não commitada
 
@@ -119,7 +119,7 @@ Estado final: **127 testes verdes (75 unit + 52 e2e)**, typecheck limpo, migrati
 
 **Impacto:** Confusão para quem lê — pareciam projectos diferentes.
 
-**Solução:** Substituições `.js→.ts`, contagens 75/52, modelo ER alinhado com os campos reais do Prisma (`name`, `date`, `teacherId`, `dayOfWeek`).
+**Solução:** Substituições `.js→.ts`, contagens 75/67, modelo ER alinhado com os campos reais do Prisma (`name`, `date`, `teacherId`, `dayOfWeek`).
 
 **Alteração realizada:** Documentos reescritos/actualizados.
 
@@ -175,7 +175,7 @@ Estado final: **127 testes verdes (75 unit + 52 e2e)**, typecheck limpo, migrati
 | API aberta (sem User/Password/JWT/RBAC) | ✅ |
 | OpenAPI sem `security` | ✅ |
 | API Client tipado | ✅ |
-| Testes (unit + e2e) | ✅ 127 verdes |
+| Testes (unit + e2e) | ✅ 142 verdes |
 | Evidências | ✅ `docs/evidence/` |
 | Perguntas de reflexão | ✅ `docs/reflection-questions.md` |
 | Diagramas ER/UML/Sequência/Fluxo | ✅ `docs/diagrams/` |
@@ -190,7 +190,7 @@ O código estava estruturalmente **CORRECTO** — a arquitectura em camadas resp
 
 1. **Corrigir** 3 testes que falhavam por dados de seed opcionais.
 2. **Commitar** trabalho em progresso (`DELETE /results/:id`).
-3. **Alinhar** documentação stale com o código real (TypeScript, contagens 75/52).
+3. **Alinhar** documentação stale com o código real (TypeScript, contagens 75/67).
 4. **Completar** artefactos exigidos pela ficha em falta (auditoria, ER humanizado, código explicado, compose, tabela de atributos no formato pedido).
 
 Nenhuma duplicação, código morto ou abstracção artificial foi encontrada no código de produção — apenas documentação desactualizada e um cliente API com um método a menos.

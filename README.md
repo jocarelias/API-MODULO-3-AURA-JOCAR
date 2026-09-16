@@ -24,7 +24,7 @@ src/
     ├── infrastructure/{prisma,httpError}.ts             # singleton Prisma + mapeamento erro→HTTP
     ├── schemas/index.ts                                 # schemas Zod autoritativos (fonte única)
     ├── http/schedulesAssessmentsRouter.ts               # router Express + Zod + correlationId
-    └── tests/                                           # e2e: 29 g3 + 18 calculation + 3 error + 2 ACID
+    └── tests/                                           # e2e: 29 g3 + 18 calculation + 3 error + 2 ACID + 15 catálogo
 packages/
 ├── shared-types/src/index.ts                            # DTOs, constantes, campusModules
 ├── validation/src/index.ts                              # re-exporta schemas do módulo
@@ -80,6 +80,17 @@ npm run build && npm run start   # compilar TS e correr dist/
 | POST | `/api/v1/results/calculate` | Calcula nota com método flexível |
 | GET | `/api/v1/print/class/:classId/schedule` | Horário da turma (impressão) |
 | GET | `/api/v1/print/class/:classId/pauta` | Pauta de notas da turma |
+| GET | `/api/v1/schools` | Catálogo: escolas (id + nome) |
+| GET | `/api/v1/academic-years` | Catálogo: anos letivos |
+| GET | `/api/v1/terms` | Catálogo: períodos/tipos letivos (`?academicYearId=`) |
+| GET | `/api/v1/classes` | Catálogo: turmas (`?termId=` ou `?academicYearId=`) |
+| GET | `/api/v1/subjects` | Catálogo: disciplinas |
+| GET | `/api/v1/teachers` | Catálogo: professores |
+| GET | `/api/v1/students` | Catálogo: alunos (`?classId=` ou `?termId=`) |
+
+> **Nomes legíveis:** todas as respostas de avaliações, notas, horários e resultados já incluem os nomes
+> (`className`, `subjectName`, `teacherName`, `studentName`, `termName`) ao lado dos IDs — uso direto sem decifrar UUIDs.
+> Para montar formulários, consulte os catálogos acima (`.data[].id` + `.data[].name`).
 
 ## Motor de Cálculo de Notas
 
@@ -149,7 +160,7 @@ As notas de corte da escala académica (10 aprovação, 8 recuperação) são co
 ## Testes
 
 ```bash
-npm run test          # 75 unit + 52 e2e = 127 testes
+npm run test          # 75 unit + 67 e2e = 142 testes
 npm run test:unit     # domínio: tipos, pesos (> 0), média, status, time range + motor de cálculo (54)
 npm run test:e2e      # integração: contratos, CRUD+DELETE, 409s, recálculo, impressão, rollback ACID, cálculo flexível
 ```
@@ -165,7 +176,7 @@ Ver `docs/` — `openapi.yaml`, `entity-model.md`, `manual-apis-core.md`, `refle
 | Artefacto | Descrição |
 |---|---|---|
 | `docs/G3-exercicios-respostas.md` | Respostas consolidadas dos 7 exercícios (markdown) |
-| `docs/API_TESTS_JSON.md` | Exemplos JSON (pedido+resposta) de **todos** os endpoints |
+| `docs/API_TESTS_JSON.md` / `.docx` | Exemplos JSON (pedido+resposta) de **todos** os endpoints |
 | `docs/UUID_REFERENCE.md` / `.docx` | Todos os UUID do banco (seed UJAC) |
 | `docs/test-payloads/` | JSONs de pedido prontos (validados contra Zod) |
 | `docs/G3_HORARIO_AVALIACOES_TYPE_FINAL.md` / `.docx` | Documentação final completa (24 secções) |
@@ -179,5 +190,5 @@ Ver `docs/` — `openapi.yaml`, `entity-model.md`, `manual-apis-core.md`, `refle
 | `docs/evidence/crud/` | Create/Update/Delete reais (201/200) e validações (400) |
 | `docs/evidence/business-rules/` | Regras de negócio (409) — duplicata, imutabilidade, delete bloqueado, conflito de horário |
 | `docs/evidence/transaction/` | Evidência ACID (rollback forçado) |
-| `docs/evidence/tests/` | Saída real do `npm test` (127 testes) |
+| `docs/evidence/tests/` | Saída real do `npm test` (142 testes) |
 | `docs/evidence/data-quality/` | Constraints CHECK e registos rejeitados |

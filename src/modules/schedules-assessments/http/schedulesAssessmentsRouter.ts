@@ -14,6 +14,7 @@ import {
   createResultSchema,
   updateResultSchema,
   resultQuerySchema,
+  catalogQuerySchema,
   calculationInputSchema,
   idParamsSchema,
   assessmentIdParamsSchema,
@@ -297,6 +298,76 @@ export function createSchedulesAssessmentsRouter(): Router {
       const query = validate(printPautaQuerySchema, req.query);
       const data = await service.getPrintClassPauta(classId, query.termId, query.subjectId);
       return success(res, data, 200, req.correlationId);
+    }),
+  );
+
+  router.get(
+    '/schools',
+    handler(async (req, res) => {
+      const query = validate(catalogQuerySchema, req.query);
+      const data = await service.listSchools();
+      const { rows, meta } = paginate(data, query);
+      return success(res, rows, 200, req.correlationId, meta);
+    }),
+  );
+
+  router.get(
+    '/academic-years',
+    handler(async (req, res) => {
+      const query = validate(catalogQuerySchema, req.query);
+      const data = await service.listAcademicYears();
+      const { rows, meta } = paginate(data, query);
+      return success(res, rows, 200, req.correlationId, meta);
+    }),
+  );
+
+  router.get(
+    '/terms',
+    handler(async (req, res) => {
+      const query = validate(catalogQuerySchema, req.query);
+      const data = await service.listTerms({ academicYearId: query.academicYearId });
+      const { rows, meta } = paginate(data, query);
+      return success(res, rows, 200, req.correlationId, meta);
+    }),
+  );
+
+  router.get(
+    '/classes',
+    handler(async (req, res) => {
+      const query = validate(catalogQuerySchema, req.query);
+      const data = await service.listClasses({ termId: query.termId, academicYearId: query.academicYearId });
+      const { rows, meta } = paginate(data, query);
+      return success(res, rows, 200, req.correlationId, meta);
+    }),
+  );
+
+  router.get(
+    '/subjects',
+    handler(async (req, res) => {
+      const query = validate(catalogQuerySchema, req.query);
+      const data = await service.listSubjects();
+      const { rows, meta } = paginate(data, query);
+      return success(res, rows, 200, req.correlationId, meta);
+    }),
+  );
+
+  router.get(
+    '/teachers',
+    handler(async (req, res) => {
+      const query = validate(catalogQuerySchema, req.query);
+      const data = await service.listTeachers();
+      const { rows, meta } = paginate(data, query);
+      return success(res, rows, 200, req.correlationId, meta);
+    }),
+  );
+
+  router.get(
+    '/students',
+    handler(async (req, res) => {
+      const query = validate(catalogQuerySchema, req.query);
+      const data = await service.listStudents({ classId: query.classId, termId: query.termId });
+      const { rows, meta } = paginate(data, query);
+      return success(res, rows, 200, req.correlationId, meta);
     }),
   );
 

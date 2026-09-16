@@ -24,10 +24,24 @@ import {
   gradeDto,
   scheduleDto,
   resultDto,
+  schoolDto,
+  academicYearDto,
+  termDto,
+  classDto,
+  subjectDto,
+  teacherDto,
+  studentDto,
   AssessmentDto,
   GradeDto,
   ScheduleDto,
   ResultDto,
+  SchoolDto,
+  AcademicYearDto,
+  TermDto,
+  ClassDto,
+  SubjectDto,
+  TeacherDto,
+  StudentDto,
   CalculationInputDto,
   CalculationResultDto,
   CalculationMethodMetaDto,
@@ -138,13 +152,17 @@ export class SchedulesAssessmentsService {
     if (teacherId) where.teacherId = teacherId;
     const rows = await this.prisma.assessment.findMany({
       where,
+      include: { academicYear: true, term: true, class: true, subject: true, teacher: true },
       orderBy: { date: 'asc' },
     });
     return rows.map((row) => assessmentDto(row as unknown as Record<string, unknown>));
   }
 
   async getAssessment(id: string): Promise<AssessmentDto> {
-    const record = await this.prisma.assessment.findUnique({ where: { id } });
+    const record = await this.prisma.assessment.findUnique({
+      where: { id },
+      include: { academicYear: true, term: true, class: true, subject: true, teacher: true },
+    });
     if (!record) {
       throw new DomainError('NOT_FOUND', 'Avaliação não encontrada');
     }
@@ -226,6 +244,7 @@ export class SchedulesAssessmentsService {
         weight: input.weight,
         status: (input.status ?? 'DRAFT') as EvaluationStatus,
       },
+      include: { academicYear: true, term: true, class: true, subject: true, teacher: true },
     });
 
     return assessmentDto(record as unknown as Record<string, unknown>);
@@ -260,7 +279,11 @@ export class SchedulesAssessmentsService {
     }
     if (patch.type !== undefined) data.type = withValidAssessmentType(patch.type as string) as EvaluationType;
 
-    const updated = await this.prisma.assessment.update({ where: { id }, data });
+    const updated = await this.prisma.assessment.update({
+      where: { id },
+      data,
+      include: { academicYear: true, term: true, class: true, subject: true, teacher: true },
+    });
     return assessmentDto(updated as unknown as Record<string, unknown>);
   }
 
@@ -289,6 +312,7 @@ export class SchedulesAssessmentsService {
     }
     const rows = await this.prisma.grade.findMany({
       where: { assessmentId },
+      include: { assessment: true, student: true },
       orderBy: { createdAt: 'asc' },
     });
     return rows.map((row) => gradeDto(row as unknown as Record<string, unknown>));
@@ -414,6 +438,7 @@ export class SchedulesAssessmentsService {
           comment: input.comment ?? null,
           status: 'SUBMITTED',
         },
+        include: { assessment: true, student: true },
       });
       await this._recalculateInTx(
         tx,
@@ -431,7 +456,10 @@ export class SchedulesAssessmentsService {
     if (!assessment) {
       throw new DomainError('NOT_FOUND', 'Avaliação não encontrada');
     }
-    const existing = await this.prisma.grade.findUnique({ where: { id: gradeId } });
+    const existing = await this.prisma.grade.findUnique({
+      where: { id: gradeId },
+      include: { assessment: true, student: true },
+    });
     if (!existing || existing.assessmentId !== assessmentId) {
       throw new DomainError('NOT_FOUND', 'Nota não encontrada');
     }
@@ -453,7 +481,11 @@ export class SchedulesAssessmentsService {
     }
 
     const updated = await this.prisma.$transaction(async (tx) => {
-      const row = await tx.grade.update({ where: { id: gradeId }, data });
+      const row = await tx.grade.update({
+        where: { id: gradeId },
+        data,
+        include: { assessment: true, student: true },
+      });
       await this._recalculateInTx(
         tx,
         { classId: assessment.classId, subjectId: assessment.subjectId, termId: assessment.termId, schoolId: assessment.schoolId, academicYearId: assessment.academicYearId },
@@ -480,6 +512,7 @@ export class SchedulesAssessmentsService {
     }
     const rows = await this.prisma.schedule.findMany({
       where,
+      include: { term: true, class: true, subject: true, teacher: true },
       orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
     });
     return rows.map((row) => scheduleDto(row as unknown as Record<string, unknown>));
@@ -536,6 +569,7 @@ export class SchedulesAssessmentsService {
         room: input.room ?? null,
         status: (input.status ?? 'ACTIVE') as ScheduleStatus,
       },
+      include: { term: true, class: true, subject: true, teacher: true },
     });
 
     return scheduleDto(created as unknown as Record<string, unknown>);
@@ -606,7 +640,11 @@ export class SchedulesAssessmentsService {
       if (conflicts.length > 0) {
         throw new DomainError('CONFLICT', 'Conflito de horário detectado', toConflictDetails(conflicts));
       }
-      const updated = await this.prisma.schedule.update({ where: { id }, data });
+      const updated = await this.prisma.schedule.update({
+        where: { id },
+        data,
+        include: { term: true, class: true, subject: true, teacher: true },
+      });
       return scheduleDto(updated as unknown as Record<string, unknown>);
     }
 
@@ -623,7 +661,10 @@ export class SchedulesAssessmentsService {
   }
 
   async getSchedule(id: string): Promise<ScheduleDto> {
-    const record = await this.prisma.schedule.findUnique({ where: { id } });
+    const record = await this.prisma.schedule.findUnique({
+      where: { id },
+      include: { term: true, class: true, subject: true, teacher: true },
+    });
     if (!record) {
       throw new DomainError('NOT_FOUND', 'Horário não encontrado');
     }
@@ -636,12 +677,19 @@ export class SchedulesAssessmentsService {
     if (classId) where.classId = classId;
     if (subjectId) where.subjectId = subjectId;
     if (studentId) where.studentId = studentId;
-    const rows = await this.prisma.result.findMany({ where, orderBy: { updatedAt: 'asc' } });
+    const rows = await this.prisma.result.findMany({
+      where,
+      include: { term: true, class: true, subject: true, student: true },
+      orderBy: { updatedAt: 'asc' },
+    });
     return rows.map((row) => resultDto(row as unknown as Record<string, unknown>));
   }
 
   async getResult(id: string): Promise<ResultDto> {
-    const record = await this.prisma.result.findUnique({ where: { id } });
+    const record = await this.prisma.result.findUnique({
+      where: { id },
+      include: { term: true, class: true, subject: true, student: true },
+    });
     if (!record) {
       throw new DomainError('NOT_FOUND', 'Resultado não encontrado');
     }
@@ -665,6 +713,7 @@ export class SchedulesAssessmentsService {
           termId: input.termId,
           ...(input.studentIds ? { studentId: { in: input.studentIds } } : {}),
         },
+        include: { term: true, class: true, subject: true, student: true },
         orderBy: { studentId: 'asc' },
       });
       return rows.map((row) => resultDto(row as unknown as Record<string, unknown>));
@@ -692,7 +741,10 @@ export class SchedulesAssessmentsService {
         { classId: result.classId, subjectId: result.subjectId, termId: result.termId, schoolId: result.schoolId, academicYearId: result.academicYearId },
         [result.studentId],
       );
-      const updated = await tx.result.findUnique({ where: { id } });
+      const updated = await tx.result.findUnique({
+        where: { id },
+        include: { term: true, class: true, subject: true, student: true },
+      });
       if (!updated) {
         throw new DomainError('NOT_FOUND', 'Resultado não encontrado');
       }
@@ -746,6 +798,66 @@ export class SchedulesAssessmentsService {
 
   listCalculationMethods(): CalculationMethodMetaDto[] {
     return CALCULATION_METHODS;
+  }
+
+  async listSchools(): Promise<SchoolDto[]> {
+    const rows = await this.prisma.school.findMany({ orderBy: { name: 'asc' } });
+    return rows.map((row) => schoolDto(row as unknown as Record<string, unknown>));
+  }
+
+  async listAcademicYears(): Promise<AcademicYearDto[]> {
+    const rows = await this.prisma.academicYear.findMany({ orderBy: { name: 'desc' } });
+    return rows.map((row) => academicYearDto(row as unknown as Record<string, unknown>));
+  }
+
+  async listTerms({ academicYearId }: { academicYearId?: string } = {}): Promise<TermDto[]> {
+    const where: Prisma.TermWhereInput = {};
+    if (academicYearId) where.academicYearId = academicYearId;
+    const rows = await this.prisma.term.findMany({ where, orderBy: { startDate: 'asc' } });
+    return rows.map((row) => termDto(row as unknown as Record<string, unknown>));
+  }
+
+  async listClasses({ termId, academicYearId }: { termId?: string; academicYearId?: string } = {}): Promise<ClassDto[]> {
+    const where: Prisma.ClassWhereInput = {};
+    if (termId) {
+      const term = await this.prisma.term.findUnique({ where: { id: termId }, select: { academicYearId: true } });
+      if (!term) {
+        throw new DomainError('NOT_FOUND', 'Período (termo) não encontrado');
+      }
+      where.academicYearId = term.academicYearId;
+    } else if (academicYearId) {
+      where.academicYearId = academicYearId;
+    }
+    const rows = await this.prisma.class.findMany({ where, orderBy: { name: 'asc' } });
+    return rows.map((row) => classDto(row as unknown as Record<string, unknown>));
+  }
+
+  async listSubjects(): Promise<SubjectDto[]> {
+    const rows = await this.prisma.subject.findMany({ orderBy: { name: 'asc' } });
+    return rows.map((row) => subjectDto(row as unknown as Record<string, unknown>));
+  }
+
+  async listTeachers(): Promise<TeacherDto[]> {
+    const rows = await this.prisma.teacher.findMany({ orderBy: { name: 'asc' } });
+    return rows.map((row) => teacherDto(row as unknown as Record<string, unknown>));
+  }
+
+  async listStudents({ classId, termId }: { classId?: string; termId?: string } = {}): Promise<StudentDto[]> {
+    if (!classId && !termId) {
+      const rows = await this.prisma.student.findMany({ orderBy: { name: 'asc' } });
+      return rows.map((row) => studentDto(row as unknown as Record<string, unknown>));
+    }
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: {
+        ...(classId ? { classId } : {}),
+        ...(termId ? { termId } : {}),
+        status: 'ACTIVE',
+      },
+      include: { student: true },
+      orderBy: { student: { name: 'asc' } },
+      distinct: ['studentId'],
+    });
+    return enrollments.map((enrollment) => studentDto(enrollment.student as unknown as Record<string, unknown>));
   }
 
   async getPrintClassSchedule(classId: string, termId?: string): Promise<Record<string, unknown>> {

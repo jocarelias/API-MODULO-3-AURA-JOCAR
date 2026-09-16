@@ -86,7 +86,7 @@ docs/                           # artefactos da ficha
 | Unitários | `npm run test:unit` | **75 testes** — regras puras do domínio + motor de cálculo, sem banco |
 | E2E | `npm run test:e2e` | **52 testes** — CRUD completo, envelope, Zod, 400/404/409/500, impressão, OpenAPI sem `security`, motor flexível, **rollback ACID** |
 
-Servidor usado nos E2E: app Express ephemeral (porta 0), IDs buscados dinamicamente via Prisma. Total: **127 testes verdes**.
+Servidor usado nos E2E: app Express ephemeral (porta 0), IDs buscados dinamicamente via Prisma. Total: **142 testes verdes**.
 
 ## 8. Banco de dados
 
@@ -102,6 +102,6 @@ Servidor usado nos E2E: app Express ephemeral (porta 0), IDs buscados dinamicame
 
 ## 10. Estado actual
 
-- ✅ 127 testes a passar (75 unit + 52 e2e)
+- ✅ 142 testes a passar (75 unit + 67 e2e)
 - ✅ Servidor arranca e `/health`, `/api/v1/assessments`, `/api/docs` → 200
 - ✅ Diagramas, manuais, OpenAPI, relatório, evidências e documento Word (ver `docs/`)

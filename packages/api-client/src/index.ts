@@ -176,6 +176,34 @@ export class SmartCampusApiClient {
   calculate<T>(payload: unknown): Promise<T> {
     return this.post<T>('/results/calculate', payload);
   }
+
+  listSchools<T>(query: QueryParams = {}): Promise<T> {
+    return this.get<T>('/schools', query);
+  }
+
+  listAcademicYears<T>(query: QueryParams = {}): Promise<T> {
+    return this.get<T>('/academic-years', query);
+  }
+
+  listTerms<T>(query: QueryParams = {}): Promise<T> {
+    return this.get<T>('/terms', query);
+  }
+
+  listClasses<T>(query: QueryParams = {}): Promise<T> {
+    return this.get<T>('/classes', query);
+  }
+
+  listSubjects<T>(query: QueryParams = {}): Promise<T> {
+    return this.get<T>('/subjects', query);
+  }
+
+  listTeachers<T>(query: QueryParams = {}): Promise<T> {
+    return this.get<T>('/teachers', query);
+  }
+
+  listStudents<T>(query: QueryParams = {}): Promise<T> {
+    return this.get<T>('/students', query);
+  }
 }
 
 export { campusModules };
