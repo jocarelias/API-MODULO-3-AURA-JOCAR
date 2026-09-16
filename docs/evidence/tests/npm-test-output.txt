@@ -1,8 +1,4 @@
 
-> g3-avaliacoes-horarios@1.0.0 test
-> npm run test:unit && npm run test:e2e
-
-
 > g3-avaliacoes-horarios@1.0.0 test:unit
 > vitest run
 
@@ -10,11 +6,12 @@
  RUN  v3.2.7 /home/Jocarelias/Documents/API HORARIOS
 
  ✓ src/modules/schedules-assessments/domain/evaluation.test.ts (21 tests) 23ms
+ ✓ src/modules/schedules-assessments/domain/calculationEngine.test.ts (54 tests) 37ms
 
- Test Files  1 passed (1)
-      Tests  21 passed (21)
-   Start at  14:13:44
-   Duration  703ms (transform 92ms, setup 0ms, collect 86ms, tests 23ms, environment 0ms, prepare 148ms)
+ Test Files  2 passed (2)
+      Tests  75 passed (75)
+   Start at  12:10:53
+   Duration  801ms (transform 261ms, setup 0ms, collect 378ms, tests 60ms, environment 1ms, prepare 283ms)
 
 
 > g3-avaliacoes-horarios@1.0.0 test:e2e
@@ -23,13 +20,14 @@
 
  RUN  v3.2.7 /home/Jocarelias/Documents/API HORARIOS
 
- ✓ src/modules/schedules-assessments/tests/g3.transaction.e2e.test.ts (2 tests) 425ms
-   ✓ G3 transações ACID (nível de serviço) > lançar nota + recálculo é atómico: falha no recálculo faz rollback total  342ms
- ✓ src/modules/schedules-assessments/tests/error-scenarios.e2e.test.ts (3 tests) 191ms
- ✓ src/modules/schedules-assessments/tests/g3.e2e.test.ts (23 tests) 1289ms
+ ✓ src/modules/schedules-assessments/tests/g3.transaction.e2e.test.ts (2 tests) 423ms
+   ✓ G3 transações ACID (nível de serviço) > lançar nota + recálculo é atómico: falha no recálculo faz rollback total  353ms
+ ✓ src/modules/schedules-assessments/tests/error-scenarios.e2e.test.ts (3 tests) 228ms
+ ✓ src/modules/schedules-assessments/tests/calculation.e2e.test.ts (18 tests) 245ms
+ ✓ src/modules/schedules-assessments/tests/g3.e2e.test.ts (29 tests) 1455ms
 
- Test Files  3 passed (3)
-      Tests  28 passed (28)
-   Start at  14:13:46
-   Duration  2.55s (transform 341ms, setup 0ms, collect 1.39s, tests 1.90s, environment 1ms, prepare 604ms)
+ Test Files  4 passed (4)
+      Tests  52 passed (52)
+   Start at  12:10:55
+   Duration  2.77s (transform 573ms, setup 0ms, collect 2.17s, tests 2.35s, environment 2ms, prepare 894ms)
 

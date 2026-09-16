@@ -1,188 +1,134 @@
 # Modelo de Entidades — Módulo G3 (Avaliações e Horários)
 
-Baseado no `prisma/schema.prisma` real do projecto.
+Formato exigido pela ficha: `Entidade | Campo | Tipo | Obrigatório | Chave | Descrição`.
+Campos reais extraídos de `prisma/schema.prisma`.
 
-## Entidades Principais do Módulo
+---
 
-### 1. Assessment (Avaliação)
+## Assessment (Avaliação) — tabela `assessments`
 
-| Campo | Tipo | Constraints | Descrição |
-|-------|------|-------------|-----------|
-| id | String (UUID) | PK, @default(uuid()) | Identificador único |
-| schoolId | String | FK → School, NOT NULL | Escola (multi-tenancy) |
-| academicYearId | String | FK → AcademicYear, NOT NULL | Ano letivo |
-| termId | String | FK → Term, NOT NULL | Período/semestre |
-| classId | String | FK → Class, NOT NULL | Turma |
-| subjectId | String | FK → Subject, NOT NULL | Disciplina |
-| teacherId | String | FK → Teacher, NOT NULL | Professor |
-| name | String | NOT NULL | Nome da avaliação |
-| type | EvaluationType | ENUM, NOT NULL | Tipo (TEST, EXAM, ...) |
-| description | String? | | Descrição opcional |
-| date | DateTime | NOT NULL | Data da avaliação |
-| maxScore | Decimal(5,2) | NOT NULL, DEFAULT 20, CHECK > 0 | Nota máxima |
-| weight | Decimal(5,3) | NOT NULL, DEFAULT 1, CHECK > 0 | Peso na média |
-| status | EvaluationStatus | ENUM, DEFAULT DRAFT | Estado |
-| createdAt | DateTime | DEFAULT now() | Criação |
-| updatedAt | DateTime | @updatedAt | Actualização |
+| Entidade | Campo | Tipo | Obrigatório | Chave | Descrição |
+|---|---|---|---|---|---|
+| Assessment | id | String (UUID) | Sim | **PK** | Identificador único da avaliação |
+| Assessment | schoolId | String (UUID) | Sim | FK → School | Escola (contexto multi-tenant) |
+| Assessment | academicYearId | String (UUID) | Sim | FK → AcademicYear | Ano letivo em que se realiza |
+| Assessment | termId | String (UUID) | Sim | FK → Term | Período académico (semestre/trimestre) |
+| Assessment | classId | String (UUID) | Sim | FK → Class | Turma avaliada |
+| Assessment | subjectId | String (UUID) | Sim | FK → Subject | Disciplina avaliada |
+| Assessment | teacherId | String (UUID) | Sim | FK → Teacher | Professor responsável |
+| Assessment | name | String (200) | Sim | — | Nome da avaliação (ex.: «Teste 1») |
+| Assessment | type | Enum `EvaluationType` | Sim | — | `TEST` ou `EXAM` (API: TESTE/EXAME_NORMAL/EXAME_RECURRENCIA) |
+| Assessment | description | String (500) | Não | — | Notas/observações opcionais |
+| Assessment | date | DateTime | Sim | — | Data/hora da avaliação |
+| Assessment | maxScore | Decimal(5,2) | Sim | CHECK > 0 | Nota máxima (default 20) |
+| Assessment | weight | Decimal(5,3) | Sim | CHECK > 0 | Peso da avaliação na média (default 1) |
+| Assessment | status | Enum `EvaluationStatus` | Sim | — | DRAFT/SCHEDULED/OPEN/CLOSED/CANCELLED (default DRAFT) |
+| Assessment | createdAt | DateTime | Sim | — | Data de criação |
+| Assessment | updatedAt | DateTime | Sim | — | Data da última actualização |
 
-**Índices:** schoolId, academicYearId, termId, classId, subjectId, teacherId, date, status, e compostos (schoolId+classId, schoolId+subjectId, schoolId+teacherId).
+**Unique composto:** `(termId, classId, subjectId, name)` — impede avaliação duplicada (409).
+**Índices:** schoolId, academicYearId, termId, classId, subjectId, teacherId, date, status e compostos (schoolId+classId, schoolId+subjectId, schoolId+teacherId).
 
-**Mapa tabela:** `assessments`
+---
 
-### 2. Grade (Nota)
+## Grade (Nota) — tabela `grades`
 
-| Campo | Tipo | Constraints | Descrição |
-|-------|------|-------------|-----------|
-| id | String (UUID) | PK | Identificador único |
-| assessmentId | String | FK → Assessment, NOT NULL | Avaliação |
-| studentId | String | FK → Student, NOT NULL | Aluno |
-| score | Decimal(5,2) | NOT NULL, CHECK >= 0 AND <= 100 | Nota obtida |
-| comment | String? | | Comentário |
-| status | GradeStatus | ENUM, DEFAULT SUBMITTED | Estado |
-| createdAt | DateTime | DEFAULT now() | Criação |
-| updatedAt | DateTime | @updatedAt | Actualização |
+| Entidade | Campo | Tipo | Obrigatório | Chave | Descrição |
+|---|---|---|---|---|---|
+| Grade | id | String (UUID) | Sim | **PK** | Identificador único da nota |
+| Grade | assessmentId | String (UUID) | Sim | FK → Assessment | Avaliação a que pertence a nota |
+| Grade | studentId | String (UUID) | Sim | FK → Student | Aluno que obteve a nota |
+| Grade | score | Decimal(5,2) | Sim | CHECK [0, maxScore] | Nota obtida (0–20 na escala padrão) |
+| Grade | comment | String (500) | Não | — | Comentário opcional do professor |
+| Grade | status | Enum `GradeStatus` | Sim | — | SUBMITTED/APPROVED/REVISED (default SUBMITTED) |
+| Grade | createdAt | DateTime | Sim | — | Data de criação |
+| Grade | updatedAt | DateTime | Sim | — | Data da última actualização |
 
-**Constraint única:** `@@unique([assessmentId, studentId])` — 1 nota por aluno por avaliação.
+**Unique composto:** `(assessmentId, studentId)` — **1 nota por aluno por avaliação** (duplicada → 409).
 
-**Mapa tabela:** `grades`
+---
 
-### 3. Schedule (Horário)
+## Schedule (Horário) — tabela `schedules`
 
-| Campo | Tipo | Constraints | Descrição |
-|-------|------|-------------|-----------|
-| id | String (UUID) | PK | Identificador único |
-| schoolId | String | FK → School, NOT NULL | Escola |
-| academicYearId | String | FK → AcademicYear, NOT NULL | Ano letivo |
-| termId | String | FK → Term, NOT NULL | Período |
-| classId | String | FK → Class, NOT NULL | Turma |
-| subjectId | String | FK → Subject, NOT NULL | Disciplina |
-| teacherId | String | FK → Teacher, NOT NULL | Professor |
-| dayOfWeek | DayOfWeek | ENUM, NOT NULL | Dia da semana |
-| startTime | String | NOT NULL, CHECK < endTime | Hora início (HH:mm) |
-| endTime | String | NOT NULL | Hora fim (HH:mm) |
-| room | String? | | Sala |
-| status | ScheduleStatus | ENUM, DEFAULT ACTIVE | Estado |
-| createdAt | DateTime | DEFAULT now() | Criação |
-| updatedAt | DateTime | @updatedAt | Actualização |
+| Entidade | Campo | Tipo | Obrigatório | Chave | Descrição |
+|---|---|---|---|---|---|
+| Schedule | id | String (UUID) | Sim | **PK** | Identificador único do horário |
+| Schedule | schoolId | String (UUID) | Sim | FK → School | Escola |
+| Schedule | academicYearId | String (UUID) | Sim | FK → AcademicYear | Ano letivo |
+| Schedule | termId | String (UUID) | Sim | FK → Term | Período académico |
+| Schedule | classId | String (UUID) | Sim | FK → Class | Turma a que se destina a aula |
+| Schedule | subjectId | String (UUID) | Sim | FK → Subject | Disciplina leccionada |
+| Schedule | teacherId | String (UUID) | Sim | FK → Teacher | Professor da aula |
+| Schedule | dayOfWeek | Enum `DayOfWeek` | Sim | — | MONDAY..SATURDAY |
+| Schedule | startTime | String (HH:mm) | Sim | CHECK < endTime | Hora de início da aula |
+| Schedule | endTime | String (HH:mm) | Sim | CHECK > startTime | Hora de fim da aula |
+| Schedule | room | String (100) | Não | — | Sala/laboratório |
+| Schedule | status | Enum `ScheduleStatus` | Sim | — | ACTIVE/INACTIVE/CANCELLED (default ACTIVE) |
+| Schedule | createdAt | DateTime | Sim | — | Data de criação |
+| Schedule | updatedAt | DateTime | Sim | — | Data da última actualização |
 
-**Índices compostos para detecção de conflitos:** (schoolId+teacherId+dayOfWeek), (schoolId+classId+dayOfWeek), (schoolId+room+dayOfWeek).
+**Índices de conflito:** (schoolId+teacherId+dayOfWeek), (schoolId+classId+dayOfWeek), (schoolId+room+dayOfWeek) — suportam a regra de conflitos (409).
 
-**Mapa tabela:** `schedules`
+---
 
-### 4. Result (Resultado)
+## Result (Resultado) — tabela `results`
 
-| Campo | Tipo | Constraints | Descrição |
-|-------|------|-------------|-----------|
-| id | String (UUID) | PK | Identificador único |
-| schoolId | String | FK → School, NOT NULL | Escola |
-| academicYearId | String | FK → AcademicYear, NOT NULL | Ano letivo |
-| termId | String | FK → Term, NOT NULL | Período |
-| classId | String | FK → Class, NOT NULL | Turma |
-| subjectId | String | FK → Subject, NOT NULL | Disciplina |
-| studentId | String | FK → Student, NOT NULL | Aluno |
-| teacherId | String? | FK → Teacher, SetNull | Professor |
-| average | Decimal(5,2)? | CHECK >= 0 AND <= 100 OR NULL | Média ponderada |
-| finalScore | Decimal(5,2)? | | Pontuação final |
-| weightedTotal | Decimal(5,2)? | | Total ponderado |
-| calculationMethod | CalculationMethod? | ENUM, NULL (herdado) | Método de cálculo usado no resultado |
-| status | ResultStatus | ENUM, DEFAULT PENDING | Estado |
-| calculatedAt | DateTime? | | Data do cálculo |
-| createdAt | DateTime | DEFAULT now() | Criação |
-| updatedAt | DateTime | @updatedAt | Actualização |
+| Entidade | Campo | Tipo | Obrigatório | Chave | Descrição |
+|---|---|---|---|---|---|
+| Result | id | String (UUID) | Sim | **PK** | Identificador único do resultado |
+| Result | schoolId | String (UUID) | Sim | FK → School | Escola |
+| Result | academicYearId | String (UUID) | Sim | FK → AcademicYear | Ano letivo |
+| Result | termId | String (UUID) | Sim | FK → Term | Período académico |
+| Result | classId | String (UUID) | Sim | FK → Class | Turma |
+| Result | subjectId | String (UUID) | Sim | FK → Subject | Disciplina |
+| Result | studentId | String (UUID) | Sim | FK → Student | Aluno |
+| Result | teacherId | String (UUID) | Não | FK → Teacher | Professor (opcional) |
+| Result | average | Decimal(5,2) | Não | CHECK [0,100] ou NULL | Média ponderada das notas |
+| Result | finalScore | Decimal(5,2) | Não | — | Pontuação final |
+| Result | weightedTotal | Decimal(5,2) | Não | — | Total ponderado |
+| Result | calculationMethod | Enum `CalculationMethod` | Não | — | Método usado (ex.: WEIGHTED_PERCENTAGE) |
+| Result | status | Enum `ResultStatus` | Sim | — | APPROVED/RECOVERY/FAILED/PENDING/IN_PROGRESS |
+| Result | calculatedAt | DateTime | Não | — | Data do último cálculo |
+| Result | createdAt | DateTime | Sim | — | Data de criação |
+| Result | updatedAt | DateTime | Sim | — | Data da última actualização |
 
-**Constraint única:** `@@unique([studentId, classId, subjectId, termId])`.
+**Unique composto:** `(studentId, classId, subjectId, termId)` — **1 resultado por aluno/contexto**.
+O resultado é **derivado** das notas (nunca editado manualmente); recalcula-se em transacção ACID.
 
-**Mapa tabela:** `results`
+---
 
-## Enums Utilizados
+## Enums utilizados
 
-### EvaluationType (Tipo de Avaliação)
-- `TEST` — Teste
-- `EXAM` — Exame
-- `ASSIGNMENT` — Trabalho
-- `QUIZ` — Quiz
-- `PROJECT` — Projecto
-- `PRACTICAL` — Prático
-- `ORAL` — Oral
-- `OTHER` — Outro
+| Enum | Valores | Descrição |
+|---|---|---|
+| EvaluationType | `TEST`, `EXAM`, `ASSIGNMENT`, `QUIZ`, `PROJECT`, `PRACTICAL`, `ORAL`, `OTHER` | Tipo da avaliação (API usa TESTE/EXAME_NORMAL/EXAME_RECURRENCIA → TEST/EXAM) |
+| EvaluationStatus | `DRAFT`, `SCHEDULED`, `OPEN`, `CLOSED`, `CANCELLED` | Estado da avaliação (notas só em OPEN) |
+| GradeStatus | `SUBMITTED`, `APPROVED`, `REVISED` | Estado da nota |
+| ScheduleStatus | `ACTIVE`, `INACTIVE`, `CANCELLED` | Estado do horário |
+| DayOfWeek | `MONDAY`–`SATURDAY` | Dia da semana |
+| ResultStatus | `APPROVED` (≥10), `RECOVERY` (≥8), `FAILED` (<8), `PENDING`, `IN_PROGRESS` | Situação académica |
+| CalculationMethod | `ARITHMETIC_MEAN`, `WEIGHTED_PERCENTAGE`, `PERCENTAGE_SUM`, `NORMALIZED_WEIGHTED_MEAN`, `COMPONENT_BASED`, `CUSTOM_WEIGHTED` | Método de cálculo usado |
 
-### EvaluationStatus (Estado da Avaliação)
-- `DRAFT` — Rascunho
-- `SCHEDULED` — Agendada
-- `OPEN` — Aberta (aceita notas)
-- `CLOSED` — Encerrada
-- `CANCELLED` — Cancelada
-
-### GradeStatus (Estado da Nota)
-- `SUBMITTED` — Submetida
-- `APPROVED` — Aprovada
-- `REVISED` — Revista
-
-### DayOfWeek (Dia da Semana)
-- `MONDAY`, `TUESDAY`, `WEDNESDAY`, `THURSDAY`, `FRIDAY`, `SATURDAY`
-
-### ScheduleStatus (Estado do Horário)
-- `ACTIVE` — Activo
-- `INACTIVE` — Inactivo
-- `CANCELLED` — Cancelado
-
-### ResultStatus (Estado do Resultado)
-- `APPROVED` — Aprovado (média >= 10)
-- `RECOVERY` — Recuperação (8 <= média < 10)
-- `FAILED` — Reprovado (média < 8)
-- `PENDING` — Pendente
-- `IN_PROGRESS` — Em progresso (faltam notas)
-
-### CalculationMethod (Método de Cálculo)
-- `ARITHMETIC_MEAN` — Média aritmética (Σ score / N)
-- `WEIGHTED_PERCENTAGE` — Média ponderada (Σ(nota×peso)/Σ(pesos)) — padrão
-- `PERCENTAGE_SUM` — Soma de percentagens ponderadas (pesos = 100)
-- `NORMALIZED_WEIGHTED_MEAN` — Média ponderada com pesos normalizados
-- `COMPONENT_BASED` — Média por componentes (sub-avaliações)
-- `CUSTOM_WEIGHTED` — Cálculo personalizado (registry de fórmulas)
-
-## Relações entre Entidades
-
-```
-School ──1:N──> Assessment
-AcademicYear ──1:N──> Assessment
-Term ──1:N──> Assessment
-Class ──1:N──> Assessment
-Subject ──1:N──> Assessment
-Teacher ──1:N──> Assessment
-Assessment ──1:N──> Grade
-Student ──1:N──> Grade
-
-School ──1:N──> Schedule
-AcademicYear ──1:N──> Schedule
-Term ──1:N──> Schedule
-Class ──1:N──> Schedule
-Subject ──1:N──> Schedule
-Teacher ──1:N──> Schedule
-
-School ──1:N──> Result
-AcademicYear ──1:N──> Result
-Term ──1:N──> Result
-Class ──1:N──> Result
-Subject ──1:N──> Result
-Student ──1:N──> Result
-Teacher ──1:?──> Result
-```
+---
 
 ## Mapeamento API ↔ Database
 
 | Campo API (Zod) | Campo DB (Prisma) | Observação |
-|-----------------|-------------------|------------|
-| TESTE | TEST | TYPE_MAP conversão |
-| EXAME_NORMAL | EXAM | TYPE_MAP conversão |
-| EXAME_RECURRENCIA | EXAM | TYPE_MAP conversão |
+|---|---|---|
+| TESTE | TEST | `TYPE_MAP` no service |
+| EXAME_NORMAL | EXAM | `TYPE_MAP` no service |
+| EXAME_RECURRENCIA | EXAM | `TYPE_MAP` no service (DTO devolve EXAME_NORMAL) |
+
+---
 
 ## Constraints CHECK (PostgreSQL)
 
 ```sql
-CHECK ("weight" > 0)             -- assessments
-CHECK ("maxScore" > 0)           -- assessments
-CHECK ("score" >= 0 AND "score" <= 100)  -- grades
-CHECK ("startTime" < "endTime")  -- schedules
+CHECK ("weight" > 0)                              -- assessments
+CHECK ("maxScore" > 0)                            -- assessments
+CHECK ("score" >= 0 AND "score" <= 100)           -- grades (Zod valida [0, maxScore])
+CHECK ("startTime" < "endTime")                   -- schedules
 CHECK ("average" IS NULL OR ("average" >= 0 AND "average" <= 100))  -- results
 ```
+
+Evidência real: `docs/evidence/07-data-quality/constraints.txt`.

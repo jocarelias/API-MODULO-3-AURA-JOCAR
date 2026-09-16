@@ -2,48 +2,50 @@
 
 ## Resumo executivo
 
-O módulo G3 foi **completado e validado** — estrutura corrigida, contrato alinhado à ficha, transações ACID implementadas, **46 testes a passar (21 unit + 25 e2e)**, documentação de suporte completa, diagramas ER/UML, evidências reais de execução e **documento Word final**. API aberta sem autenticação.
+O módulo G3 foi **completado e validado** — estrutura corrigida, contrato alinhado à ficha, transações ACID implementadas, **127 testes a passar (75 unit + 52 e2e)**, documentação de suporte completa, diagramas ER/UML, evidências reais de execução e **documento Word final**. API aberta sem autenticação.
 
 **Principais entregas:**
 
 | Artefacto | Estado |
 |---|---|
-| `prisma/schema.prisma` — modelos `Assessment`, `Grade` (renomeados com `@@map`, migration aplicada) | ✔ |
-| Migration `20260909000000_add_schedules_assessments` — dados preservados | ✔ |
+| `prisma/schema.prisma` — modelos `Assessment`, `Grade`, `Schedule`, `Result` (com `@@map`, migrations aplicadas) | ✔ |
+| Migrations `_init` + `add_schedules_assessments` + `add_calculation_method` — dados preservados | ✔ |
 | CHECK constraints no banco (peso, nota, horário, resultado) | ✔ activos (`docs/evidence/07-data-quality`) |
-| Regras de domínio (`evaluation.js`) — peso > 0, tipos, média ponderada, status | ✔ (21 testes unitários) |
-| Service (`schedulesAssessmentsService.js`) — CRUD, transações `$transaction`, regras | ✔ |
-| Router (`schedulesAssessmentsRouter.js`) — novas rotas, DELETE, schemas Zod, correlationId, **paginação** | ✔ |
+| Regras de domínio (`evaluation.ts`) — peso > 0, tipos, média ponderada, status | ✔ (75 testes unitários) |
+| Motor de cálculo (`calculationEngine.ts`) — 6 métodos, registry controlado, sem `eval` | ✔ (54 testes unitários) |
+| Service (`schedulesAssessmentsService.ts`) — CRUD, transações `$transaction`, regras | ✔ |
+| Router (`schedulesAssessmentsRouter.ts`) — rotas, DELETE, schemas Zod, correlationId, **paginação** | ✔ |
 | DTOs (`@smartcampus/shared-types`) — serialização, reverse map `TEST→TESTE` | ✔ |
-| Schemas (`schemas/index.js`) — fonte única (incl. `page`/`pageSize`); `@smartcampus/validation` re-exporta | ✔ |
+| Schemas (`schemas/index.ts`) — fonte única (incl. `page`/`pageSize`); `@smartcampus/validation` re-exporta | ✔ |
 | `@smartcampus/api-client` — cliente HTTP fetch (com `updateResult` alias de `PATCH /results/:id`) | ✔ |
-| `httpError.js` — mapeamento P2002 → 409, DomainError, 500 genérico | ✔ |
-| `seed.js` — convertido de `.ts` (sem argon2/TS) | ✔ |
-| `app.js` — router em `/api/v1` (não `/schedules-assessments`), health não colide com catch-all | ✔ |
-| `openapi.js` + `docs/openapi.yaml` — spec 3.0.0, novas rotas, paginação, **sem security** | ✔ |
-| Testes e2e (25) — CRUD, DELETE, 409/400/404, recálculo, impressão, API docs | ✔ |
+| `httpError.ts` — mapeamento P2002 → 409, DomainError, 500 genérico | ✔ |
+| `seed.ts` — dados UJAC (Engenharia Informática 1º/2º/3º Ano) | ✔ |
+| `app.ts` + `main.ts` — router em `/api/v1`, health, Swagger local | ✔ |
+| `openapi.ts` + `docs/openapi.yaml` — spec 3.0.0, todas as rotas, paginação, **sem security** | ✔ |
+| Testes e2e (52) — CRUD, DELETE, 409/400/404/500, recálculo, impressão, API docs | ✔ |
 | Testes ACID (2) — rollback forçado e sucesso atómico | ✔ |
-| `vitest.config.js` — unit exclusivo (exclui `*.e2e.test.js`) | ✔ |
+| `vitest.config.ts` — unit exclusivo (exclui `*.e2e.test.ts`) | ✔ |
 | Diagramas: `docs/diagrams/*.svg` (ER, classes, casos de uso, sequência, fluxo da média) + `.mmd/.dbml/.drawio` | ✔ |
-| `docs/prisma-model.md` + `docs/REPOSITORY_ANALYSIS.md` | ✔ |
+| `docs/prisma-model.md` + `docs/review/repository-audit.md` | ✔ |
 | `docs/reflection-questions.md` — **4 perguntas exactas da ficha** | ✔ |
 | `docs/evidence/**` — migrate status, studio, psql, curls reais, logs de testes | ✔ |
-| Documento Word `docs/G3_Avaliacoes_Horarios_Documentacao_Final.docx` (capa, TOC, 24 secções, figuras) | ✔ |
+| Documento Word `docs/G3_Horario_Avaliacoes_Type_Documentacao.docx` (capa, TOC, secções, figuras) | ✔ |
 | `AGENTS.md` actualizado (rotas, estrutura, regras) | ✔ |
 
 ## Arquitectura aplicada
 
 ```
 src/
-├── main.js / app.js                       ← Express 5, /api/v1, Swagger local
-├── openapi.js                             ← spec runtime
+├── main.ts / app.ts                       ← Express 5, /api/v1, Swagger local
+├── openapi.ts                             ← spec runtime
 └── modules/schedules-assessments/
-    ├── domain/evaluation.js               ← regras puras + 21 testes
-    ├── application/schedulesAssessmentsService.js
-    ├── infrastructure/{prisma,httpError}.js
-    ├── schemas/index.js                   ← Zod (fonte única)
-    ├── http/schedulesAssessmentsRouter.js ← express + correlationId + 404
-    └── tests/                             ← 25 e2e + 2 ACID
+    ├── domain/evaluation.ts               ← regras puras + 75 testes unitários
+    ├── domain/calculationEngine.ts        ← motor de cálculo multi-método
+    ├── application/schedulesAssessmentsService.ts
+    ├── infrastructure/{prisma,httpError}.ts
+    ├── schemas/index.ts                   ← Zod (fonte única)
+    ├── http/schedulesAssessmentsRouter.ts ← express + correlationId + 404
+    └── tests/                             ← 52 e2e (CRUD + ACID)
 
 packages/
 ├── shared-types/    ← DTOs, constantes, campusModules
@@ -61,8 +63,10 @@ packages/
 | `/api/v1/assessments/:assessmentId/grades/:gradeId` | PATCH |
 | `/api/v1/schedules` | GET, POST |
 | `/api/v1/schedules/:id` | GET, PATCH, DELETE |
-| `/api/v1/results` | GET, POST |
-| `/api/v1/results/:id` | GET, PATCH |
+| `/api/v1/results` | GET, POST (recálculo em lote) |
+| `/api/v1/results/:id` | GET, PATCH, **DELETE** |
+| `/api/v1/results/calculation-methods` | GET |
+| `/api/v1/results/calculate` | POST |
 | `/api/v1/print/class/:classId/schedule` | GET |
 | `/api/v1/print/class/:classId/pauta` | GET |
 | `/api/v1/health` | GET |
@@ -114,11 +118,11 @@ packages/
 
 | Verificação | Resultado |
 |---|---|
-| `npm run test:unit` | ✔ 21 passed (1 ficheiro, sem banco) |
-| `npm run test:e2e` | ✔ 25 passed (2 ficheiros, app ephemeral) |
-| `prisma migrate status` | ✔ "2 migrations found … Database schema is up to date!" |
+| `npm run test:unit` | ✔ 75 passed (2 ficheiros, sem banco) |
+| `npm run test:e2e` | ✔ 52 passed (4 ficheiros, app ephemeral) |
+| `prisma migrate status` | ✔ "3 migrations found … Database schema is up to date!" |
 | Prisma Studio `http://localhost:5555` | ✔ HTTP 200 (arranque headless) |
-| Servidor `node src/main.js` → `/api/v1/health` | ✔ 200 |
+| Servidor `node src/main.ts` → `/api/v1/health` | ✔ 200 |
 | `/api/docs` e `/api/openapi.json` | ✔ 200 — spec sem `security`, sem `password`/`bearer` |
 | CRUD + erros HTTP reais (200/201/400/404/409) | ✔ evidências em `docs/evidence/03-crud` e `06-errors` |
 | CHECK/UNIQUE constraints (psql) | ✔ `docs/evidence/07-data-quality/constraints.txt` |
@@ -129,7 +133,7 @@ packages/
 ## Execução verificada
 
 ```bash
-npm run test:unit   # 21 passed ✔  (regras puras, sem banco)
-npm run test:e2e    # 25 passed ✔  (CRUD + 2 ACID rollback)
-node src/main.js    # http://localhost:4100/api/v1 ✔
+npm run test:unit   # 75 passed ✔  (regras puras + motor de cálculo, sem banco)
+npm run test:e2e    # 52 passed ✔  (CRUD + 2 ACID rollback + motor e2e)
+node src/main.ts    # http://localhost:4100/api/v1 ✔
 ```

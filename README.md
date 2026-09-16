@@ -24,7 +24,7 @@ src/
     ├── infrastructure/{prisma,httpError}.ts             # singleton Prisma + mapeamento erro→HTTP
     ├── schemas/index.ts                                 # schemas Zod autoritativos (fonte única)
     ├── http/schedulesAssessmentsRouter.ts               # router Express + Zod + correlationId
-    └── tests/                                           # e2e (23) + ACID/rollback (2)
+    └── tests/                                           # e2e: 29 g3 + 18 calculation + 3 error + 2 ACID
 packages/
 ├── shared-types/src/index.ts                            # DTOs, constantes, campusModules
 ├── validation/src/index.ts                              # re-exporta schemas do módulo
@@ -140,14 +140,16 @@ Tipos de avaliação: `TESTE`, `EXAME_NORMAL`, `EXAME_RECURRENCIA` (armazenados 
 
 | Variável | Padrão | Descrição |
 |---|---|---|
-| `DATABASE_URL` | `postgresql://smartcampos:smartcampos@localhost:5434/smartcampos` | Conexão PostgreSQL |
+| `DATABASE_URL` | `postgresql://smartcampos:smartcampos@localhost:5434/smartcampos` | Conexão PostgreSQL (Docker, porta 5434) |
 | `G3_PORT` | `4100` | Porta do servidor |
-| `ACADEMIC_PASSING_SCORE` / `ACADEMIC_RECOVERY_SCORE` | `10` / `8` | Nota de corte (escala 0–20) |
+| `G3_API_URL` | `http://localhost:4100` | URL base usada pelo `@smartcampus/api-client` |
+
+As notas de corte da escala académica (10 aprovação, 8 recuperação) são constantes do domínio em `src/modules/schedules-assessments/domain/evaluation.ts`.
 
 ## Testes
 
 ```bash
-npm run test          # 75 unit + 46 e2e = 121 testes
+npm run test          # 75 unit + 52 e2e = 127 testes
 npm run test:unit     # domínio: tipos, pesos (> 0), média, status, time range + motor de cálculo (54)
 npm run test:e2e      # integração: contratos, CRUD+DELETE, 409s, recálculo, impressão, rollback ACID, cálculo flexível
 ```
@@ -163,12 +165,16 @@ Ver `docs/` — `openapi.yaml`, `entity-model.md`, `manual-apis-core.md`, `refle
 | Artefacto | Descrição |
 |---|---|
 | `docs/G3-exercicios-respostas.md` | Respostas consolidadas dos 7 exercícios (markdown) |
+| `docs/G3_HORARIO_AVALIACOES_TYPE_FINAL.md` / `.docx` | Documentação final completa (24 secções) |
 | `docs/G3_Horario_Avaliacoes_Type_Documentacao.docx` | Versão Word com evidências e imagens reais |
+| `docs/diagrams/er-diagram-humanized.md` | Diagrama ER em caixas ASCII (preto-e-branco) |
+| `docs/code-explanation.md` | Explicação linha a linha do código do módulo |
+| `docs/review/repository-audit.md` | Auditoria/revisão de código (problemas + correcções) |
 | `docs/diagrams/er-diagram.{svg,png,pdf}` | Diagrama entidade-relação do módulo |
 | `docs/entity-model.md` | Modelo de entidades detalhado |
 | `docs/evidence/prisma/` | Evidências `prisma generate` / `migrate status` / migration SQL |
 | `docs/evidence/crud/` | Create/Update/Delete reais (201/200) e validações (400) |
 | `docs/evidence/business-rules/` | Regras de negócio (409) — duplicata, imutabilidade, delete bloqueado, conflito de horário |
 | `docs/evidence/transaction/` | Evidência ACID (rollback forçado) |
-| `docs/evidence/tests/` | Saída real do `npm test` (49 testes) |
+| `docs/evidence/tests/` | Saída real do `npm test` (127 testes) |
 | `docs/evidence/data-quality/` | Constraints CHECK e registos rejeitados |
