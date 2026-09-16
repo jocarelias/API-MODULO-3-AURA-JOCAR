@@ -671,6 +671,15 @@ export class SchedulesAssessmentsService {
     });
   }
 
+  async deleteResult(id: string): Promise<{ id: string; deleted: boolean }> {
+    const result = await this.prisma.result.findUnique({ where: { id } });
+    if (!result) {
+      throw new DomainError('NOT_FOUND', 'Resultado não encontrado');
+    }
+    await this.prisma.result.delete({ where: { id } });
+    return { id, deleted: true };
+  }
+
   async patchResult(id: string): Promise<ResultDto> {
     const result = await this.prisma.result.findUnique({ where: { id } });
     if (!result) {

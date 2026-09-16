@@ -271,6 +271,15 @@ export function createSchedulesAssessmentsRouter(): Router {
     }),
   );
 
+  router.delete(
+    '/results/:id',
+    handler(async (req, res) => {
+      const { id } = validate(idParamsSchema, req.params);
+      const data = await service.deleteResult(id);
+      return success(res, data, 200, req.correlationId);
+    }),
+  );
+
   router.get(
     '/print/class/:classId/schedule',
     handler(async (req, res) => {

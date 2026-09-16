@@ -492,6 +492,12 @@ export function buildOpenApi(): Record<string, unknown> {
           requestBody: { required: false, content: { 'application/json': { schema: { type: 'object' } } } },
           responses: responses(result),
         },
+        delete: {
+          tags: ['Resultados'],
+          summary: 'Elimina um resultado',
+          parameters: [idParam('id')],
+          responses: responses({ type: 'object' }),
+        },
       },
       '/api/v1/print/class/{classId}/schedule': {
         get: {

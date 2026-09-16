@@ -85,6 +85,11 @@ API REST aberta para gestão académica de avaliações, notas, horários e resu
 - **Objectivo:** Recalcular um resultado individual
 - **Transacção atómica**
 
+### DELETE /api/v1/results/:id
+- **Objectivo:** Eliminar um resultado
+- **Response:** `{ data: { id, deleted: true }, meta: { correlationId } }`
+- **Erros:** 404 NOT_FOUND
+
 ### GET /api/v1/results/calculation-methods
 - **Objectivo:** Listar métodos de cálculo disponíveis
 - **Response:** `{ data: CalculationMethodMeta[], meta: { correlationId } }`

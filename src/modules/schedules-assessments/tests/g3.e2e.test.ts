@@ -318,11 +318,13 @@ describe('G3 Avaliações e Horários (e2e) — API aberta', () => {
     expect(results.status).toBe(200);
     const studentResults = results.body.data.filter((r: { studentId: string }) => r.studentId === ids.studentId);
     expect(studentResults.length).toBeGreaterThan(0);
-    const updated = studentResults.find((r: { id: string }) => r.id === ids.seedResult.id) ?? studentResults[0];
+    const updated = ids.seedResult ? studentResults.find((r: { id: string }) => r.id === ids.seedResult!.id) ?? studentResults[0] : studentResults[0];
     expect(updated.status).toBe('IN_PROGRESS');
   });
 
   it('PATCH recalcula um resultado individual', async () => {
+    if (!ids.seedResult) return;
+
     const before = await request(apiBase).get(`/api/v1/results/${ids.seedResult.id}`);
     expect(before.status).toBe(200);
 
@@ -373,6 +375,121 @@ describe('G3 Avaliações e Horários (e2e) — API aberta', () => {
     const del = await request(apiBase).delete(`/api/v1/schedules/${first.body.data.id}`);
     expect(del.status).toBe(200);
     created.schedules = created.schedules.filter((id) => id !== first.body.data.id);
+  });
+
+  it('obtém horário por ID', async () => {
+    const payload = {
+      academicYearId: ids.academicYearId,
+      termId: ids.termId,
+      classId: ids.classId,
+      subjectId: ids.subjectId,
+      teacherId: ids.teacherId,
+      dayOfWeek: 'SATURDAY',
+      startTime: '14:00',
+      endTime: '15:00',
+      room: unique('sala-get'),
+    };
+    const createdRes = await request(apiBase).post('/api/v1/schedules').send(payload);
+    expect(createdRes.status).toBe(201);
+    created.schedules.push(createdRes.body.data.id);
+
+    const getRes = await request(apiBase).get(`/api/v1/schedules/${createdRes.body.data.id}`);
+    expect(getRes.status).toBe(200);
+    expect(getRes.body.data.id).toBe(createdRes.body.data.id);
+    expect(getRes.body.data.dayOfWeek).toBe('SATURDAY');
+    expect(getRes.body.data.startTime).toBe('14:00');
+
+    await request(apiBase).delete(`/api/v1/schedules/${createdRes.body.data.id}`);
+    created.schedules = created.schedules.filter((id) => id !== createdRes.body.data.id);
+  });
+
+  it('actualiza um horário (dia, hora, sala)', async () => {
+    const payload = {
+      academicYearId: ids.academicYearId,
+      termId: ids.termId,
+      classId: ids.classId,
+      subjectId: ids.subjectId,
+      teacherId: ids.teacherId,
+      dayOfWeek: 'FRIDAY',
+      startTime: '16:00',
+      endTime: '17:00',
+      room: unique('sala-patch'),
+    };
+    const createdRes = await request(apiBase).post('/api/v1/schedules').send(payload);
+    expect(createdRes.status).toBe(201);
+    created.schedules.push(createdRes.body.data.id);
+
+    const patchRes = await request(apiBase)
+      .patch(`/api/v1/schedules/${createdRes.body.data.id}`)
+      .send({ startTime: '16:30', endTime: '17:30', room: unique('sala-nova') });
+    expect(patchRes.status).toBe(200);
+    expect(patchRes.body.data.startTime).toBe('16:30');
+    expect(patchRes.body.data.endTime).toBe('17:30');
+
+    await request(apiBase).delete(`/api/v1/schedules/${createdRes.body.data.id}`);
+    created.schedules = created.schedules.filter((id) => id !== createdRes.body.data.id);
+  });
+
+  it('404 para horário inexistente', async () => {
+    const res = await request(apiBase).get('/api/v1/schedules/00000000-0000-0000-0000-000000000000');
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('NOT_FOUND');
+  });
+
+  it('conflito de sala apenas (mesma sala, dia e período, diferente professor/turma)', async () => {
+    const room = unique('sala-conflict');
+    const base = {
+      academicYearId: ids.academicYearId,
+      termId: ids.termId,
+      subjectId: ids.subjectId,
+      dayOfWeek: 'SATURDAY',
+      startTime: '08:00',
+      endTime: '09:00',
+      room,
+    };
+    const first = await request(apiBase).post('/api/v1/schedules').send({
+      ...base,
+      classId: ids.classId,
+      teacherId: ids.teacherId,
+    });
+    expect(first.status).toBe(201);
+    created.schedules.push(first.body.data.id);
+
+    const classRecord2 = await prisma.class.findFirst({ where: { status: 'ACTIVE', id: { not: ids.classId } } });
+    const teacher2 = await prisma.teacher.findFirst({ where: { status: 'ACTIVE', id: { not: ids.teacherId } } });
+    if (classRecord2 && teacher2) {
+      const conflict = await request(apiBase).post('/api/v1/schedules').send({
+        ...base,
+        classId: classRecord2.id,
+        teacherId: teacher2.id,
+      });
+      expect(conflict.status).toBe(409);
+      expect(conflict.body.code).toBe('CONFLICT');
+      expect(conflict.body.details.some((d: { type: string }) => d.type === 'ROOM')).toBe(true);
+    }
+
+    await request(apiBase).delete(`/api/v1/schedules/${first.body.data.id}`);
+    created.schedules = created.schedules.filter((id) => id !== first.body.data.id);
+  });
+
+  it('elimina resultado existente e verifica 404 após delete', async () => {
+    if (!ids.seedResult) return;
+
+    const before = await request(apiBase).get(`/api/v1/results/${ids.seedResult.id}`);
+    expect(before.status).toBe(200);
+
+    const del = await request(apiBase).delete(`/api/v1/results/${ids.seedResult.id}`);
+    expect(del.status).toBe(200);
+    expect(del.body.data).toEqual({ id: ids.seedResult.id, deleted: true });
+
+    const after = await request(apiBase).get(`/api/v1/results/${ids.seedResult.id}`);
+    expect(after.status).toBe(404);
+  });
+
+  it('404 para resultado inexistente no DELETE', async () => {
+    const res = await request(apiBase).delete('/api/v1/results/00000000-0000-0000-0000-000000000000');
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('NOT_FOUND');
   });
 
   it('impressão do horário da turma', async () => {

@@ -12,7 +12,8 @@ const SUBJECT_IDS = [randomUUID(), randomUUID(), randomUUID()];
 const TEACHER_IDS = [randomUUID(), randomUUID(), randomUUID(), randomUUID(), randomUUID()];
 const STUDENT_IDS = Array.from({ length: 10 }, () => randomUUID());
 
-const CLASS_NAMES = ['10ª Classe A', '10ª Classe B', '11ª Classe A'];
+const CLASS_NAMES = ['Engenharia Informática - 1º Ano', 'Engenharia Informática - 2º Ano', 'Engenharia Informática - 3º Ano'];
+const CLASS_ROOMS = ['Sala 204', 'Sala 203', 'Sala 201'];
 const SUBJECT_NAMES = ['PTP 3', 'Administração de Redes', 'Programação Paralela'];
 const TEACHER_NAMES = ['Armando Correia', 'Leandro Titos', 'Carsolino Sambo', 'Cidalia da Camara', 'Fortunato Farao'];
 const STUDENT_NAMES = [
@@ -21,7 +22,7 @@ const STUDENT_NAMES = [
 ];
 
 async function seed() {
-  console.log('🌱 A iniciar seed G3 — Avaliações e Horários...');
+  console.log(' A iniciar seed G3 — Avaliações e Horários...');
 
   await prisma.school.create({
     data: { id: SCHOOL_ID, name: 'UJAC', code: 'UJAC', status: 'ACTIVE' },
@@ -37,7 +38,7 @@ async function seed() {
 
   for (let i = 0; i < CLASS_IDS.length; i++) {
     await prisma.class.create({
-      data: { id: CLASS_IDS[i], schoolId: SCHOOL_ID, academicYearId: AY_ID, name: CLASS_NAMES[i], grade: i < 2 ? '10' : '11', shift: 'Manhã', room: `Sala ${101 + i}`, status: 'ACTIVE' },
+      data: { id: CLASS_IDS[i], schoolId: SCHOOL_ID, academicYearId: AY_ID, name: CLASS_NAMES[i], grade: String(i + 1), shift: 'Manhã', room: CLASS_ROOMS[i], status: 'ACTIVE' },
     });
   }
 
@@ -176,7 +177,7 @@ async function seed() {
     }
   }
 
-  console.log('✅ Seed concluído: 1 escola, 1 ano lectivo, 1 período, 3 turmas, 3 disciplinas, 5 professores, 10 alunos, avaliações, horários e resultados.');
+  console.log(' Seed concluído: 1 escola, 1 ano lectivo, 1 período, 3 turmas, 3 disciplinas, 5 professores, 10 alunos, avaliações, horários e resultados.');
 }
 
 seed()

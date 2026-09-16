@@ -149,6 +149,10 @@ export class SmartCampusApiClient {
     return this.post<T>('/results', payload);
   }
 
+  deleteResult<T>(id: string): Promise<T> {
+    return this.delete<T>(`/results/${id}`);
+  }
+
   patchResult<T>(id: string): Promise<T> {
     return this.patch<T>(`/results/${id}`);
   }

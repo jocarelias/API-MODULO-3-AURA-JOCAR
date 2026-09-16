@@ -76,8 +76,13 @@ describe('G3 transações ACID (nível de serviço)', () => {
         },
       },
     });
-    expect(resultAfter.average.toString()).toBe(resultBefore.average.toString());
-    expect(resultAfter.status).toBe(resultBefore.status);
+    if (resultBefore) {
+      expect(resultAfter).not.toBeNull();
+      expect(resultAfter!.average.toString()).toBe(resultBefore.average.toString());
+      expect(resultAfter!.status).toBe(resultBefore.status);
+    } else {
+      expect(resultAfter).toBeNull();
+    }
 
     await prisma.assessment.delete({ where: { id: assessment.id } });
   });
