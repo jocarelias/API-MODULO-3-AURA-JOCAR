@@ -1,0 +1,12 @@
+{
+  "academicYearId": "7059d983-da71-4221-9541-afacb32316c3",
+  "termId": "b1ec59f2-8ae4-48e2-b9b0-24172da51ce8",
+  "classId": "afadd13d-7f2e-4aeb-a839-9b4ff0e99cac",
+  "subjectId": "eb659aed-8388-449b-95f6-65d7eb1041b8",
+  "teacherId": "a4b8703f-22bc-46c6-932b-7dae7025d3e9",
+  "dayOfWeek": "TUESDAY",
+  "startTime": "10:00",
+  "endTime": "11:40",
+  "room": "Sala 203",
+  "status": "ACTIVE"
+}

@@ -1,0 +1,22 @@
+{
+  "method": "WEIGHTED_PERCENTAGE",
+  "items": [
+    {
+      "assessmentId": "595b586c-ceac-4722-9ac0-49c5501d451d",
+      "name": "Teste 1 - PTP 3",
+      "score": 16,
+      "weight": 40
+    },
+    {
+      "name": "Exame Final - PTP 3",
+      "score": 13,
+      "weight": 60
+    }
+  ],
+  "expectedTotal": 100,
+  "minScore": 0,
+  "maxScore": 20,
+  "rounding": {
+    "decimals": 2
+  }
+}

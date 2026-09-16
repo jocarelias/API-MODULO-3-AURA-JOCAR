@@ -1,0 +1,13 @@
+{
+  "name": "Teste 2 - PTP 3 (criar)",
+  "type": "TESTE",
+  "academicYearId": "7059d983-da71-4221-9541-afacb32316c3",
+  "termId": "b1ec59f2-8ae4-48e2-b9b0-24172da51ce8",
+  "classId": "df12a7a2-b47b-413e-8308-b0d5b6ef53dd",
+  "subjectId": "26c5ef3c-67ce-436c-9c45-c2a4cf28ceaf",
+  "teacherId": "e79e30fb-b3e6-4113-ad47-c212aefca3ac",
+  "date": "2026-05-20T10:00:00+02:00",
+  "maxScore": 20,
+  "weight": 1,
+  "status": "SCHEDULED"
+}
