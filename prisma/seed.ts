@@ -118,6 +118,7 @@ async function seed() {
     }
   }
 
+  let gradeSeq = 0;
   for (const assessmentId of assessmentIds) {
     const assessment = await prisma.assessment.findUnique({ where: { id: assessmentId } });
     if (!assessment || assessment.status !== 'OPEN') continue;
@@ -132,7 +133,8 @@ async function seed() {
           where: { assessmentId_studentId: { assessmentId, studentId } },
         });
         if (exists) continue;
-        const score = Math.round(Math.random() * Number(assessment.maxScore));
+        const score = (gradeSeq * 7 + 3) % (Math.floor(Number(assessment.maxScore)) + 1);
+        gradeSeq += 1;
         await prisma.grade.create({
           data: { assessmentId, studentId, score, status: 'SUBMITTED' as GradeStatus },
         });
