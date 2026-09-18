@@ -38,3 +38,5 @@ src/generated/
 
 # Testes
 .tmp-test/
+# LibreOffice lock files
+*.~lock.*
