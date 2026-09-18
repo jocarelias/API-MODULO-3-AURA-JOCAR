@@ -1,0 +1,173 @@
+================================================================
+ SMARTCAMPUS - G3 API (AVALIACOES E HORARIOS)
+ DOCUMENTACAO DE TESTE - APENAS API
+================================================================
+
+1. O QUE E
+----------------------------------------------------------------
+API REST (Express + TypeScript + Prisma + PostgreSQL) do modulo
+G3 - Avaliacoes, Notas, Horarios, Resultados e Motor de Calculo.
+Documenta e expoe a API; o contrato OpenAPI 3.0 esta em
+http://localhost:4100/api/docs (Swagger UI).
+
+Base URL: http://localhost:4100/api/v1
+
+Servicos da stack (todos locais, sem Docker):
+  4100  G3 API principal          (Swagger em /api/docs)
+  4101  Servico Students          GET /students, GET /students/:id
+  4102  Servico Teachers          GET /teachers, GET /teachers/:id
+  4103  Servico Enrolments        GET /enrolments
+  4104  Servico Finance           GET /financial-status/:studentId
+                                  POST /financial/integration/assessment-charges
+
+Formato de resposta: { "data": ..., "meta": { "correlationId", ... } }
+Formato de erro:      { "code", "message", "details", "correlationId" }
+
+Header de correlacao: x-correlation-id (ecoado na resposta).
+
+
+2. AUTENTICACAO (JWT Bearer)
+---------------------------------------------------------------
+POST /api/v1/auth/login
+Body: { "email": "...", "password": "..." }
+Resposta: { "data": { "accessToken": "...", "expiresIn": 900,
+                      "refreshToken": "...", "refreshExpiresIn": 604800 } }
+
+Usar o accessToken em TODAS as outras rotas como:
+   Authorization: Bearer <accessToken>
+
+REFRESH TOKEN (renovacao + revogacao):
+  POST /api/v1/auth/refresh
+  Body: { "refreshToken": "<refreshToken>" }
+  Resposta: NOVO par { accessToken, refreshToken, ... } (rotacao: o token
+  recebido fica revogado e o novo e emitido). NUNCA reutilizar um
+  refreshToken: se for reutilizado, devolve 401.
+
+  POST /api/v1/auth/logout
+  Header: Authorization: Bearer <accessToken>
+  Body: { "refreshToken": "<refreshToken>" }
+  Rexoga o refreshToken (fica inutilizavel; refresh posterior = 401).
+
+  O refreshToken e persistido apenas por HASH (nunca em claro) e tem
+  validade de 7 dias. O accessToken tem validade de 15 minutos.
+
+Papeis: SUPER_ADMIN, TEACHER, STUDENT, e __SERVICE__ (service token).
+Rotas publicas: apenas /api/v1/auth/login, /api/v1/auth/refresh e /api/v1/health.
+
+RBAC (denegacao explicita por papel): os catalogos com dados pessoais
+(students, teachers) exigem papel de staff (SUPER_ADMIN/SCHOOL_ADMIN/
+DIRECTOR/COORDINATOR/TEACHER/SECRETARY); um aluno autenticado recebe 403.
+
+
+3. UTILIZADORES DE TESTE
+----------------------------------------------------------------
+a) Super Admin
+   admin@ucjac.ac.mz / admin123          (papel SUPER_ADMIN - acesso total)
+
+b) Professores (papel TEACHER) - senha comum: prof123
+   prof1@ucjac.ac.mz   prof2@ucjac.ac.mz   prof3@ucjac.ac.mz
+   prof4@ucjac.ac.mz   prof5@ucjac.ac.mz
+
+c) Alunos (papel STUDENT) - senha comum: aluno123
+   aluno1@student.ucjac.ac.mz   aluno2@student.ucjac.ac.mz
+   aluno3@student.ucjac.ac.mz   aluno4@student.ucjac.ac.mz
+   aluno5@student.ucjac.ac.mz   aluno6@student.ucjac.ac.mz
+   aluno7@student.ucjac.ac.mz   aluno8@student.ucjac.ac.mz
+   aluno9@student.ucjac.ac.mz   aluno10@student.ucjac.ac.mz
+
+   Nota: aluno1, aluno2 e aluno3 tem situacao financeira com divida
+   (hasDebt=true). Usar estas contas para testar a regra financeira.
+
+
+4. ENDPOINTS
+----------------------------------------------------------------
+Autenticacao e perfil
+  POST /api/v1/auth/login                 login, devolve access+refresh
+  POST /api/v1/auth/refresh               renova (rotacao), publico
+  POST /api/v1/auth/logout                revoga o refreshToken (autenticado)
+  GET  /api/v1/me/financial-status        estado financeiro do proprio aluno
+
+Avaliacoes (assessments)
+  GET  /api/v1/assessments                listar (paginado)
+  POST /api/v1/assessments                criar avaliacao
+  GET  /api/v1/assessments/:id            detalhe
+  PATCH /api/v1/assessments/:id           actualizar
+  DELETE /api/v1/assessments/:id          apagar (bloqueado se houver notas)
+
+Notas (grades)
+  GET  /api/v1/assessments/:assessmentId/grades      listar notas
+  POST /api/v1/assessments/:assessmentId/grades      lancar nota
+  PATCH /api/v1/assessments/:assessmentId/grades/:gradeId  actualizar nota
+
+Horarios (schedules)
+  GET  /api/v1/schedules                  listar (paginado)
+  POST /api/v1/schedules                  criar horario
+  GET  /api/v1/schedules/:id              detalhe
+  PATCH /api/v1/schedules/:id             actualizar
+  DELETE /api/v1/schedules/:id            apagar
+
+Resultados (results)
+  GET  /api/v1/results                    listar (paginado)
+  POST /api/v1/results                    recalcular em lote
+  GET  /api/v1/results/:id                detalhe
+  PATCH /api/v1/results/:id               recalcular um resultado
+
+Motor de Calculo
+  GET  /api/v1/results/calculation-methods      lista os 6 metodos
+  POST /api/v1/results/calculate          calcular nota sem persistir
+
+Impressao
+  GET  /api/v1/print/class/:classId/schedule     imprimir horario da turma
+  GET  /api/v1/print/class/:classId/pauta        imprimir pauta
+
+Catalogos (para formularios) - teachers e students exigem papel de staff (RBAC)
+  GET /api/v1/schools  GET /api/v1/academic-years  GET /api/v1/terms
+  GET /api/v1/classes  GET /api/v1/subjects        GET /api/v1/teachers (staff)
+  GET /api/v1/students                                                    (staff)
+
+Paginao: listagens e catalogos aceitam ?page=<n>&pageSize=<1..100>;
+a meta devolve { page, pageSize, total }.
+
+
+5. REGRAS DE NEGOCIO QUE A API FORCA (COM CODIGOS DE ERRO)
+----------------------------------------------------------------
+- 1 nota por aluno/avaliacao      -> duplicada devolve 409
+- Avaliacao nao duplicada         -> mesmo nome+turma+disciplina+periodo = 409
+- Nota so em avaliacao OPEN       -> caso contrario 409
+- Pesos/maxScore imutaveis apos notas -> 409
+- Nota fora de [0, maxScore]      -> 400
+- Aluno nao matriculado           -> 409
+- Conflito de horario (prof/turma/sala) -> 409 com details
+- Regra financeira (aluno com divida):
+    GET /results, /results/:id, /assessments/:id/grades, pauta
+    -> 403 FINANCIAL_ACCESS_BLOCKED
+    servico financeiro indisponivel -> 503 FINANCIAL_VERIFICATION_UNAVAILABLE
+    aluno inexistente               -> 404 STUDENT_NOT_FOUND
+- Staff lanca nota de aluno endividado -> 409 GRADES_BLOCKED_DUE_TO_DEBT
+- Pauta: linhas de endividados mascaradas (debtRestricted:true, average:null)
+
+Codigos de erro globais: 400 VALIDATION_ERROR | 401 UNAUTHENTICATED |
+403 FORBIDDEN | 404 NOT_FOUND | 409 CONFLICT | 500 INTERNAL_ERROR |
+503 SERVICE_UNAVAILABLE.
+
+
+6. COMO TESTAR NO SWAGGER
+----------------------------------------------------------------
+1. Abrir http://localhost:4100/api/docs
+2. POST /api/v1/auth/login com um email acima (ex.: aluno4 / aluno123)
+3. Clicar "Authorize" e colar o accessToken
+4. Executar os pedidos:
+   - GET /api/v1/me/financial-status        (aluno4 = REGULAR)
+   - GET /api/v1/results                    (aluno1 = 403; aluno4 = 200)
+   - GET /api/v1/assessments                (staff)
+   - GET /api/v1/print/class/:classId/pauta (staff)
+   - Apos expirar o accessToken (15 min), chamar POST /api/v1/auth/refresh
+     e voltar a autenticar no Swagger com o NOVO accessToken
+   - Logout: POST /api/v1/auth/logout e tentar refresh de novo -> 401
+
+
+7. ESPECIFICACAO / CONTRATO
+----------------------------------------------------------------
+OpenAPI 3.0 live:      GET http://localhost:4100/api/openapi.json
+Swagger UI:            http://localhost:4100/api/docs
+Health check:          GET http://localhost:4100/api/v1/health

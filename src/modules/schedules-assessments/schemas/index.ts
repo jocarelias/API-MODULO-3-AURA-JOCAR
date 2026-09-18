@@ -230,3 +230,15 @@ export const loginSchema = z
     password: z.string().min(1, 'Password é obrigatória').max(128),
   })
   .strict();
+
+export const refreshSchema = z
+  .object({
+    refreshToken: z.string().min(16, 'refreshToken é obrigatório'),
+  })
+  .strict();
+
+export const logoutSchema = z
+  .object({
+    refreshToken: z.string().min(16, 'refreshToken é obrigatório'),
+  })
+  .strict();

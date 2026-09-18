@@ -7,6 +7,10 @@ import { signToken } from '@smartcampus/auth';
 
 export const TEST_JWT_SECRET = 'g3-e2e-secret';
 process.env.SMARTCAMPUS_JWT_SECRET = TEST_JWT_SECRET;
+process.env.JWT_ACCESS_SECRET = TEST_JWT_SECRET;
+process.env.JWT_REFRESH_SECRET = 'g3-e2e-refresh-secret';
+process.env.JWT_ACCESS_EXPIRES_IN = '3600';
+process.env.JWT_REFRESH_EXPIRES_IN = '86400';
 process.env.FINANCIAL_SERVICE_TOKEN = 'g3-e2e-service-token';
 process.env.SMARTCAMPUS_SERVICE_TOKEN = 'g3-e2e-service-token';
 

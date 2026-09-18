@@ -7,6 +7,7 @@ import { createApp } from './app';
 
 const SECRET = 'e2e-secret-finance';
 process.env.SMARTCAMPUS_JWT_SECRET = SECRET;
+process.env.JWT_ACCESS_SECRET = SECRET;
 process.env.FINANCE_SERVICE_PORT = '4104';
 
 const prisma = new PrismaClient();

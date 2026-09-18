@@ -528,6 +528,6 @@ describe('G3 Avaliações e Horários (e2e) — API autenticada + contratos', ()
     expect(scheme?.type).toBe('http');
     expect(scheme?.scheme).toBe('bearer');
     expect(JSON.stringify(doc)).toContain('"security"');
-    expect(JSON.stringify(doc)).not.toMatch(/passwordHash|senhaHash|refreshToken/i);
+    expect(JSON.stringify(doc)).not.toMatch(/passwordHash|senhaHash|tokenHash/i);
   });
 });

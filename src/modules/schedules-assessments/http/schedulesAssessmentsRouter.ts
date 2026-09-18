@@ -27,6 +27,8 @@ import {
   printPautaQuerySchema,
   printScheduleQuerySchema,
   loginSchema,
+  refreshSchema,
+  logoutSchema,
 } from '../schemas';
 import { z } from 'zod';
 
@@ -97,6 +99,11 @@ export function createSchedulesAssessmentsRouter(options: { service?: SchedulesA
     correlationId: req.correlationId as string,
   });
 
+  const reqMeta = (req: CustomRequest) => ({
+    userAgent: (req.get('user-agent') as string | undefined) ?? undefined,
+    ipAddress: req.ip,
+  });
+
   const isStudentRole = (req: CustomRequest) => req.auth?.role === 'STUDENT';
 
   router.use((req: CustomRequest, res: Response, next: NextFunction) => {
@@ -111,12 +118,30 @@ export function createSchedulesAssessmentsRouter(options: { service?: SchedulesA
     '/auth/login',
     handler(async (req: CustomRequest, res: Response) => {
       const body = validate(loginSchema, req.body);
-      const data = await authService.login(body);
+      const data = await authService.login(body, reqMeta(req));
+      return success(res, data, 200, req.correlationId);
+    }),
+  );
+
+  router.post(
+    '/auth/refresh',
+    handler(async (req: CustomRequest, res: Response) => {
+      const body = validate(refreshSchema, req.body);
+      const data = await authService.refresh(body.refreshToken, reqMeta(req));
       return success(res, data, 200, req.correlationId);
     }),
   );
 
   router.use(createG3AuthMiddleware());
+
+  router.post(
+    '/auth/logout',
+    handler(async (req: CustomRequest, res: Response) => {
+      const body = validate(logoutSchema, req.body);
+      const data = await authService.logout(body.refreshToken, (req.auth as { userId: string }).userId);
+      return success(res, data, 200, req.correlationId);
+    }),
+  );
 
   router.get(
     '/me/financial-status',
@@ -420,6 +445,7 @@ export function createSchedulesAssessmentsRouter(options: { service?: SchedulesA
 
   router.get(
     '/teachers',
+    requireRoles(...STAFF_ROLES),
     handler(async (req, res) => {
       const query = validate(catalogQuerySchema, req.query);
       const data = await service.listTeachers();
@@ -430,6 +456,7 @@ export function createSchedulesAssessmentsRouter(options: { service?: SchedulesA
 
   router.get(
     '/students',
+    requireRoles(...STAFF_ROLES),
     handler(async (req, res) => {
       const query = validate(catalogQuerySchema, req.query);
       const data = await service.listStudents({ classId: query.classId, termId: query.termId });

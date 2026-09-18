@@ -43,9 +43,9 @@ function sendError(res: Response, status: number, code: string, message: string,
 
 export function createAssessmentChargesRouter(): Router {
   const router = Router();
-  const secret = process.env.SMARTCAMPUS_JWT_SECRET;
+  const secret = process.env.JWT_ACCESS_SECRET || process.env.SMARTCAMPUS_JWT_SECRET;
   if (!secret) {
-    throw new Error('SMARTCAMPUS_JWT_SECRET é obrigatório para o serviço financeiro');
+    throw new Error('JWT_ACCESS_SECRET (ou SMARTCAMPUS_JWT_SECRET) é obrigatório para o serviço financeiro');
   }
   const auth = createAuthMiddleware({
     secret,

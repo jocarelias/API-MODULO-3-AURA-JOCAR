@@ -469,12 +469,22 @@ export interface AuthTokensDto {
   accessToken: string;
   tokenType: 'Bearer';
   expiresIn: number;
+  refreshToken: string;
+  refreshExpiresIn: number;
   user: AuthUserDto;
 }
 
 export interface LoginInputDto {
   email: string;
   password: string;
+}
+
+export interface RefreshInputDto {
+  refreshToken: string;
+}
+
+export interface LogoutInputDto {
+  refreshToken: string;
 }
 
 export interface StudentProfileDto {

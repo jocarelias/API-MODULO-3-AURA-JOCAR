@@ -240,6 +240,14 @@ export class SmartCampusApiClient {
     return this.post<T>(`/auth/login`, { email, password });
   }
 
+  refresh<T>(refreshToken: string): Promise<T> {
+    return this.post<T>(`/auth/refresh`, { refreshToken });
+  }
+
+  logout<T>(refreshToken: string): Promise<T> {
+    return this.post<T>(`/auth/logout`, { refreshToken });
+  }
+
   getStudentProfile<T>(studentId: string): Promise<T> {
     return this.get<T>(`/api/v1/students/${studentId}`, {}, this.contractBaseUrls.students);
   }

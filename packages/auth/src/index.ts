@@ -1,12 +1,15 @@
-import { createHmac, timingSafeEqual, randomBytes, scryptSync } from 'node:crypto';
+import { createHmac, timingSafeEqual, randomBytes, scryptSync, createHash, randomUUID } from 'node:crypto';
 
 const HEADER_B64 = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
 
+export type TokenType = 'access' | 'refresh';
+
 export interface TokenClaims {
+  jti: string;
   sub: string;
   role: string;
   schoolId: string;
-  type: 'access';
+  type: TokenType;
   iat: number;
   exp: number;
 }
@@ -25,12 +28,13 @@ function unixNow(): number {
   return Math.floor(Date.now() / 1000);
 }
 
-export function signToken(user: LoginUser, secret: string, ttlSeconds = 3600): string {
+export function signToken(user: LoginUser, secret: string, ttlSeconds = 3600, type: TokenType = 'access', jti = randomUUID()): string {
   const claims: TokenClaims = {
+    jti,
     sub: user.id,
     role: user.role,
     schoolId: user.schoolId,
-    type: 'access',
+    type,
     iat: unixNow(),
     exp: unixNow() + ttlSeconds,
   };
@@ -40,7 +44,7 @@ export function signToken(user: LoginUser, secret: string, ttlSeconds = 3600): s
   return `${signingInput}.${signature}`;
 }
 
-export function verifyToken(token: string, secret: string): TokenClaims {
+export function verifyToken(token: string, secret: string, expectedType: TokenType = 'access'): TokenClaims {
   const parts = token.split('.');
   if (parts.length !== 3) {
     throw new Error('Token malformado');
@@ -56,13 +60,17 @@ export function verifyToken(token: string, secret: string): TokenClaims {
     throw new Error('Assinatura inválida');
   }
   const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as TokenClaims;
-  if (claims.type !== 'access' || !claims.sub || !claims.role || !claims.schoolId) {
+  if (claims.type !== expectedType || !claims.sub || !claims.role || !claims.schoolId) {
     throw new Error('Reclamações inválidas');
   }
   if (claims.exp <= unixNow()) {
     throw new Error('Token expirado');
   }
   return claims;
+}
+
+export function hashToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
 }
 
 const SCRYPT_KEYLEN = 64;

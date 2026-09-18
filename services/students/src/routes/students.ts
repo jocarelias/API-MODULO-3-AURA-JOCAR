@@ -54,9 +54,9 @@ function toProfile(row: StudentRow): StudentProfileDto {
 
 export function createStudentsRouter(): Router {
   const router = Router();
-  const secret = process.env.SMARTCAMPUS_JWT_SECRET;
+  const secret = process.env.JWT_ACCESS_SECRET || process.env.SMARTCAMPUS_JWT_SECRET;
   if (!secret) {
-    throw new Error('SMARTCAMPUS_JWT_SECRET é obrigatório para o serviço de estudantes');
+    throw new Error('JWT_ACCESS_SECRET (ou SMARTCAMPUS_JWT_SECRET) é obrigatório para o serviço de estudantes');
   }
   const auth = createAuthMiddleware({ secret, loadUser });
 

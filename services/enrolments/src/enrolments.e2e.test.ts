@@ -7,6 +7,7 @@ import { createApp } from './app';
 
 const SECRET = 'e2e-secret-enrolments';
 process.env.SMARTCAMPUS_JWT_SECRET = SECRET;
+process.env.JWT_ACCESS_SECRET = SECRET;
 process.env.ENROLMENTS_SERVICE_PORT = '4103';
 
 const prisma = new PrismaClient();

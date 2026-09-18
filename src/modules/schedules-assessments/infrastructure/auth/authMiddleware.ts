@@ -10,9 +10,9 @@ async function loadUser(userId: string): Promise<AuthUserRecord | null> {
 }
 
 export function createG3AuthMiddleware() {
-  const secret = process.env.SMARTCAMPUS_JWT_SECRET;
+  const secret = process.env.JWT_ACCESS_SECRET || process.env.SMARTCAMPUS_JWT_SECRET;
   if (!secret) {
-    throw new Error('SMARTCAMPUS_JWT_SECRET é obrigatório para o módulo G3');
+    throw new Error('JWT_ACCESS_SECRET (ou SMARTCAMPUS_JWT_SECRET) é obrigatório para o módulo G3');
   }
   return createAuthMiddleware({ secret, loadUser });
 }

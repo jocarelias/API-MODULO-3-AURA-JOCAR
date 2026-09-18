@@ -64,7 +64,26 @@ const authTokens: OpenApiSchema = {
     accessToken: { type: 'string' },
     tokenType: { type: 'string' },
     expiresIn: { type: 'integer' },
+    refreshToken: { type: 'string' },
+    refreshExpiresIn: { type: 'integer' },
     user: authUser,
+  },
+  required: ['accessToken', 'tokenType', 'expiresIn', 'refreshToken', 'refreshExpiresIn', 'user'],
+};
+
+const refreshInput: OpenApiSchema = {
+  type: 'object',
+  required: ['refreshToken'],
+  properties: {
+    refreshToken: { type: 'string', minLength: 16 },
+  },
+};
+
+const logoutInput: OpenApiSchema = {
+  type: 'object',
+  required: ['refreshToken'],
+  properties: {
+    refreshToken: { type: 'string', minLength: 16 },
   },
 };
 
@@ -474,8 +493,10 @@ export function buildOpenApi(): Record<string, unknown> {
       '/api/v1/auth/login': {
         post: {
           tags: ['Autenticação'],
-          summary: 'Autentica um utilizador e devolve um token de acesso',
-          description: 'Público. Verifica credenciais e devolve um accessToken (Bearer, TTL 3600s).',
+          summary: 'Autentica um utilizador e devolve accessToken + refreshToken',
+          description:
+            'Público. Verifica credenciais e devolve um accessToken (Bearer, curta duração) e um refreshToken ' +
+            '(longa duração, 7 dias por omissão). O refreshToken é gerido com rotação e revogação.',
           requestBody: { required: true, content: { 'application/json': { schema: loginInput } } },
           responses: {
             200: {
@@ -486,6 +507,38 @@ export function buildOpenApi(): Record<string, unknown> {
             401: { description: 'Credenciais inválidas ou utilizador inativo', content: { 'application/json': { schema: errorSchema } } },
           },
           security: [],
+        },
+      },
+      '/api/v1/auth/refresh': {
+        post: {
+          tags: ['Autenticação'],
+          summary: 'Renova a sessão (rotação de refreshToken)',
+          description:
+            'Público. Recebe um refreshToken válido, revoga-o e devolve um novo par accessToken + refreshToken. ' +
+            'Reutilização de um refreshToken já revogado devolve 401 UNAUTHENTICATED.',
+          requestBody: { required: true, content: { 'application/json': { schema: refreshInput } } },
+          responses: {
+            200: {
+              description: 'Novo par de tokens',
+              content: { 'application/json': { schema: successEnvelope(authTokens) } },
+            },
+            400: { description: 'Requisição inválida', content: { 'application/json': { schema: errorSchema } } },
+            401: { description: 'RefreshToken inválido, expirado ou já utilizado', content: { 'application/json': { schema: errorSchema } } },
+          },
+          security: [],
+        },
+      },
+      '/api/v1/auth/logout': {
+        post: {
+          tags: ['Autenticação'],
+          summary: 'Revoga o refreshToken (logout)',
+          description: 'Autenticado. Revoga o refreshToken indicado; pedidos posteriores com esse refreshToken devolvem 401.',
+          requestBody: { required: true, content: { 'application/json': { schema: logoutInput } } },
+          responses: {
+            200: { description: 'Sessão revogada', content: { 'application/json': { schema: successEnvelope({ type: 'object', properties: { revoked: { type: 'boolean' } } }) } } },
+            400: { description: 'Requisição inválida', content: { 'application/json': { schema: errorSchema } } },
+            401: { description: 'Não autenticado', content: { 'application/json': { schema: errorSchema } } },
+          },
         },
       },
       '/api/v1/results/calculation-methods': {
@@ -782,6 +835,8 @@ export function buildOpenApi(): Record<string, unknown> {
         Error: errorSchema,
         FinancialStatus: financialStatus,
         LoginInput: loginInput,
+        RefreshInput: refreshInput,
+        LogoutInput: logoutInput,
         AuthTokens: authTokens,
         AuthUser: authUser,
       },

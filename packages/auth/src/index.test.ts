@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { signToken, verifyToken, hashPassword, verifyPassword } from './index';
+import { signToken, verifyToken, hashToken, hashPassword, verifyPassword } from './index';
 
 const SECRET = 'test-secret';
 
@@ -28,6 +28,27 @@ describe('@smartcampus/auth — tokens', () => {
   it('token expirado rejeita', () => {
     const token = signToken(user, SECRET, -10);
     expect(() => verifyToken(token, SECRET)).toThrow('expirado');
+  });
+
+  it('refresh token é assinado com type=refresh e verifica com segredo próprio', () => {
+    const refresh = signToken(user, 'refresh-secret', 604800, 'refresh');
+    const claims = verifyToken(refresh, 'refresh-secret', 'refresh');
+    expect(claims.type).toBe('refresh');
+    expect(claims.sub).toBe('u1');
+  });
+
+  it('access token não passa por verificação de refresh (e vice-versa)', () => {
+    const access = signToken(user, SECRET, 3600, 'access');
+    const refresh = signToken(user, SECRET, 3600, 'refresh');
+    expect(() => verifyToken(access, SECRET, 'refresh')).toThrow();
+    expect(() => verifyToken(refresh, SECRET, 'access')).toThrow();
+  });
+
+  it('hashToken é estável e irreversível', () => {
+    const a = hashToken('segredo');
+    expect(a).toBe(hashToken('segredo'));
+    expect(a).not.toBe('segredo');
+    expect(a).toMatch(/^[0-9a-f]{64}$/);
   });
 });
 
