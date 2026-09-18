@@ -4,8 +4,8 @@ Documentação do modelo de dados do **Módulo G3 — Avaliações e Horários**
 [dbdiagram.io](https://dbdiagram.io/d), incluindo:
 
 1. **DSL dbdiagram.io** pronta a copiar/colar (validada contra `prisma/schema.prisma`);
-2. **Diagrama assíncrono ASCII** com cardinalidades Crow's Foot;
-3. **Dicionário de entidades**, enums e regras;
+2. **Diagrama renderizado** com as entidades organizadas por módulo e **cardinalidades explícitas `1:N` / `1:1`** em cada relação;
+3. **Dicionário de entidades** (16 tabelas, 17 enums), regras e chaves;
 4. **Relação com os outros módulos** (Core: Students 4101, Teachers 4102, Enrolments 4103, Finance 4104).
 
 > As tabelas estão tal como definidas em `prisma/schema.prisma` (names em maze_case das tabelas,
@@ -460,16 +460,46 @@ Table audit_logs {
 
 ## 1.1 Diagrama renderizado (estilo dbdiagram.io)
 
-Imagem gerada a partir do mesmo modelo (SVG/PNG):
+Imagem gerada a partir do mesmo modelo (SVG/PNG). A figura mostra as **16 entidades organizadas
+em faixas por módulo** e, junto a cada relacionamento, a **cardinalidade `1:N` / `1:1`**:
 
-![Diagrama ER — estilo dbdiagram.io](diagrams/er-diagram-g3-dbdiagram.png)
+![Diagrama ER — estilo dbdiagram.io](../diagrams/er-diagram-g3-dbdiagram.png)
 
-- **SVG vectorial:** [`docs/diagrams/er-diagram-g3-dbdiagram.svg`](diagrams/er-diagram-g3-dbdiagram.svg)
-- **PNG (alta resolução, para relatórios/Word):** [`docs/diagrams/er-diagram-g3-dbdiagram.png`](diagrams/er-diagram-g3-dbdiagram.png)
+- **SVG vectorial:** [`docs/diagrams/er-diagram-g3-dbdiagram.svg`](../diagrams/er-diagram-g3-dbdiagram.svg)
+- **PNG (alta resolução, para relatórios/Word):** [`docs/diagrams/er-diagram-g3-dbdiagram.png`](../diagrams/er-diagram-g3-dbdiagram.png)
 
 ---
 
-## 2. Diagrama ER (vista lógica — cardinalidades Crow's Foot)
+## 1.2 Organização das entidades por módulo
+
+O modelo é **multi-tenancy**: todas as entidades têm `schoolId` que aponta para `schools`. As
+faixas coloridas do diagrama correspondem ao núcleo funcional de cada tabela:
+
+| Núcleo / módulo | Entidades | Porta a que se liga |
+|---|---|---|
+| Multi-tenancy | `schools` | — |
+| Core Auth (RBAC) | `users`, `refresh_tokens` | — |
+| Core Académico | `academic_years`, `terms`, `classes`, `subjects` | — |
+| Core Teachers | `teachers` | 4102 |
+| Core Students | `students` | 4101 |
+| Core Enrolments | `enrollments` | 4103 |
+| **Módulo G3** | `assessments`, `grades`, `schedules`, `results` | 4100 |
+| Core Finance | `financial_statuses` | 4104 |
+| Auditoria | `audit_logs` | — |
+
+**Como ler o diagrama:**
+- A **pata de pé-de-crow** (Δ) indica o lado "muitos" (`N`); o **traço** indica o lado "um" (`1`).
+- A etiqueta **`1:N`** junto à chave estrangeira lê-se "uma entidade de origem tem muitas da destino".
+- A etiqueta **`1:1`** marca as relações únicas (`teachers.userId`, `students.userId`,
+  `financial_statuses.studentId`) — contas de acesso e situação financeira são exclusivas.
+- Relações **N:N** (aluno–disciplina, aluno–avaliação) não existem directamente: são
+  materializadas pelas entidades-associação `enrollments` e `grades`.
+
+---
+
+## 2. Diagrama ER (vista lógica — cardinalidades `1:N` / `1:1`)
+
+Vista lógica simplificada que mostra a estrutura do modelo com as cardinalidades:
 
 ```
                           CORE (multi-tenancy)                G3 — AVALIAÇÕES E HORÁRIOS
@@ -522,6 +552,10 @@ Imagem gerada a partir do mesmo modelo (SVG/PNG):
 `1:1` um-para-um. A cardinalidade "muitos" está sempre do lado das tabelas do módulo G3
 (avaliações → notas, resultados por aluno/disciplina/período).
 
+> Relações **N:N** lógicas (estudante↔disciplina, estudante↔avaliação) são representadas por
+> entidades-associação: `enrollments` (aluno × turma × disciplina × período) e `grades`
+> (aluno × avaliação, 1 nota — `UQ(assessmentId, studentId)`).
+
 ---
 
 ## 3. Dicionário de entidades
@@ -563,22 +597,28 @@ Imagem gerada a partir do mesmo modelo (SVG/PNG):
 
 ## 4. Relações e regras do módulo G3
 
-**Relações do G3 com o núcleo Core (módulos adjacentes):**
+**Mapa completo de relacionamentos (`1:N` / `1:1`).** O lado "muitos" (`N`) é sempre a entidade
+que contém a chave estrangeira:
 
-| FK de | → Tabela alvo | Cardinalidade | O que liga |
-|---|---|---|---|
-| `Assessment.schoolId` | `School` | M:1 | multi-tenancy |
-| `Assessment.teacherId` | `Teacher` (4102) | M:1 | professor responsável |
-| `Assessment.classId` | `Class` | M:1 | turma avaliada |
-| `Assessment.subjectId` | `Subject` | M:1 | disciplina |
-| `Assessment.termId` / `academicYearId` | `Term` / `AcademicYear` | M:1 | período lectivo |
-| `Grade.studentId` | `Student` (4101) | M:1 | aluno avaliado |
-| `Grade.assessmentId` | `Assessment` | M:1 | avaliação origem |
-| `Schedule.*Id` | `Class/Subject/Teacher/Term` | M:1 | horário da aula |
-| `Result.studentId` | `Student` (4101) | M:1 | dono do resultado |
-| `Result.*Id` | `Class/Subject/Term` | M:1 | contexto do resultado |
-| `Result.teacherId` | `Teacher` (4102) | M:1 (opcional) | docente que lançou as notas |
-| `FinancialStatus.studentId` | `Student` (4101) | **1:1** | situação financeira (contrato Finance 4104) |
+| Entidade (lado 1) | Relação | Entidade (lado N) | Cardinalidade | O que liga |
+|---|---|---|---|---|
+| `schools` | — | todas as entidades (`schoolId`) | 1:N | multi-tenancy |
+| `users` | — | `teachers` / `students` (`userId`) | **1:1** | conta de acesso exclusiva |
+| `users` | — | `refresh_tokens` | 1:N | sessões da conta |
+| `academic_years` | — | `terms` | 1:N | períodos do ano lectivo |
+| `classes` | — | `enrollments` · `assessments` · `schedules` · `results` | 1:N | turmas avaliadas/horários/resultados |
+| `subjects` | — | `enrollments` · `assessments` · `schedules` · `results` | 1:N | disciplinas avaliadas |
+| `teachers` | — | `assessments` · `schedules` · `results` | 1:N | docente responsável |
+| `students` | — | `enrollments` · `grades` · `results` | 1:N | aluno avaliado/matriculado |
+| `students` | — | `financial_statuses` | **1:1** | situação financeira (Finance 4104) |
+| `assessments` | — | `grades` | 1:N | notas da avaliação |
+| `terms` | — | `assessments` · `schedules` · `enrollments` · `results` | 1:N | período do lançamento |
+
+**Relações N:N (materializadas por entidades-associação):**
+- `students` ↔ `subjects` (e `classes`, `terms`) → resolvida por **`enrollments`**
+  (`UQ(studentId, classId, subjectId, termId)` — 1 matrícula única);
+- `students` ↔ `assessments` → resolvida por **`grades`**
+  (`UQ(assessmentId, studentId)` — 1 nota por aluno por avaliação).
 
 **Regras que o diagrama materializa:**
 - **1 nota por aluno/avaliação** → `UQ(assessmentId, studentId)` em `grades` (duplicada → 409).
