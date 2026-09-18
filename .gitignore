@@ -36,6 +36,9 @@ Thumbs.db
 # Prisma (migrations sao versionadas; apenas gerados sao ignorados)
 src/generated/
 
+# Documentação
+*.md
+
 # Testes
 .tmp-test/
 # LibreOffice lock files
