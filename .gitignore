@@ -12,7 +12,7 @@ AGENTS.md
 .env.local
 .env.test
 .env.*.local
-!.env.example
+.env.example
 
 # Logs
 logs/
