@@ -6,14 +6,25 @@
   "license": "UNLICENSED",
   "private": true,
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "services/*"
   ],
   "scripts": {
     "dev": "tsx watch src/main.ts",
     "start": "node dist/src/main.js",
+    "dev:services": "concurrently -n students,teachers,enrolments,finance -c blue,green,magenta,yellow \"npm:dev:students\" \"npm:dev:teachers\" \"npm:dev:enrolments\" \"npm:dev:finance\"",
+    "dev:students": "tsx watch services/students/src/main.ts",
+    "dev:teachers": "tsx watch services/teachers/src/main.ts",
+    "dev:enrolments": "tsx watch services/enrolments/src/main.ts",
+    "dev:finance": "tsx watch services/finance/src/main.ts",
+    "start:students": "node dist/services/students/src/main.js",
+    "start:teachers": "node dist/services/teachers/src/main.js",
+    "start:enrolments": "node dist/services/enrolments/src/main.js",
+    "start:finance": "node dist/services/finance/src/main.js",
     "build": "tsc -p tsconfig.json",
     "test": "npm run test:unit && npm run test:e2e",
     "test:unit": "vitest run",
+    "test:services": "vitest run --config vitest.services.config.ts",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "prisma:generate": "prisma generate",
     "prisma:studio": "prisma studio",
@@ -37,7 +48,9 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
     "@types/supertest": "^6.0.2",
+    "js-yaml": "^5.4.2",
     "prisma": "^6.5.0",
     "supertest": "^7.0.0",
     "tsx": "^4.19.0",

@@ -25,14 +25,42 @@ export interface QueryParams {
 export class SmartCampusApiClient {
   private baseUrl: string;
   private timeoutMs: number;
+  private accessToken: string | null = null;
+  private contractBaseUrls: { students: string; teachers: string; enrolments: string; finance: string };
 
-  constructor({ baseUrl = process.env.G3_API_URL || 'http://localhost:4100', timeoutMs = 10000 }: { baseUrl?: string; timeoutMs?: number } = {}) {
+  constructor({
+    baseUrl = process.env.G3_API_URL || 'http://localhost:4100',
+    timeoutMs = 10000,
+    accessToken,
+    contractBaseUrls = {},
+  }: {
+    baseUrl?: string;
+    timeoutMs?: number;
+    accessToken?: string;
+    contractBaseUrls?: { students?: string; teachers?: string; enrolments?: string; finance?: string };
+  } = {}) {
     this.baseUrl = baseUrl.replace(/\/+$/, '');
     this.timeoutMs = timeoutMs;
+    this.accessToken = accessToken ?? null;
+    this.contractBaseUrls = {
+      students: (contractBaseUrls.students ?? process.env.STUDENTS_SERVICE_URL ?? 'http://localhost:4101').replace(/\/+$/, ''),
+      teachers: (contractBaseUrls.teachers ?? process.env.TEACHERS_SERVICE_URL ?? 'http://localhost:4102').replace(/\/+$/, ''),
+      enrolments: (contractBaseUrls.enrolments ?? process.env.ENROLMENTS_SERVICE_URL ?? 'http://localhost:4103').replace(/\/+$/, ''),
+      finance: (contractBaseUrls.finance ?? process.env.FINANCE_SERVICE_URL ?? 'http://localhost:4104').replace(/\/+$/, ''),
+    };
   }
 
-  async request<T>(method: string, path: string, body?: unknown, query: QueryParams = {}): Promise<T> {
-    const url = new URL(`${this.baseUrl}${G3.basePath}${path}`);
+  setAccessToken(token: string): void {
+    this.accessToken = token;
+  }
+
+  private resolveUrl(path: string, baseOverride?: string): URL {
+    const base = (baseOverride ?? `${this.baseUrl}${G3.basePath}`).replace(/\/+$/, '');
+    return new URL(`${base}${path}`);
+  }
+
+  async request<T>(method: string, path: string, body?: unknown, query: QueryParams = {}, baseUrlOverride?: string): Promise<T> {
+    const url = this.resolveUrl(path, baseUrlOverride);
     const searchParams = Object.entries(query).filter(([, value]) => value !== undefined && value !== null && value !== '');
     for (const [key, value] of searchParams) {
       url.searchParams.set(key, String(value));
@@ -41,6 +69,9 @@ export class SmartCampusApiClient {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
     const options: { method: string; headers: Record<string, string>; signal: AbortSignal; body?: string } = { method, headers: {}, signal: controller.signal };
+    if (this.accessToken) {
+      options.headers.authorization = `Bearer ${this.accessToken}`;
+    }
     if (body !== undefined) {
       options.headers['content-type'] = 'application/json';
       options.body = JSON.stringify(body);
@@ -69,12 +100,12 @@ export class SmartCampusApiClient {
     return payload.data as T;
   }
 
-  get<T>(path: string, query: QueryParams = {}): Promise<T> {
-    return this.request<T>('GET', path, undefined, query);
+  get<T>(path: string, query: QueryParams = {}, baseUrlOverride?: string): Promise<T> {
+    return this.request<T>('GET', path, undefined, query, baseUrlOverride);
   }
 
-  post<T>(path: string, body: unknown): Promise<T> {
-    return this.request<T>('POST', path, body);
+  post<T>(path: string, body: unknown, baseUrlOverride?: string): Promise<T> {
+    return this.request<T>('POST', path, body, {}, baseUrlOverride);
   }
 
   patch<T>(path: string, body: unknown = {}): Promise<T> {
@@ -203,6 +234,38 @@ export class SmartCampusApiClient {
 
   listStudents<T>(query: QueryParams = {}): Promise<T> {
     return this.get<T>('/students', query);
+  }
+
+  login<T>(email: string, password: string): Promise<T> {
+    return this.post<T>(`/auth/login`, { email, password });
+  }
+
+  getStudentProfile<T>(studentId: string): Promise<T> {
+    return this.get<T>(`/api/v1/students/${studentId}`, {}, this.contractBaseUrls.students);
+  }
+
+  getMyStudentProfile<T>(): Promise<T> {
+    return this.get<T>(`/api/v1/students/me`, {}, this.contractBaseUrls.students);
+  }
+
+  listStudentsContract<T>(query: QueryParams = {}): Promise<T> {
+    return this.get<T>(`/api/v1/students`, query, this.contractBaseUrls.students);
+  }
+
+  getTeacherProfile<T>(teacherId: string): Promise<T> {
+    return this.get<T>(`/api/v1/teachers/${teacherId}`, {}, this.contractBaseUrls.teachers);
+  }
+
+  listTeachersContract<T>(query: QueryParams = {}): Promise<T> {
+    return this.get<T>(`/api/v1/teachers`, query, this.contractBaseUrls.teachers);
+  }
+
+  listEnrolments<T>(query: QueryParams = {}): Promise<T> {
+    return this.get<T>(`/api/v1/enrolments`, query, this.contractBaseUrls.enrolments);
+  }
+
+  getFinancialStatus<T>(studentId: string): Promise<T> {
+    return this.get<T>(`/api/v1/financial-status/${studentId}`, {}, this.contractBaseUrls.finance);
   }
 }
 

@@ -1,0 +1,8 @@
+{
+  "name": "@smartcampus/auth",
+  "version": "1.0.0",
+  "description": "Autenticação partilhada da Smart Campos: tokens HMAC (Bearer), hash de password (scrypt) e middleware de autenticação/RBAC para Express.",
+  "private": true,
+  "main": "src/index.ts",
+  "license": "UNLICENSED"
+}

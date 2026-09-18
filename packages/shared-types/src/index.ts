@@ -392,10 +392,188 @@ export function studentDto(record: Record<string, unknown>): StudentDto {
 }
 
 export const campusModules = {
+  AUTH: { name: 'Autenticação', basePath: '/api/v1', resources: ['auth/login'] },
   G3_AVALIACOES_HORARIOS: {
     name: 'Avaliações e Horários',
     basePath: '/api/v1',
     resources: ['assessments', 'schedules', 'results'],
-    open: true,
+    open: false,
   },
+  STUDENTS: { name: 'Estudantes', basePath: '/api/v1', resources: ['students'] },
+  TEACHERS: { name: 'Docentes', basePath: '/api/v1', resources: ['teachers'] },
+  ENROLMENTS: { name: 'Inscrições', basePath: '/api/v1', resources: ['enrolments'] },
+  FINANCE: { name: 'Financeiro', basePath: '/api/v1', resources: ['financial-status'] },
 };
+
+// ============================================================
+// CONTRATOS ENTRE MÓDULOS (multi-serviço, consumidos por HTTP)
+// ============================================================
+
+export const ROLES = ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'DIRECTOR', 'COORDINATOR', 'TEACHER', 'STUDENT', 'PARENT', 'SECRETARY'] as const;
+export type Role = (typeof ROLES)[number];
+
+export const ADMIN_ROLES: readonly Role[] = ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'DIRECTOR', 'COORDINATOR', 'SECRETARY'];
+export const STAFF_ROLES: readonly Role[] = [...ADMIN_ROLES, 'TEACHER'];
+
+export const CONTRACT_ERROR_CODES = {
+  UNKNOWN: 'UNKNOWN_ERROR',
+  STUDENT_NOT_FOUND: 'STUDENT_NOT_FOUND',
+  TEACHER_NOT_FOUND: 'TEACHER_NOT_FOUND',
+  UNAUTHENTICATED: 'UNAUTHENTICATED',
+  FORBIDDEN: 'FORBIDDEN',
+  GRADES_BLOCKED_DUE_TO_DEBT: 'GRADES_BLOCKED_DUE_TO_DEBT',
+  FINANCIAL_ACCESS_BLOCKED: 'FINANCIAL_ACCESS_BLOCKED',
+  FINANCIAL_VERIFICATION_UNAVAILABLE: 'FINANCIAL_VERIFICATION_UNAVAILABLE',
+  FINANCIAL_SERVICE_UNAVAILABLE: 'FINANCIAL_SERVICE_UNAVAILABLE',
+  UPSTREAM_UNAVAILABLE: 'UPSTREAM_UNAVAILABLE',
+  UPSTREAM_ERROR: 'UPSTREAM_ERROR',
+} as const;
+
+export type FinancialStandingStatus = 'ACTIVE' | 'BLOCKED';
+
+export interface FinancialStandingDto {
+  status: FinancialStandingStatus;
+  checkedAt: string;
+}
+
+export interface AssessmentChargeInputDto {
+  sourceModule: string;
+  sourceRequestId: string;
+  studentUserId: string;
+  feeCode: string;
+  externalAssessmentId?: string;
+  externalEnrolmentId?: string;
+  academicYearId?: string;
+  termId?: string;
+}
+
+export interface AssessmentChargeDto {
+  externalRegistrationId: string;
+  feeCode: string;
+  amount: number;
+  currency: string;
+  description: string;
+  dueDate: string | null;
+  status: string;
+}
+
+export interface AuthUserDto {
+  id: string;
+  role: Role;
+  schoolId: string;
+  name: string;
+  email: string;
+}
+
+export interface AuthTokensDto {
+  accessToken: string;
+  tokenType: 'Bearer';
+  expiresIn: number;
+  user: AuthUserDto;
+}
+
+export interface LoginInputDto {
+  email: string;
+  password: string;
+}
+
+export interface StudentProfileDto {
+  id: string;
+  schoolId: string;
+  userId: string | null;
+  studentNumber: string | null;
+  courseId: string | null;
+  admissionYear: string | null;
+  name: string;
+  email: string | null;
+  status: string;
+}
+
+export interface TeacherProfileDto {
+  id: string;
+  schoolId: string;
+  userId: string | null;
+  staffNumber: string | null;
+  departmentId: string | null;
+  title: string | null;
+  name: string;
+  email: string | null;
+  status: string;
+}
+
+export interface EnrolmentDto {
+  id: string;
+  schoolId: string;
+  academicYearId: string;
+  academicYear: string | null;
+  termId: string;
+  classId: string;
+  studentId: string;
+  subjectId: string;
+  status: string;
+}
+
+export type FinancialStatusState = 'REGULAR' | 'IN_DEBT';
+
+export interface FinancialStatusDto {
+  studentId: string;
+  schoolId: string;
+  hasDebt: boolean;
+  status: FinancialStatusState;
+  outstandingAmount: number | null;
+  updatedAt: string | null;
+}
+
+export function studentProfileDto(record: Record<string, unknown>): StudentProfileDto {
+  return {
+    id: record.id as string,
+    schoolId: record.schoolId as string,
+    userId: (record.userId as string | null) ?? null,
+    studentNumber: (record.studentNumber as string | null) ?? (record.enrollmentNumber as string | null) ?? null,
+    courseId: (record.courseId as string | null) ?? null,
+    admissionYear: (record.admissionYear as string | null) ?? null,
+    name: record.name as string,
+    email: (record.email as string | null) ?? null,
+    status: record.status as string,
+  };
+}
+
+export function teacherProfileDto(record: Record<string, unknown>): TeacherProfileDto {
+  return {
+    id: record.id as string,
+    schoolId: record.schoolId as string,
+    userId: (record.userId as string | null) ?? null,
+    staffNumber: (record.staffNumber as string | null) ?? null,
+    departmentId: (record.departmentId as string | null) ?? null,
+    title: (record.title as string | null) ?? null,
+    name: record.name as string,
+    email: (record.email as string | null) ?? null,
+    status: record.status as string,
+  };
+}
+
+export function enrolmentDto(record: Record<string, unknown>): EnrolmentDto {
+  const academicYear = record.academicYear as { name?: unknown } | null | undefined;
+  return {
+    id: record.id as string,
+    schoolId: record.schoolId as string,
+    academicYearId: record.academicYearId as string,
+    academicYear: academicYear && typeof academicYear.name === 'string' ? academicYear.name : null,
+    termId: record.termId as string,
+    classId: record.classId as string,
+    studentId: record.studentId as string,
+    subjectId: record.subjectId as string,
+    status: record.status as string,
+  };
+}
+
+export function financialStatusDto(record: Record<string, unknown>): FinancialStatusDto {
+  return {
+    studentId: record.studentId as string,
+    schoolId: record.schoolId as string,
+    hasDebt: Boolean(record.hasDebt),
+    status: (record.hasDebt ? 'IN_DEBT' : 'REGULAR') as FinancialStatusState,
+    outstandingAmount: record.outstandingAmount === null || record.outstandingAmount === undefined ? null : Number(record.outstandingAmount),
+    updatedAt: record.updatedAt instanceof Date ? record.updatedAt.toISOString() : (record.updatedAt as string | null) ?? null,
+  };
+}

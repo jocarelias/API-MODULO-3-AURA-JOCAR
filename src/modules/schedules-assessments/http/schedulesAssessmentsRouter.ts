@@ -1,6 +1,10 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { randomUUID } from 'node:crypto';
+import { requireRoles, AuthRequest as AuthRequestBase } from '@smartcampus/auth';
+import { STAFF_ROLES } from '@smartcampus/shared-types';
 import { SchedulesAssessmentsService, DomainError } from '../application/schedulesAssessmentsService';
+import { AuthService } from '../application/authService';
+import { createG3AuthMiddleware } from '../infrastructure/auth/authMiddleware';
 import { toHttpError } from '../infrastructure/httpError';
 import {
   createAssessmentSchema,
@@ -22,10 +26,11 @@ import {
   classIdParamsSchema,
   printPautaQuerySchema,
   printScheduleQuerySchema,
+  loginSchema,
 } from '../schemas';
 import { z } from 'zod';
 
-interface CustomRequest extends Request {
+interface CustomRequest extends AuthRequestBase {
   correlationId?: string;
 }
 
@@ -71,17 +76,10 @@ function validate<S extends z.ZodTypeAny>(schema: S, value: unknown): z.output<S
   return result.data;
 }
 
-export function createSchedulesAssessmentsRouter(): Router {
+export function createSchedulesAssessmentsRouter(options: { service?: SchedulesAssessmentsService; authService?: AuthService } = {}): Router {
   const router = Router();
-  const service = new SchedulesAssessmentsService();
-
-  router.use((req: CustomRequest, res: Response, next: NextFunction) => {
-    if (!req.correlationId) {
-      req.correlationId = req.get('x-request-id') || randomUUID();
-    }
-    res.setHeader('x-request-id', req.correlationId);
-    next();
-  });
+  const service = options.service ?? new SchedulesAssessmentsService();
+  const authService = options.authService ?? new AuthService();
 
   const handler =
     (fn: (req: CustomRequest, res: Response) => Promise<unknown>) =>
@@ -93,6 +91,40 @@ export function createSchedulesAssessmentsRouter(): Router {
         res.status(mapped.status).json(mapped.body);
       }
     };
+
+  const ctxOf = (req: CustomRequest) => ({
+    token: (req.auth as { token: string }).token,
+    correlationId: req.correlationId as string,
+  });
+
+  const isStudentRole = (req: CustomRequest) => req.auth?.role === 'STUDENT';
+
+  router.use((req: CustomRequest, res: Response, next: NextFunction) => {
+    if (!req.correlationId) {
+      req.correlationId = req.get('x-request-id') || randomUUID();
+    }
+    res.setHeader('x-request-id', req.correlationId);
+    next();
+  });
+
+  router.post(
+    '/auth/login',
+    handler(async (req: CustomRequest, res: Response) => {
+      const body = validate(loginSchema, req.body);
+      const data = await authService.login(body);
+      return success(res, data, 200, req.correlationId);
+    }),
+  );
+
+  router.use(createG3AuthMiddleware());
+
+  router.get(
+    '/me/financial-status',
+    handler(async (req: CustomRequest, res: Response) => {
+      const data = await service.getMyFinancialStanding(ctxOf(req));
+      return success(res, data, 200, req.correlationId);
+    }),
+  );
 
   router.get(
     '/assessments',
@@ -106,6 +138,7 @@ export function createSchedulesAssessmentsRouter(): Router {
 
   router.post(
     '/assessments',
+    requireRoles(...STAFF_ROLES),
     handler(async (req, res) => {
       const body = validate(createAssessmentSchema, req.body);
       const data = await service.createAssessment(body);
@@ -124,6 +157,7 @@ export function createSchedulesAssessmentsRouter(): Router {
 
   router.patch(
     '/assessments/:id',
+    requireRoles(...STAFF_ROLES),
     handler(async (req, res) => {
       const { id } = validate(idParamsSchema, req.params);
       const body = validate(updateAssessmentSchema, req.body);
@@ -134,6 +168,7 @@ export function createSchedulesAssessmentsRouter(): Router {
 
   router.delete(
     '/assessments/:id',
+    requireRoles(...STAFF_ROLES),
     handler(async (req, res) => {
       const { id } = validate(idParamsSchema, req.params);
       const data = await service.deleteAssessment(id);
@@ -145,27 +180,33 @@ export function createSchedulesAssessmentsRouter(): Router {
     '/assessments/:assessmentId/grades',
     handler(async (req, res) => {
       const { assessmentId } = validate(assessmentIdParamsSchema, req.params);
-      const data = await service.listGrades(assessmentId);
+      let data = await service.listGrades(assessmentId);
+      if (isStudentRole(req)) {
+        const ownId = await service.assertStudentCanViewNotes(undefined, ctxOf(req));
+        data = data.filter((row: { studentId: string }) => row.studentId === ownId);
+      }
       return success(res, data, 200, req.correlationId, listMeta(data));
     }),
   );
 
   router.post(
     '/assessments/:assessmentId/grades',
+    requireRoles(...STAFF_ROLES),
     handler(async (req, res) => {
       const { assessmentId } = validate(assessmentIdParamsSchema, req.params);
       const body = validate(createGradeSchema, req.body);
-      const data = await service.createGrade(assessmentId, body);
+      const data = await service.createGrade(assessmentId, body, ctxOf(req));
       return success(res, data, 201, req.correlationId);
     }),
   );
 
   router.patch(
     '/assessments/:assessmentId/grades/:gradeId',
+    requireRoles(...STAFF_ROLES),
     handler(async (req, res) => {
       const { assessmentId, gradeId } = validate(gradeParamsSchema, req.params);
       const body = validate(updateGradeSchema, req.body);
-      const data = await service.updateGrade(assessmentId, gradeId, body);
+      const data = await service.updateGrade(assessmentId, gradeId, body, ctxOf(req));
       return success(res, data, 200, req.correlationId);
     }),
   );
@@ -174,6 +215,9 @@ export function createSchedulesAssessmentsRouter(): Router {
     '/schedules',
     handler(async (req, res) => {
       const query = validate(scheduleQuerySchema, req.query);
+      if (isStudentRole(req)) {
+        query.studentId = await service.resolveStudentScope(query.studentId, ctxOf(req));
+      }
       const data = await service.listSchedules(query);
       const { rows, meta } = paginate(data, query);
       return success(res, rows, 200, req.correlationId, meta);
@@ -182,6 +226,7 @@ export function createSchedulesAssessmentsRouter(): Router {
 
   router.post(
     '/schedules',
+    requireRoles(...STAFF_ROLES),
     handler(async (req, res) => {
       const body = validate(createScheduleSchema, req.body);
       const data = await service.createSchedule(body);
@@ -200,6 +245,7 @@ export function createSchedulesAssessmentsRouter(): Router {
 
   router.patch(
     '/schedules/:id',
+    requireRoles(...STAFF_ROLES),
     handler(async (req, res) => {
       const { id } = validate(idParamsSchema, req.params);
       const body = validate(updateScheduleSchema, req.body);
@@ -210,6 +256,7 @@ export function createSchedulesAssessmentsRouter(): Router {
 
   router.delete(
     '/schedules/:id',
+    requireRoles(...STAFF_ROLES),
     handler(async (req, res) => {
       const { id } = validate(idParamsSchema, req.params);
       const data = await service.deleteSchedule(id);
@@ -221,6 +268,9 @@ export function createSchedulesAssessmentsRouter(): Router {
     '/results',
     handler(async (req, res) => {
       const query = validate(resultQuerySchema, req.query);
+      if (isStudentRole(req)) {
+        query.studentId = await service.assertStudentCanViewNotes(query.studentId, ctxOf(req));
+      }
       const data = await service.listResults(query);
       const { rows, meta } = paginate(data, query);
       return success(res, rows, 200, req.correlationId, meta);
@@ -249,31 +299,44 @@ export function createSchedulesAssessmentsRouter(): Router {
     handler(async (req, res) => {
       const { id } = validate(idParamsSchema, req.params);
       const data = await service.getResult(id);
+      if (isStudentRole(req)) {
+        const ownId = await service.assertStudentCanViewNotes(undefined, ctxOf(req));
+        if (data.studentId !== ownId) {
+          throw new DomainError('FORBIDDEN', 'Só tem permissão para consultar os seus próprios resultados');
+        }
+      }
       return success(res, data, 200, req.correlationId);
     }),
   );
 
   router.post(
     '/results',
+    requireRoles(...STAFF_ROLES),
     handler(async (req, res) => {
       const body = validate(createResultSchema, req.body);
-      const data = await service.createResults(body);
-      return success(res, data, 201, req.correlationId);
+      const { results, blockedByDebt } = await service.createResults(body, ctxOf(req));
+      const meta: Record<string, unknown> = { correlationId: req.correlationId };
+      if (blockedByDebt.length > 0) {
+        meta.blockedByDebt = blockedByDebt;
+      }
+      return res.status(201).json({ data: results, meta });
     }),
   );
 
   router.patch(
     '/results/:id',
+    requireRoles(...STAFF_ROLES),
     handler(async (req, res) => {
       const { id } = validate(idParamsSchema, req.params);
       validate(updateResultSchema, req.body);
-      const data = await service.patchResult(id);
+      const data = await service.patchResult(id, ctxOf(req));
       return success(res, data, 200, req.correlationId);
     }),
   );
 
   router.delete(
     '/results/:id',
+    requireRoles(...STAFF_ROLES),
     handler(async (req, res) => {
       const { id } = validate(idParamsSchema, req.params);
       const data = await service.deleteResult(id);
@@ -296,7 +359,11 @@ export function createSchedulesAssessmentsRouter(): Router {
     handler(async (req, res) => {
       const { classId } = validate(classIdParamsSchema, req.params);
       const query = validate(printPautaQuerySchema, req.query);
-      const data = await service.getPrintClassPauta(classId, query.termId, query.subjectId);
+      let onlyStudentId: string | undefined;
+      if (isStudentRole(req)) {
+        onlyStudentId = await service.assertStudentCanViewNotes(undefined, ctxOf(req));
+      }
+      const data = await service.getPrintClassPauta(classId, query.termId, query.subjectId, ctxOf(req), onlyStudentId);
       return success(res, data, 200, req.correlationId);
     }),
   );

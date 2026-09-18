@@ -2,10 +2,31 @@
 
 ## Visão Geral
 
-API REST aberta para gestão académica de avaliações, notas, horários e resultados. Baseada em Node.js/TypeScript/Express/Prisma/PostgreSQL.
+API REST autenticada (Bearer JWT) para gestão académica de avaliações, notas, horários e resultados. Baseada em Node.js/TypeScript/Express/Prisma/PostgreSQL. Consome os serviços de contratos (students/teachers/enrolments/finance) via HTTP com credencial de serviço.
 
 **URL base:** `http://localhost:4100`
 **Docs Swagger:** `http://localhost:4100/api/docs`
+
+---
+
+## Autenticação
+
+Toda a API exige `Authorization: Bearer <accessToken>` (TTL 3600s) obtido em:
+
+### POST /api/v1/auth/login
+- **Body:** `{ email, password }`
+- **Response:** `{ data: { accessToken, tokenType, expiresIn, user }, meta: { correlationId } }`
+- **Erros:** 400 VALIDATION_ERROR, 401 UNAUTHENTICATED (credenciais inválidas/inativo)
+
+Papéis: `SCHOOL_ADMIN`, `TEACHER`, `STUDENT`. A comunicação G3 → Financeiro usa `FINANCIAL_SERVICE_TOKEN` (credencial de serviço), nunca o token do aluno. O `x-correlation-id`/`x-request-id` enviado pelo cliente é propagado aos serviços de contratos e ecoado como `meta.correlationId`.
+
+## Regra financeira (bloqueio de notas)
+
+- Estudante com registo financeiro em dívida → `403 FINANCIAL_ACCESS_BLOCKED` em todas as consultas de notas (resultados, notas de avaliação, pauta).
+- Serviço financeiro indisponível → `503 FINANCIAL_VERIFICATION_UNAVAILABLE` (fail-closed, nunca assume regular).
+- Lançamento de nota de aluno endividado → `409 GRADES_BLOCKED_DUE_TO_DEBT`.
+- Pauta para staff mascara linhas de endividados (`debtRestricted: true`, `average: null`).
+- `GET /api/v1/me/financial-status` reflecte o estado (só `ACTIVE`/`BLOCKED`, sem montantes) para o frontend silencioso.
 
 ---
 
@@ -40,6 +61,7 @@ API REST aberta para gestão académica de avaliações, notas, horários e resu
 
 ### GET /api/v1/assessments/:assessmentId/grades
 - **Objectivo:** Listar notas de uma avaliação
+- **Regras:** STUDENT apenas se não tiver dívida (senão 403 FINANCIAL_ACCESS_BLOCKED / 503 fail-closed)
 - **Response:** `{ data: Grade[], meta: { correlationId } }`
 
 ### POST /api/v1/assessments/:assessmentId/grades
@@ -73,13 +95,20 @@ API REST aberta para gestão académica de avaliações, notas, horários e resu
 
 ### GET /api/v1/results
 - **Objectivo:** Listar resultados académicos
+- **Regras:** STUDENT vê só os próprios; com dívida → 403 FINANCIAL_ACCESS_BLOCKED; sem perfil académico → 404 STUDENT_NOT_FOUND
+
+### GET /api/v1/me/financial-status
+- **Objectivo:** Estado financeiro do próprio estudante
+- **Response:** `{ data: { status: "ACTIVE" | "BLOCKED", checkedAt }, meta: { correlationId } }` (sem montantes)
 
 ### POST /api/v1/results
 - **Objectivo:** Calcular resultados em lote (turma/disciplina/período)
 - **Transacção atómica**
+- Alunos endividados são excluídos e sinalizados (`blockedByDebt`)
 
 ### GET /api/v1/results/:id
 - **Objectivo:** Obter resultado por ID
+- **Regras:** STUDENT só os próprios; com dívida → 403 FINANCIAL_ACCESS_BLOCKED
 
 ### PATCH /api/v1/results/:id
 - **Objectivo:** Recalcular um resultado individual

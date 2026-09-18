@@ -1,0 +1,8 @@
+{
+  "name": "@smartcampus/services-students",
+  "version": "1.0.0",
+  "description": "Serviço de Estudantes (contrato GET /api/v1/students).",
+  "private": true,
+  "main": "src/main.ts",
+  "license": "UNLICENSED"
+}

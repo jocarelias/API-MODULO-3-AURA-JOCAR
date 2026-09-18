@@ -525,6 +525,26 @@ model Result {
 }
 
 // ============================================================
+// MÓDULO FINANCEIRO (dono: services/finance)
+// Situação financeira do estudante — consumida por contrato HTTP
+// ============================================================
+
+model FinancialStatus {
+  id                 String   @id @default(uuid())
+  schoolId           String
+  studentId          String   @unique
+  hasDebt            Boolean  @default(false)
+  status             String   @default("REGULAR")
+  outstandingAmount  Decimal  @default(0) @db.Decimal(12, 2)
+  updatedAt          DateTime @updatedAt
+  createdAt          DateTime @default(now())
+
+  @@index([schoolId])
+  @@index([status])
+  @@map("financial_statuses")
+}
+
+// ============================================================
 // AUDITORIA
 // ============================================================
 

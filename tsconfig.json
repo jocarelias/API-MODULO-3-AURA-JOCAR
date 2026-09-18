@@ -19,6 +19,7 @@
   "include": [
     "src/**/*.ts",
     "packages/*/src/**/*.ts",
+    "services/*/src/**/*.ts",
     "prisma/**/*.ts"
   ],
   "exclude": [

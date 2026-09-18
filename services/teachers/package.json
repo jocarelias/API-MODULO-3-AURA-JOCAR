@@ -1,0 +1,8 @@
+{
+  "name": "@smartcampus/services-teachers",
+  "version": "1.0.0",
+  "description": "Serviço de Professores (contrato GET /api/v1/teachers).",
+  "private": true,
+  "main": "src/main.ts",
+  "license": "UNLICENSED"
+}

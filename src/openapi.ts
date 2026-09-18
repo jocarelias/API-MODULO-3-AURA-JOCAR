@@ -38,6 +38,45 @@ const errorSchema: OpenApiSchema = {
   },
 };
 
+const loginInput: OpenApiSchema = {
+  type: 'object',
+  required: ['email', 'password'],
+  properties: {
+    email: { type: 'string', format: 'email' },
+    password: { type: 'string', minLength: 1 },
+  },
+};
+
+const authUser: OpenApiSchema = {
+  type: 'object',
+  properties: {
+    id: uuid,
+    role: { type: 'string' },
+    schoolId: uuid,
+    name: { type: 'string' },
+    email: { type: 'string' },
+  },
+};
+
+const authTokens: OpenApiSchema = {
+  type: 'object',
+  properties: {
+    accessToken: { type: 'string' },
+    tokenType: { type: 'string' },
+    expiresIn: { type: 'integer' },
+    user: authUser,
+  },
+};
+
+const financialStatus: OpenApiSchema = {
+  type: 'object',
+  properties: {
+    status: { type: 'string', enum: ['ACTIVE', 'BLOCKED'] },
+    checkedAt: dateTime,
+  },
+  required: ['status', 'checkedAt'],
+};
+
 const school: OpenApiSchema = {
   type: 'object',
   properties: {
@@ -388,9 +427,24 @@ function responses(dataSchema: OpenApiSchema): Record<string, unknown> {
       content: { 'application/json': { schema: successEnvelope(dataSchema) } },
     },
     400: { description: 'Requisição inválida (validação Zod ou regra de domínio)', content: { 'application/json': { schema: errorSchema } } },
+    401: { description: 'Não autenticado — token em falta ou inválido (UNAUTHENTICATED)', content: { 'application/json': { schema: errorSchema } } },
     404: { description: 'Recurso não encontrado', content: { 'application/json': { schema: errorSchema } } },
     409: { description: 'Conflito (duplicação, horário, bloqueio por notas)', content: { 'application/json': { schema: errorSchema } } },
     500: { description: 'Erro interno do servidor', content: { 'application/json': { schema: errorSchema } } },
+  };
+}
+
+function studentResponses(dataSchema: OpenApiSchema): Record<string, unknown> {
+  return {
+    ...responses(dataSchema),
+    403: {
+      description: 'Estudante com dívida financeira — bloqueado de consultar notas (FINANCIAL_ACCESS_BLOCKED)',
+      content: { 'application/json': { schema: errorSchema } },
+    },
+    503: {
+      description: 'Serviço financeiro indisponível — falha fechada (FINANCIAL_VERIFICATION_UNAVAILABLE)',
+      content: { 'application/json': { schema: errorSchema } },
+    },
   };
 }
 
@@ -412,9 +466,28 @@ export function buildOpenApi(): Record<string, unknown> {
       title: 'Smart Campos — Módulo G3 (Avaliações e Horários)',
       version: '1.0.0',
       description:
-        'API aberta para gestão de avaliações, notas, médias, horários, resultados e impressão de pautas/horários.',
+        'API autenticada (Bearer) para gestão de avaliações, notas, médias, horários, resultados e impressão de pautas/horários. ' +
+        'Consome os serviços de contratos (estudantes, docentes, inscrições e financeiro) e bloqueia o lançamento de notas de alunos com dívida.',
     },
+    security: [{ BearerAuth: [] }],
     paths: {
+      '/api/v1/auth/login': {
+        post: {
+          tags: ['Autenticação'],
+          summary: 'Autentica um utilizador e devolve um token de acesso',
+          description: 'Público. Verifica credenciais e devolve um accessToken (Bearer, TTL 3600s).',
+          requestBody: { required: true, content: { 'application/json': { schema: loginInput } } },
+          responses: {
+            200: {
+              description: 'Credenciais válidas',
+              content: { 'application/json': { schema: successEnvelope(authTokens) } },
+            },
+            400: { description: 'Requisição inválida', content: { 'application/json': { schema: errorSchema } } },
+            401: { description: 'Credenciais inválidas ou utilizador inativo', content: { 'application/json': { schema: errorSchema } } },
+          },
+          security: [],
+        },
+      },
       '/api/v1/results/calculation-methods': {
         get: {
           tags: ['Resultados'],
@@ -478,12 +551,23 @@ export function buildOpenApi(): Record<string, unknown> {
           responses: responses({ type: 'object' }),
         },
       },
+      '/api/v1/me/financial-status': {
+        get: {
+          tags: ['Resultados'],
+          summary: 'Estado financeiro do próprio utilizador (estudante)',
+          description:
+            'Usado pelo frontend para refletir bloqueio de consulta de notas sem expor montantes: devolve apenas ACTIVE ou BLOCKED.',
+          security: [{ BearerAuth: [] }],
+          responses: studentResponses(financialStatus),
+        },
+      },
       '/api/v1/assessments/{assessmentId}/grades': {
         get: {
           tags: ['Notas'],
           summary: 'Lista notas de uma avaliação',
+          description: 'Para estudantes, devolve 403 cuando o utilizador tem dívida financeira (fail-closed 503 se o serviço financeiro estiver indisponível).',
           parameters: [idParam('assessmentId')],
-          responses: responses({ type: 'array', items: grade }),
+          responses: studentResponses({ type: 'array', items: grade }),
         },
         post: {
           tags: ['Notas'],
@@ -551,6 +635,7 @@ export function buildOpenApi(): Record<string, unknown> {
         get: {
           tags: ['Resultados'],
           summary: 'Lista resultados acadêmicos (filtros opcionais por termo, turma, disciplina, aluno)',
+          description: 'Estudantes apenas veem os próprios resultados; com dívida financeira recebem 403 (fail-closed 503).',
           parameters: [
             queryParam('termId'),
             queryParam('classId'),
@@ -559,7 +644,7 @@ export function buildOpenApi(): Record<string, unknown> {
             pageParam,
             pageSizeParam,
           ],
-          responses: responses({ type: 'array', items: result }),
+          responses: studentResponses({ type: 'array', items: result }),
         },
         post: {
           tags: ['Resultados'],
@@ -573,8 +658,9 @@ export function buildOpenApi(): Record<string, unknown> {
         get: {
           tags: ['Resultados'],
           summary: 'Obtém um resultado por ID',
+          description: 'Estudantes apenas acedem aos próprios resultados; com dívida financeira recebem 403 (fail-closed 503).',
           parameters: [idParam('id')],
-          responses: responses(result),
+          responses: studentResponses(result),
         },
         patch: {
           tags: ['Resultados'],
@@ -602,8 +688,9 @@ export function buildOpenApi(): Record<string, unknown> {
         get: {
           tags: ['Impressão'],
           summary: 'Dados para impressão da pauta de uma turma/disciplina',
+          description: 'Para estudantes, devolve 403 com dívida financeira (fail-closed 503); o staff vê linhas de endividados mascaradas (debtRestricted).',
           parameters: [idParam('classId'), queryParam('termId'), queryParam('subjectId')],
-          responses: responses({ type: 'object' }),
+          responses: studentResponses({ type: 'object' }),
         },
       },
       '/api/v1/schools': {
@@ -693,6 +780,13 @@ export function buildOpenApi(): Record<string, unknown> {
         Teacher: teacher,
         Student: student,
         Error: errorSchema,
+        FinancialStatus: financialStatus,
+        LoginInput: loginInput,
+        AuthTokens: authTokens,
+        AuthUser: authUser,
+      },
+      securitySchemes: {
+        BearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
       },
     },
   };

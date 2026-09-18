@@ -1,5 +1,6 @@
 import { PrismaClient, EvaluationType, EvaluationStatus, GradeStatus, ScheduleStatus, DayOfWeek, ResultStatus } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
+import { hashPassword } from '@smartcampus/auth';
 
 const prisma = new PrismaClient();
 
@@ -59,6 +60,8 @@ async function seed() {
       data: { id: STUDENT_IDS[i], schoolId: SCHOOL_ID, name: STUDENT_NAMES[i], email: `aluno${i + 1}@student.ucjac.ac.mz`, enrollmentNumber: `UCJAC-${2026}-${String(i + 1).padStart(3, '0')}`, status: 'ACTIVE' },
     });
   }
+
+  await seedUsersAndFinance(prisma, SCHOOL_ID, TEACHER_IDS, STUDENT_IDS);
 
   for (const classId of CLASS_IDS) {
     for (const subjectId of SUBJECT_IDS) {
@@ -178,6 +181,82 @@ async function seed() {
   }
 
   console.log(' Seed concluído: 1 escola, 1 ano lectivo, 1 período, 3 turmas, 3 disciplinas, 5 professores, 10 alunos, avaliações, horários e resultados.');
+}
+
+async function seedUsersAndFinance(
+  prisma: PrismaClient,
+  schoolId: string,
+  teacherIds: string[],
+  studentIds: string[],
+) {
+  const adminPassword = hashPassword('admin123');
+  const teacherPassword = hashPassword('prof123');
+  const studentPassword = hashPassword('aluno123');
+
+  await prisma.user.create({
+    data: {
+      schoolId,
+      role: 'SUPER_ADMIN',
+      name: 'Administrador UCT-JAC',
+      email: 'admin@ucjac.ac.mz',
+      passwordHash: adminPassword,
+      status: 'ACTIVE',
+    },
+  });
+
+  for (let i = 0; i < teacherIds.length; i++) {
+    const user = await prisma.user.create({
+      data: {
+        schoolId,
+        role: 'TEACHER',
+        name: TEACHER_NAMES[i],
+        email: `prof${i + 1}@ucjac.ac.mz`,
+        passwordHash: teacherPassword,
+        status: 'ACTIVE',
+      },
+    });
+    await prisma.teacher.update({
+      where: { id: teacherIds[i] },
+      data: { userId: user.id },
+    });
+  }
+
+  for (let i = 0; i < studentIds.length; i++) {
+    const user = await prisma.user.create({
+      data: {
+        schoolId,
+        role: 'STUDENT',
+        name: STUDENT_NAMES[i],
+        email: `aluno${i + 1}@student.ucjac.ac.mz`,
+        passwordHash: studentPassword,
+        status: 'ACTIVE',
+      },
+    });
+    await prisma.student.update({
+      where: { id: studentIds[i] },
+      data: { userId: user.id },
+    });
+  }
+
+  const studentRows = await prisma.student.findMany({
+    where: { schoolId },
+    select: { id: true },
+    orderBy: { enrollmentNumber: 'asc' },
+  });
+  for (let i = 0; i < studentRows.length; i++) {
+    const inDebt = i < 3;
+    await prisma.financialStatus.create({
+      data: {
+        schoolId,
+        studentId: studentRows[i].id,
+        hasDebt: inDebt,
+        status: inDebt ? 'IN_DEBT' : 'REGULAR',
+        outstandingAmount: inDebt ? 17500 : 0,
+      },
+    });
+  }
+
+  console.log(' Seed usuarios/financeiro: 1 admin, 5 professores, 10 alunos (3 com dívida).');
 }
 
 seed()

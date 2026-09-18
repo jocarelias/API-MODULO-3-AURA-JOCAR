@@ -1,0 +1,288 @@
+{
+  "_info": {
+    "swagger": "http://localhost:4100/api/docs",
+    "baseUrl": "http://localhost:4100/api/v1",
+    "ids_validos_seed_ujac": {
+      "academicYearId": "7059d983-da71-4221-9541-afacb32316c3",
+      "termId": "b1ec59f2-8ae4-48e2-b9b0-24172da51ce8",
+      "classId_1ano": "df12a7a2-b47b-413e-8308-b0d5b6ef53dd",
+      "classId_2ano": "afadd13d-7f2e-4aeb-a839-9b4ff0e99cac",
+      "classId_3ano": "a9c7e5c3-0c0f-4d00-858a-e2a019f801f6",
+      "subjectId_ptp3": "26c5ef3c-67ce-436c-9c45-c2a4cf28ceaf",
+      "subjectId_adr": "eb659aed-8388-449b-95f6-65d7eb1041b8",
+      "subjectId_ppar": "f733b0de-f907-4501-b9ec-0216bf9c75ad",
+      "teacherId_armando": "e79e30fb-b3e6-4113-ad47-c212aefca3ac",
+      "teacherId_leandro": "a4b8703f-22bc-46c6-932b-7dae7025d3e9",
+      "teacherId_carsolino": "9610a83b-7f68-4de8-915a-b0bfb933204b",
+      "teacherId_cidalia": "176d4cfd-ed74-46fa-893a-aaa3ff1a0ea6",
+      "teacherId_fortunato": "5f2a3271-0a7e-4196-b550-4476191015ac",
+      "studentId_ana": "99cf22c6-9ad1-4e3b-8402-16de34051558",
+      "studentId_berto": "3fa2c658-25db-4d07-9a92-62085242a74e",
+      "studentId_carlos": "cad368ba-17c5-401d-af67-e0463bdf12a2",
+      "assessmentId_teste1_ptp3_open": "595b586c-ceac-4722-9ac0-49c5501d451d",
+      "assessmentId_exame_ptp3_open_2ano": "5f290cf0-9a8d-480b-bf02-0adb9b8f72cd",
+      "assessmentId_teste1_ppar_open": "40c22892-cefa-4bdc-a1cc-cd594ac4f38d",
+      "assessmentId_teste1_adr_open": "f7cc99b8-78a0-4bde-abaa-b3c3a9d5fbe8",
+      "assessmentId_sem_notas": "546207e4-6712-476e-8ba1-2f0a07b5e506",
+      "gradeId_ana_ptp3": "04c1687d-b6d4-4c46-b539-68017fc19bc7",
+      "scheduleId": "d87be2da-fd8f-461b-94fd-9d5258a24b12",
+      "resultId_ana": "7b7e11e7-09c8-4fb2-91fb-b20464ccd7cd"
+    }
+  },
+  "crud": {
+    "POST /api/v1/assessments": {
+      "body": {
+        "name": "Teste 2 - PTP 3 (criar)",
+        "type": "TESTE",
+        "academicYearId": "7059d983-da71-4221-9541-afacb32316c3",
+        "termId": "b1ec59f2-8ae4-48e2-b9b0-24172da51ce8",
+        "classId": "df12a7a2-b47b-413e-8308-b0d5b6ef53dd",
+        "subjectId": "26c5ef3c-67ce-436c-9c45-c2a4cf28ceaf",
+        "teacherId": "e79e30fb-b3e6-4113-ad47-c212aefca3ac",
+        "date": "2026-05-20T10:00:00+02:00",
+        "maxScore": 20,
+        "weight": 1,
+        "status": "SCHEDULED"
+      },
+      "esperado": "201; mude o name em cada execucao (duplicado 409)"
+    },
+    "GET /api/v1/assessments": {
+      "query": { "termId": "b1ec59f2-8ae4-48e2-b9b0-24172da51ce8", "classId": "df12a7a2-b47b-413e-8308-b0d5b6ef53dd", "page": 1, "pageSize": 5 },
+      "esperado": "200 com meta.page/pageSize/total"
+    },
+    "PATCH /api/v1/assessments/:id": {
+      "pathId": "595b586c-ceac-4722-9ac0-49c5501d451d",
+      "body": { "name": "Teste 2 - PTP 3 (actualizado)", "description": "Avaliacao actualizada por PATCH" },
+      "esperado": "200; nao alterar weight/maxScore com notas (409)"
+    },
+    "DELETE /api/v1/assessments/:id": {
+      "pathIdSemNotas": "546207e4-6712-476e-8ba1-2f0a07b5e506",
+      "esperado": "sem notas -> 200 deleted:true; com notas -> 409"
+    },
+    "POST /api/v1/assessments/:assessmentId/grades": {
+      "pathAssessmentId": "40c22892-cefa-4bdc-a1cc-cd594ac4f38d",
+      "body": { "studentId": "99cf22c6-9ad1-4e3b-8402-16de34051558", "score": 15, "comment": "Bom desempenho no teste" },
+      "esperado": "201; aluno tem de estar matriculado e nao ter nota naquela avaliacao (duplicado 409); nota [0,maxScore] (400)"
+    },
+    "PATCH /api/v1/assessments/:assessmentId/grades/:gradeId": {
+      "pathAssessmentId": "595b586c-ceac-4722-9ac0-49c5501d451d",
+      "pathGradeId": "04c1687d-b6d4-4c46-b539-68017fc19bc7",
+      "body": { "score": 18, "comment": "Corrigido apos revisao" },
+      "esperado": "200; recalcula o resultado do aluno"
+    },
+    "POST /api/v1/schedules": {
+      "body": {
+        "academicYearId": "7059d983-da71-4221-9541-afacb32316c3",
+        "termId": "b1ec59f2-8ae4-48e2-b9b0-24172da51ce8",
+        "classId": "afadd13d-7f2e-4aeb-a839-9b4ff0e99cac",
+        "subjectId": "eb659aed-8388-449b-95f6-65d7eb1041b8",
+        "teacherId": "a4b8703f-22bc-46c6-932b-7dae7025d3e9",
+        "dayOfWeek": "SATURDAY",
+        "startTime": "10:00",
+        "endTime": "11:40",
+        "room": "Sala 203",
+        "status": "ACTIVE"
+      },
+      "esperado": "201; usar SATURDAY para evitar conflito do seed (conflito -> 409)"
+    },
+    "GET /api/v1/schedules": {
+      "query": { "termId": "b1ec59f2-8ae4-48e2-b9b0-24172da51ce8", "classId": "afadd13d-7f2e-4aeb-a839-9b4ff0e99cac", "page": 1, "pageSize": 10 },
+      "esperado": "200"
+    },
+    "PATCH /api/v1/schedules/:id": {
+      "pathId": "d87be2da-fd8f-461b-94fd-9d5258a24b12",
+      "body": { "room": "Laboratorio de Informatica 2", "endTime": "10:00" },
+      "esperado": "200"
+    },
+    "DELETE /api/v1/schedules/:id": {
+      "pathId": "d87be2da-fd8f-461b-94fd-9d5258a24b12",
+      "esperado": "200; delete de horario sempre permitido"
+    },
+    "POST /api/v1/results": {
+      "body": {
+        "classId": "df12a7a2-b47b-413e-8308-b0d5b6ef53dd",
+        "subjectId": "26c5ef3c-67ce-436c-9c45-c2a4cf28ceaf",
+        "termId": "b1ec59f2-8ae4-48e2-b9b0-24172da51ce8",
+        "studentIds": ["99cf22c6-9ad1-4e3b-8402-16de34051558", "3fa2c658-25db-4d07-9a92-62085242a74e", "cad368ba-17c5-401d-af67-e0463bdf12a2"]
+      },
+      "esperado": "201; recalcula em lote"
+    },
+    "PATCH /api/v1/results/:id": {
+      "pathId": "7b7e11e7-09c8-4fb2-91fb-b20464ccd7cd",
+      "body": {},
+      "esperado": "200; body vazio (strict schema)"
+    },
+    "GET /api/v1/results": {
+      "query": { "termId": "b1ec59f2-8ae4-48e2-b9b0-24172da51ce8", "classId": "df12a7a2-b47b-413e-8308-b0d5b6ef53dd", "subjectId": "26c5ef3c-67ce-436c-9c45-c2a4cf28ceaf", "page": 1, "pageSize": 10 },
+      "esperado": "200"
+    },
+    "GET /api/v1/print/class/:classId/schedule": {
+      "pathClassId": "df12a7a2-b47b-413e-8308-b0d5b6ef53dd",
+      "query": { "termId": "b1ec59f2-8ae4-48e2-b9b0-24172da51ce8" },
+      "esperado": "200"
+    },
+    "GET /api/v1/print/class/:classId/pauta": {
+      "pathClassId": "df12a7a2-b47b-413e-8308-b0d5b6ef53dd",
+      "query": { "termId": "b1ec59f2-8ae4-48e2-b9b0-24172da51ce8", "subjectId": "26c5ef3c-67ce-436c-9c45-c2a4cf28ceaf" },
+      "esperado": "200; subjectId e termId obrigatorios (400 sem eles)"
+    }
+  },
+  "catalogos": {
+    "GET /api/v1/schools": { "esperado": "200" },
+    "GET /api/v1/academic-years": { "esperado": "200" },
+    "GET /api/v1/terms": { "query": { "academicYearId": "7059d983-da71-4221-9541-afacb32316c3" }, "esperado": "200" },
+    "GET /api/v1/classes": { "query": { "termId": "b1ec59f2-8ae4-48e2-b9b0-24172da51ce8" }, "esperado": "200" },
+    "GET /api/v1/subjects": { "esperado": "200" },
+    "GET /api/v1/teachers": { "esperado": "200" },
+    "GET /api/v1/students": { "query": { "classId": "df12a7a2-b47b-413e-8308-b0d5b6ef53dd" }, "esperado": "200" }
+  },
+  "motor_calculo": {
+    "GET /api/v1/results/calculation-methods": { "esperado": "200; 6 metodos" },
+    "POST /api/v1/results/calculate": {
+      "exemplos": [
+        {
+          "nome": "ARITHMETIC_MEAN [10,12,14] -> 12",
+          "body": { "method": "ARITHMETIC_MEAN", "items": [{ "score": 10 }, { "score": 12 }, { "score": 14 }] },
+          "esperado": "200 value 12"
+        },
+        {
+          "nome": "WEIGHTED_PERCENTAGE 14x30 + 16x70 -> 15.4",
+          "body": {
+            "method": "WEIGHTED_PERCENTAGE",
+            "items": [
+              { "assessmentId": "595b586c-ceac-4722-9ac0-49c5501d451d", "name": "Teste 1 - PTP 3", "score": 16, "weight": 40 },
+              { "name": "Exame Final - PTP 3", "score": 13, "weight": 60 }
+            ],
+            "expectedTotal": 100,
+            "minScore": 0,
+            "maxScore": 20,
+            "rounding": { "decimals": 2 }
+          },
+          "esperado": "200; pesos tem de somar expectedTotal (senao 409)"
+        },
+        {
+          "nome": "PERCENTAGE_SUM 15/20 + 12/30 + 17/50 -> 15.1",
+          "body": {
+            "method": "PERCENTAGE_SUM",
+            "items": [
+              { "score": 15, "weight": 20 },
+              { "score": 12, "weight": 30 },
+              { "score": 17, "weight": 50 }
+            ]
+          },
+          "esperado": "200 value 15.1"
+        },
+        {
+          "nome": "NORMALIZED_WEIGHTED_MEAN pesos 2,3,5 -> 16.6",
+          "body": {
+            "method": "NORMALIZED_WEIGHTED_MEAN",
+            "items": [
+              { "score": 14, "weight": 2 },
+              { "score": 16, "weight": 3 },
+              { "score": 18, "weight": 5 }
+            ]
+          },
+          "esperado": "200 value 16.6"
+        },
+        {
+          "nome": "COMPONENT_BASED (Avaliacao Continua 40% + Exame 60%)",
+          "body": {
+            "method": "COMPONENT_BASED",
+            "items": [],
+            "components": [
+              {
+                "name": "Avaliacao Continua",
+                "weight": 40,
+                "children": [
+                  { "name": "Teste 1", "weight": 30, "score": 14 },
+                  { "name": "Teste 2", "weight": 30, "score": 16 },
+                  { "name": "Trabalho", "weight": 40, "score": 18 }
+                ]
+              },
+              { "name": "Exame", "weight": 60, "score": 17 }
+            ]
+          },
+          "esperado": "200; soma dos pesos dos componentes = 100 (senao 409)"
+        },
+        {
+          "nome": "CUSTOM_WEIGHTED formula WEIGHTED_100 -> 15.4",
+          "body": {
+            "method": "CUSTOM_WEIGHTED",
+            "formula": "WEIGHTED_100",
+            "items": [
+              { "score": 14, "weight": 30 },
+              { "score": 16, "weight": 70 }
+            ]
+          },
+          "esperado": "200; formula nao registada -> 400"
+        },
+        {
+          "nome": "ARREDONDAMENTO 0 casas [10,11,12] -> 11",
+          "body": { "method": "ARITHMETIC_MEAN", "items": [{ "score": 10 }, { "score": 11 }, { "score": 12 }], "rounding": { "decimals": 0 } },
+          "esperado": "200 value 11"
+        }
+      ],
+      "erros": [
+        { "nome": "metodo invalido", "body": { "method": "MEDIA_INEXISTENTE", "items": [{ "score": 10 }] }, "esperado": "400 VALIDATION_ERROR" },
+        { "nome": "lista vazia", "body": { "method": "ARITHMETIC_MEAN", "items": [] }, "esperado": "400" },
+        { "nome": "nota negativa", "body": { "method": "ARITHMETIC_MEAN", "items": [{ "score": -5 }] }, "esperado": "400" },
+        { "nome": "peso negativo", "body": { "method": "WEIGHTED_PERCENTAGE", "items": [{ "score": 10, "weight": -1 }] }, "esperado": "400" },
+        { "nome": "CUSTOM_WEIGHTED sem formula", "body": { "method": "CUSTOM_WEIGHTED", "items": [{ "score": 10 }] }, "esperado": "400" },
+        { "nome": "COMPONENT_BASED sem componentes", "body": { "method": "COMPONENT_BASED", "items": [] }, "esperado": "400" },
+        { "nome": "pesos nao totalizam 100", "body": { "method": "WEIGHTED_PERCENTAGE", "items": [{ "score": 14, "weight": 20 }, { "score": 16, "weight": 30 }] }, "esperado": "409 CONFLICT" },
+        { "nome": "percentagens totalizam 80 (PERCENTAGE_SUM)", "body": { "method": "PERCENTAGE_SUM", "items": [{ "score": 10, "weight": 40 }, { "score": 10, "weight": 40 }] }, "esperado": "409 CONFLICT" },
+        {
+          "nome": "assessment inexistente",
+          "body": { "method": "ARITHMETIC_MEAN", "items": [{ "assessmentId": "99999999-9999-4999-8999-999999999999", "score": 10 }] },
+          "esperado": "404 NOT_FOUND"
+        },
+        { "nome": "formula nao registada", "body": { "method": "CUSTOM_WEIGHTED", "formula": "NAO_EXISTE", "items": [{ "score": 10 }] }, "esperado": "400" }
+      ]
+    }
+  },
+  "erros_esperados_crud": [
+    {
+      "nome": "avaliacao com peso zero",
+      "POST /api/v1/assessments": {
+        "termId": "b1ec59f2-8ae4-48e2-b9b0-24172da51ce8",
+        "academicYearId": "7059d983-da71-4221-9541-afacb32316c3",
+        "classId": "df12a7a2-b47b-413e-8308-b0d5b6ef53dd",
+        "subjectId": "26c5ef3c-67ce-436c-9c45-c2a4cf28ceaf",
+        "teacherId": "e79e30fb-b3e6-4113-ad47-c212aefca3ac",
+        "name": "Teste peso zero",
+        "type": "TESTE",
+        "date": "2026-07-20T08:00:00.000Z",
+        "weight": 0
+      },
+      "esperado": "400 VALIDATION_ERROR"
+    },
+    {
+      "nome": "nota fora da escala (maxScore 20)",
+      "POST /api/v1/assessments/:assessmentId/grades": {
+        "assessmentId": "40c22892-cefa-4bdc-a1cc-cd594ac4f38d",
+        "body": { "studentId": "99cf22c6-9ad1-4e3b-8402-16de34051558", "score": 25 }
+      },
+      "esperado": "400 VALIDATION_ERROR"
+    },
+    {
+      "nome": "conflito de horario (MONDAY 08:00-09:40 ja existe no seed)",
+      "POST /api/v1/schedules": {
+        "termId": "b1ec59f2-8ae4-48e2-b9b0-24172da51ce8",
+        "academicYearId": "7059d983-da71-4221-9541-afacb32316c3",
+        "classId": "df12a7a2-b47b-413e-8308-b0d5b6ef53dd",
+        "subjectId": "26c5ef3c-67ce-436c-9c45-c2a4cf28ceaf",
+        "teacherId": "e79e30fb-b3e6-4113-ad47-c212aefca3ac",
+        "dayOfWeek": "MONDAY",
+        "startTime": "08:00",
+        "endTime": "09:40",
+        "room": "Sala 999"
+      },
+      "esperado": "409 CONFLICT"
+    },
+    {
+      "nome": "avaliacao inexistente",
+      "GET /api/v1/assessments/:id": { "id": "99999999-9999-4999-8999-999999999999" },
+      "esperado": "404 NOT_FOUND"
+    }
+  ]
+}

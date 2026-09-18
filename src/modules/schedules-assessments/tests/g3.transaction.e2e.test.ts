@@ -1,16 +1,22 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { PrismaClient } from '@prisma/client';
 import { SchedulesAssessmentsService } from '../application/schedulesAssessmentsService';
+import { startContractServices, ContractTestContext } from './contractTestEnv';
 
 describe('G3 transações ACID (nível de serviço)', () => {
   let prisma: PrismaClient;
+  let ctx: { token: string; correlationId: string };
+  let testContext: ContractTestContext;
 
   beforeAll(async () => {
+    testContext = await startContractServices();
     prisma = new PrismaClient();
+    ctx = { token: testContext.token, correlationId: 'e2e-acid' };
   });
 
   afterAll(async () => {
     await prisma.$disconnect();
+    await testContext.stop();
   });
 
   it('lançar nota + recálculo é atómico: falha no recálculo faz rollback total', async () => {
@@ -58,7 +64,7 @@ describe('G3 transações ACID (nível de serviço)', () => {
     };
 
     await expect(
-      service.createGrade(assessment.id, { studentId: enrollment.studentId, score: 15 }),
+      service.createGrade(assessment.id, { studentId: enrollment.studentId, score: 15 }, ctx),
     ).rejects.toThrow('falha forçada no recálculo');
 
     const grade = await prisma.grade.findUnique({
@@ -116,10 +122,11 @@ describe('G3 transações ACID (nível de serviço)', () => {
     });
 
     const service = new SchedulesAssessmentsService();
-    const grade = await service.createGrade(assessment.id, {
-      studentId: enrollment.studentId,
-      score: 18,
-    });
+    const grade = await service.createGrade(
+      assessment.id,
+      { studentId: enrollment.studentId, score: 18 },
+      ctx,
+    );
     expect(grade.score).toBe(18);
 
     const persisted = await prisma.grade.findUnique({

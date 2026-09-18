@@ -223,3 +223,10 @@ export const calculationInputSchema = z
       });
     }
   });
+
+export const loginSchema = z
+  .object({
+    email: z.string().email('Email inválido').max(254),
+    password: z.string().min(1, 'Password é obrigatória').max(128),
+  })
+  .strict();

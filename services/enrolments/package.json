@@ -1,0 +1,8 @@
+{
+  "name": "@smartcampus/services-enrolments",
+  "version": "1.0.0",
+  "description": "Serviço de Inscrições (contrato GET /api/v1/enrolments).",
+  "private": true,
+  "main": "src/main.ts",
+  "license": "UNLICENSED"
+}

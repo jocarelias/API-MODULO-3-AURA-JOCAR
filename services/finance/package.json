@@ -1,0 +1,8 @@
+{
+  "name": "@smartcampus/services-finance",
+  "version": "1.0.0",
+  "description": "Serviço Financeiro (contrato GET /api/v1/financial-status/:studentId).",
+  "private": true,
+  "main": "src/main.ts",
+  "license": "UNLICENSED"
+}

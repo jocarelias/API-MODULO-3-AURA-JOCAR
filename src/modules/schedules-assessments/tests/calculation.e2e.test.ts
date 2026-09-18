@@ -1,26 +1,32 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../../../app';
+import { startContractServices, ContractTestContext } from './contractTestEnv';
 
-describe('Motor de cálculo de notas (e2e) — API aberta', () => {
+describe('Motor de cálculo de notas (e2e) — API autenticada', () => {
   let app: ReturnType<typeof createApp>;
   let server: ReturnType<typeof app.listen>;
   let apiBase: string;
+  let api: ReturnType<typeof request.agent>;
+  let testContext: ContractTestContext;
 
   beforeAll(async () => {
+    testContext = await startContractServices();
     app = createApp();
     server = app.listen(0);
     await new Promise((resolve) => server.once('listening', resolve));
     const address = server.address();
     apiBase = typeof address === 'object' && address !== null ? `http://127.0.0.1:${address.port}` : '';
+    api = request.agent(apiBase).set('authorization', `Bearer ${testContext.token}`);
   });
 
   afterAll(async () => {
     await new Promise((resolve) => server.close(resolve));
+    await testContext.stop();
   });
 
   it('GET /results/calculation-methods lista os 6 métodos', async () => {
-    const res = await request(apiBase).get('/api/v1/results/calculation-methods');
+    const res = await api.get('/api/v1/results/calculation-methods');
     expect(res.status).toBe(200);
     expect(res.body.meta.correlationId).toBeTruthy();
     const codes = res.body.data.map((m: { code: string }) => m.code);
@@ -41,7 +47,7 @@ describe('Motor de cálculo de notas (e2e) — API aberta', () => {
   });
 
   it('calcula média aritmética [10, 12, 14] → 12', async () => {
-    const res = await request(apiBase).post('/api/v1/results/calculate').send({
+    const res = await api.post('/api/v1/results/calculate').send({
       method: 'ARITHMETIC_MEAN',
       items: [{ score: 10 }, { score: 12 }, { score: 14 }],
     });
@@ -53,7 +59,7 @@ describe('Motor de cálculo de notas (e2e) — API aberta', () => {
   });
 
   it('calcula média ponderada percentual 14×30% + 16×70% → 15.4', async () => {
-    const res = await request(apiBase).post('/api/v1/results/calculate').send({
+    const res = await api.post('/api/v1/results/calculate').send({
       method: 'WEIGHTED_PERCENTAGE',
       items: [
         { score: 14, weight: 30 },
@@ -67,7 +73,7 @@ describe('Motor de cálculo de notas (e2e) — API aberta', () => {
   });
 
   it('calcula soma percentual com contribuições verificadas', async () => {
-    const res = await request(apiBase).post('/api/v1/results/calculate').send({
+    const res = await api.post('/api/v1/results/calculate').send({
       method: 'PERCENTAGE_SUM',
       items: [
         { score: 15, weight: 20 },
@@ -83,7 +89,7 @@ describe('Motor de cálculo de notas (e2e) — API aberta', () => {
   });
 
   it('normaliza pesos 2, 3, 5 → 16.6', async () => {
-    const res = await request(apiBase).post('/api/v1/results/calculate').send({
+    const res = await api.post('/api/v1/results/calculate').send({
       method: 'NORMALIZED_WEIGHTED_MEAN',
       items: [
         { score: 14, weight: 2 },
@@ -97,7 +103,7 @@ describe('Motor de cálculo de notas (e2e) — API aberta', () => {
   });
 
   it('calcula por componentes (Avaliação Contínua + Exame)', async () => {
-    const res = await request(apiBase).post('/api/v1/results/calculate').send({
+    const res = await api.post('/api/v1/results/calculate').send({
       method: 'COMPONENT_BASED',
       items: [],
       components: [
@@ -121,7 +127,7 @@ describe('Motor de cálculo de notas (e2e) — API aberta', () => {
   });
 
   it('executa cálculo personalizado registado (WEIGHTED_100)', async () => {
-    const res = await request(apiBase).post('/api/v1/results/calculate').send({
+    const res = await api.post('/api/v1/results/calculate').send({
       method: 'CUSTOM_WEIGHTED',
       formula: 'WEIGHTED_100',
       items: [
@@ -135,7 +141,7 @@ describe('Motor de cálculo de notas (e2e) — API aberta', () => {
   });
 
   it('arredondamento a 0 casas decimais', async () => {
-    const res = await request(apiBase).post('/api/v1/results/calculate').send({
+    const res = await api.post('/api/v1/results/calculate').send({
       method: 'ARITHMETIC_MEAN',
       items: [{ score: 10 }, { score: 11 }, { score: 12 }],
       rounding: { decimals: 0 },
@@ -146,7 +152,7 @@ describe('Motor de cálculo de notas (e2e) — API aberta', () => {
   });
 
   it('400 — método de cálculo inválido', async () => {
-    const res = await request(apiBase).post('/api/v1/results/calculate').send({
+    const res = await api.post('/api/v1/results/calculate').send({
       method: 'MEDIA_INEXISTENTE',
       items: [{ score: 10 }],
     });
@@ -156,7 +162,7 @@ describe('Motor de cálculo de notas (e2e) — API aberta', () => {
   });
 
   it('400 — lista vazia rejeitada', async () => {
-    const res = await request(apiBase).post('/api/v1/results/calculate').send({
+    const res = await api.post('/api/v1/results/calculate').send({
       method: 'ARITHMETIC_MEAN',
       items: [],
     });
@@ -165,7 +171,7 @@ describe('Motor de cálculo de notas (e2e) — API aberta', () => {
   });
 
   it('400 — nota inválida (negativa)', async () => {
-    const res = await request(apiBase).post('/api/v1/results/calculate').send({
+    const res = await api.post('/api/v1/results/calculate').send({
       method: 'ARITHMETIC_MEAN',
       items: [{ score: -5 }],
     });
@@ -174,7 +180,7 @@ describe('Motor de cálculo de notas (e2e) — API aberta', () => {
   });
 
   it('400 — peso inválido (negativo)', async () => {
-    const res = await request(apiBase).post('/api/v1/results/calculate').send({
+    const res = await api.post('/api/v1/results/calculate').send({
       method: 'WEIGHTED_PERCENTAGE',
       items: [{ score: 10, weight: -1 }],
     });
@@ -182,7 +188,7 @@ describe('Motor de cálculo de notas (e2e) — API aberta', () => {
   });
 
   it('400 — CUSTOM_WEIGHTED sem fórmula', async () => {
-    const res = await request(apiBase).post('/api/v1/results/calculate').send({
+    const res = await api.post('/api/v1/results/calculate').send({
       method: 'CUSTOM_WEIGHTED',
       items: [{ score: 10 }],
     });
@@ -190,7 +196,7 @@ describe('Motor de cálculo de notas (e2e) — API aberta', () => {
   });
 
   it('400 — COMPONENT_BASED sem componentes', async () => {
-    const res = await request(apiBase).post('/api/v1/results/calculate').send({
+    const res = await api.post('/api/v1/results/calculate').send({
       method: 'COMPONENT_BASED',
       items: [],
     });
@@ -198,7 +204,7 @@ describe('Motor de cálculo de notas (e2e) — API aberta', () => {
   });
 
   it('409 — pesos incompatíveis com o método (WEIGHTED_PERCENTAGE)', async () => {
-    const res = await request(apiBase).post('/api/v1/results/calculate').send({
+    const res = await api.post('/api/v1/results/calculate').send({
       method: 'WEIGHTED_PERCENTAGE',
       items: [
         { score: 14, weight: 20 },
@@ -210,7 +216,7 @@ describe('Motor de cálculo de notas (e2e) — API aberta', () => {
   });
 
   it('409 — percentagens não totalizam 100 (PERCENTAGE_SUM)', async () => {
-    const res = await request(apiBase).post('/api/v1/results/calculate').send({
+    const res = await api.post('/api/v1/results/calculate').send({
       method: 'PERCENTAGE_SUM',
       items: [
         { score: 10, weight: 40 },
@@ -222,7 +228,7 @@ describe('Motor de cálculo de notas (e2e) — API aberta', () => {
   });
 
   it('404 — assessment inexistente', async () => {
-    const res = await request(apiBase).post('/api/v1/results/calculate').send({
+    const res = await api.post('/api/v1/results/calculate').send({
       method: 'ARITHMETIC_MEAN',
       items: [{ assessmentId: '99999999-9999-4999-8999-999999999999', score: 10 }],
     });
@@ -232,7 +238,7 @@ describe('Motor de cálculo de notas (e2e) — API aberta', () => {
   });
 
   it('400 — fórmula não registada (CUSTOM_WEIGHTED)', async () => {
-    const res = await request(apiBase).post('/api/v1/results/calculate').send({
+    const res = await api.post('/api/v1/results/calculate').send({
       method: 'CUSTOM_WEIGHTED',
       formula: 'NAO_EXISTE',
       items: [{ score: 10 }],
