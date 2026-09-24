@@ -1,0 +1,15 @@
+
+> g3-avaliacoes-horarios@1.0.0 test:unit
+> vitest run
+
+
+ RUN  v3.2.7 /home/Jocarelias/Documents/API HORARIOS
+
+ ✓ src/modules/schedules-assessments/domain/evaluation.test.ts (21 tests) 12ms
+ ✓ src/modules/schedules-assessments/domain/calculationEngine.test.ts (54 tests) 22ms
+
+ Test Files  2 passed (2)
+      Tests  75 passed (75)
+   Start at  12:10:45
+   Duration  860ms (transform 230ms, setup 0ms, collect 264ms, tests 33ms, environment 1ms, prepare 368ms)
+

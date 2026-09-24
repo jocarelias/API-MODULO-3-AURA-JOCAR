@@ -1,0 +1,19 @@
+
+> g3-avaliacoes-horarios@1.0.0 test:e2e
+> vitest run --config vitest.e2e.config.ts
+
+
+ RUN  v3.2.7 /home/Jocarelias/Documents/API HORARIOS
+
+ ✓ src/modules/schedules-assessments/tests/error-scenarios.e2e.test.ts (3 tests) 222ms
+ ✓ src/modules/schedules-assessments/tests/g3.transaction.e2e.test.ts (2 tests) 450ms
+   ✓ G3 transações ACID (nível de serviço) > lançar nota + recálculo é atómico: falha no recálculo faz rollback total  338ms
+ ✓ src/modules/schedules-assessments/tests/calculation.e2e.test.ts (18 tests) 338ms
+ ✓ src/modules/schedules-assessments/tests/g3.catalog.e2e.test.ts (15 tests) 596ms
+ ✓ src/modules/schedules-assessments/tests/g3.e2e.test.ts (29 tests) 1688ms
+
+ Test Files  5 passed (5)
+      Tests  67 passed (67)
+   Start at  13:18:36
+   Duration  3.06s (transform 847ms, setup 0ms, collect 3.30s, tests 3.29s, environment 3ms, prepare 1.01s)
+
