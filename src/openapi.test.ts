@@ -178,6 +178,13 @@ describe('OpenAPI — exemplos realistas', () => {
 });
 
 describe('OpenAPI — códigos de erro', () => {
+  it('nenhuma leitura (GET) documenta 201 — um GET não cria recursos', () => {
+    for (const { path, method, op } of operations.filter(({ method: m }) => m === 'get')) {
+      expect(op.responses?.['201'], `GET ${path} documenta 201 indevidamente`).toBeUndefined();
+      expect(op.responses?.['200'], `GET ${path} sem 200`).toBeDefined();
+    }
+  });
+
   it('toda rota protegida documenta 400, 401, 403, 404 e 500', () => {
     for (const { path, method, op } of protectedOperations) {
       const where = `${method.toUpperCase()} ${path}`;

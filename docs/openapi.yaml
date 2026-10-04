@@ -662,74 +662,22 @@ paths:
                   - data
                   - meta
                 example:
-                  data: []
-                  meta:
-                    correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                    page: 1
-                    pageSize: 20
-                    total: 3
-              example:
-                data: []
-                meta:
-                  correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                  page: 1
-                  pageSize: 20
-                  total: 3
-        '201':
-          description: Recurso criado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
                   data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        code:
-                          type: string
-                          enum:
-                            - ARITHMETIC_MEAN
-                            - WEIGHTED_PERCENTAGE
-                            - PERCENTAGE_SUM
-                            - NORMALIZED_WEIGHTED_MEAN
-                            - COMPONENT_BASED
-                            - CUSTOM_WEIGHTED
-                        name:
-                          type: string
-                        description:
-                          type: string
-                        formula:
-                          type: string
-                      example:
-                        code: WEIGHTED_PERCENTAGE
-                        name: Média ponderada por percentagem
-                        description: Soma as notas ponderadas pela percentagem de cada componente e divide pelo total.
-                        formula: Σ (nota × peso) ÷ Σ pesos
-                  meta:
-                    type: object
-                    properties:
-                      correlationId:
-                        type: string
-                      page:
-                        type: number
-                      pageSize:
-                        type: number
-                      total:
-                        type: number
-                required:
-                  - data
-                  - meta
-                example:
-                  data: []
+                    - code: WEIGHTED_PERCENTAGE
+                      name: Média ponderada por percentagem
+                      description: Soma as notas ponderadas pela percentagem de cada componente e divide pelo total.
+                      formula: Σ (nota × peso) ÷ Σ pesos
                   meta:
                     correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                     page: 1
                     pageSize: 20
                     total: 3
               example:
-                data: []
+                data:
+                  - code: WEIGHTED_PERCENTAGE
+                    name: Média ponderada por percentagem
+                    description: Soma as notas ponderadas pela percentagem de cada componente e divide pelo total.
+                    formula: Σ (nota × peso) ÷ Σ pesos
                 meta:
                   correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                   page: 1
@@ -1507,6 +1455,22 @@ paths:
                         updatedAt:
                           type: string
                           format: date-time
+                      required:
+                        - id
+                        - schoolId
+                        - academicYearId
+                        - termId
+                        - classId
+                        - subjectId
+                        - teacherId
+                        - name
+                        - type
+                        - date
+                        - maxScore
+                        - weight
+                        - status
+                        - createdAt
+                        - updatedAt
                   meta:
                     type: object
                     properties:
@@ -1522,144 +1486,56 @@ paths:
                   - data
                   - meta
                 example:
-                  data: []
-                  meta:
-                    correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                    page: 1
-                    pageSize: 20
-                    total: 3
-              example:
-                data: []
-                meta:
-                  correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                  page: 1
-                  pageSize: 20
-                  total: 3
-        '201':
-          description: Recurso criado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
                   data:
-                    type: array
-                    items:
-                      example:
-                        id: 7c75e533-aa49-4dcf-97a2-9ecdd3bfb1d4
-                        schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                        academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                        academicYearName: '2026'
-                        termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
-                        termName: 1º Período
-                        classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                        className: Engenharia Informática - 1º Ano
-                        subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                        subjectName: Programação Paralela
-                        teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
-                        teacherName: Eng. Maria Tivane
-                        name: Teste 1 — Programação Paralela
-                        type: TEST
-                        description: Prova teórica com 12 questões de escolha múltipla.
-                        date: '2026-03-14T09:00:00.000Z'
-                        maxScore: 20
-                        weight: 40
-                        status: OPEN
-                        createdAt: '2026-03-01T08:12:00.000Z'
-                        updatedAt: '2026-03-14T10:05:00.000Z'
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          format: uuid
-                        schoolId:
-                          type: string
-                          format: uuid
-                        academicYearId:
-                          type: string
-                          format: uuid
-                        academicYearName:
-                          type: string
-                          nullable: true
-                        termId:
-                          type: string
-                          format: uuid
-                        termName:
-                          type: string
-                          nullable: true
-                        classId:
-                          type: string
-                          format: uuid
-                        className:
-                          type: string
-                          nullable: true
-                        subjectId:
-                          type: string
-                          format: uuid
-                        subjectName:
-                          type: string
-                          nullable: true
-                        teacherId:
-                          type: string
-                          format: uuid
-                        teacherName:
-                          type: string
-                          nullable: true
-                        name:
-                          type: string
-                        type:
-                          type: string
-                          enum:
-                            - TESTE
-                            - EXAME_NORMAL
-                            - EXAME_RECURRENCIA
-                        description:
-                          type: string
-                          nullable: true
-                        date:
-                          type: string
-                          format: date-time
-                        maxScore:
-                          type: number
-                        weight:
-                          type: number
-                        status:
-                          type: string
-                          enum:
-                            - DRAFT
-                            - SCHEDULED
-                            - OPEN
-                            - CLOSED
-                            - CANCELLED
-                        createdAt:
-                          type: string
-                          format: date-time
-                        updatedAt:
-                          type: string
-                          format: date-time
-                  meta:
-                    type: object
-                    properties:
-                      correlationId:
-                        type: string
-                      page:
-                        type: number
-                      pageSize:
-                        type: number
-                      total:
-                        type: number
-                required:
-                  - data
-                  - meta
-                example:
-                  data: []
+                    - id: 7c75e533-aa49-4dcf-97a2-9ecdd3bfb1d4
+                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                      academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
+                      academicYearName: '2026'
+                      termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
+                      termName: 1º Período
+                      classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
+                      className: Engenharia Informática - 1º Ano
+                      subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
+                      subjectName: Programação Paralela
+                      teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
+                      teacherName: Eng. Maria Tivane
+                      name: Teste 1 — Programação Paralela
+                      type: TEST
+                      description: Prova teórica com 12 questões de escolha múltipla.
+                      date: '2026-03-14T09:00:00.000Z'
+                      maxScore: 20
+                      weight: 40
+                      status: OPEN
+                      createdAt: '2026-03-01T08:12:00.000Z'
+                      updatedAt: '2026-03-14T10:05:00.000Z'
                   meta:
                     correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                     page: 1
                     pageSize: 20
                     total: 3
               example:
-                data: []
+                data:
+                  - id: 7c75e533-aa49-4dcf-97a2-9ecdd3bfb1d4
+                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                    academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
+                    academicYearName: '2026'
+                    termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
+                    termName: 1º Período
+                    classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
+                    className: Engenharia Informática - 1º Ano
+                    subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
+                    subjectName: Programação Paralela
+                    teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
+                    teacherName: Eng. Maria Tivane
+                    name: Teste 1 — Programação Paralela
+                    type: TEST
+                    description: Prova teórica com 12 questões de escolha múltipla.
+                    date: '2026-03-14T09:00:00.000Z'
+                    maxScore: 20
+                    weight: 40
+                    status: OPEN
+                    createdAt: '2026-03-01T08:12:00.000Z'
+                    updatedAt: '2026-03-14T10:05:00.000Z'
                 meta:
                   correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                   page: 1
@@ -1970,6 +1846,22 @@ paths:
                       updatedAt:
                         type: string
                         format: date-time
+                    required:
+                      - id
+                      - schoolId
+                      - academicYearId
+                      - termId
+                      - classId
+                      - subjectId
+                      - teacherId
+                      - name
+                      - type
+                      - date
+                      - maxScore
+                      - weight
+                      - status
+                      - createdAt
+                      - updatedAt
                   meta:
                     type: object
                     properties:
@@ -2134,6 +2026,22 @@ paths:
                       updatedAt:
                         type: string
                         format: date-time
+                    required:
+                      - id
+                      - schoolId
+                      - academicYearId
+                      - termId
+                      - classId
+                      - subjectId
+                      - teacherId
+                      - name
+                      - type
+                      - date
+                      - maxScore
+                      - weight
+                      - status
+                      - createdAt
+                      - updatedAt
                   meta:
                     type: object
                     properties:
@@ -2448,170 +2356,22 @@ paths:
                       updatedAt:
                         type: string
                         format: date-time
-                  meta:
-                    type: object
-                    properties:
-                      correlationId:
-                        type: string
-                      page:
-                        type: number
-                      pageSize:
-                        type: number
-                      total:
-                        type: number
-                required:
-                  - data
-                  - meta
-                example:
-                  data:
-                    id: 7c75e533-aa49-4dcf-97a2-9ecdd3bfb1d4
-                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                    academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                    academicYearName: '2026'
-                    termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
-                    termName: 1º Período
-                    classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                    className: Engenharia Informática - 1º Ano
-                    subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                    subjectName: Programação Paralela
-                    teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
-                    teacherName: Eng. Maria Tivane
-                    name: Teste 1 — Programação Paralela
-                    type: TEST
-                    description: Prova teórica com 12 questões de escolha múltipla.
-                    date: '2026-03-14T09:00:00.000Z'
-                    maxScore: 20
-                    weight: 40
-                    status: OPEN
-                    createdAt: '2026-03-01T08:12:00.000Z'
-                    updatedAt: '2026-03-14T10:05:00.000Z'
-                  meta:
-                    correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-              example:
-                data:
-                  id: 7c75e533-aa49-4dcf-97a2-9ecdd3bfb1d4
-                  schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                  academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                  academicYearName: '2026'
-                  termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
-                  termName: 1º Período
-                  classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                  className: Engenharia Informática - 1º Ano
-                  subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                  subjectName: Programação Paralela
-                  teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
-                  teacherName: Eng. Maria Tivane
-                  name: Teste 1 — Programação Paralela
-                  type: TEST
-                  description: Prova teórica com 12 questões de escolha múltipla.
-                  date: '2026-03-14T09:00:00.000Z'
-                  maxScore: 20
-                  weight: 40
-                  status: OPEN
-                  createdAt: '2026-03-01T08:12:00.000Z'
-                  updatedAt: '2026-03-14T10:05:00.000Z'
-                meta:
-                  correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-        '201':
-          description: Recurso criado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    example:
-                      id: 7c75e533-aa49-4dcf-97a2-9ecdd3bfb1d4
-                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                      academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                      academicYearName: '2026'
-                      termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
-                      termName: 1º Período
-                      classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                      className: Engenharia Informática - 1º Ano
-                      subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                      subjectName: Programação Paralela
-                      teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
-                      teacherName: Eng. Maria Tivane
-                      name: Teste 1 — Programação Paralela
-                      type: TEST
-                      description: Prova teórica com 12 questões de escolha múltipla.
-                      date: '2026-03-14T09:00:00.000Z'
-                      maxScore: 20
-                      weight: 40
-                      status: OPEN
-                      createdAt: '2026-03-01T08:12:00.000Z'
-                      updatedAt: '2026-03-14T10:05:00.000Z'
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
-                      schoolId:
-                        type: string
-                        format: uuid
-                      academicYearId:
-                        type: string
-                        format: uuid
-                      academicYearName:
-                        type: string
-                        nullable: true
-                      termId:
-                        type: string
-                        format: uuid
-                      termName:
-                        type: string
-                        nullable: true
-                      classId:
-                        type: string
-                        format: uuid
-                      className:
-                        type: string
-                        nullable: true
-                      subjectId:
-                        type: string
-                        format: uuid
-                      subjectName:
-                        type: string
-                        nullable: true
-                      teacherId:
-                        type: string
-                        format: uuid
-                      teacherName:
-                        type: string
-                        nullable: true
-                      name:
-                        type: string
-                      type:
-                        type: string
-                        enum:
-                          - TESTE
-                          - EXAME_NORMAL
-                          - EXAME_RECURRENCIA
-                      description:
-                        type: string
-                        nullable: true
-                      date:
-                        type: string
-                        format: date-time
-                      maxScore:
-                        type: number
-                      weight:
-                        type: number
-                      status:
-                        type: string
-                        enum:
-                          - DRAFT
-                          - SCHEDULED
-                          - OPEN
-                          - CLOSED
-                          - CANCELLED
-                      createdAt:
-                        type: string
-                        format: date-time
-                      updatedAt:
-                        type: string
-                        format: date-time
+                    required:
+                      - id
+                      - schoolId
+                      - academicYearId
+                      - termId
+                      - classId
+                      - subjectId
+                      - teacherId
+                      - name
+                      - type
+                      - date
+                      - maxScore
+                      - weight
+                      - status
+                      - createdAt
+                      - updatedAt
                   meta:
                     type: object
                     properties:
@@ -2988,6 +2748,22 @@ paths:
                       updatedAt:
                         type: string
                         format: date-time
+                    required:
+                      - id
+                      - schoolId
+                      - academicYearId
+                      - termId
+                      - classId
+                      - subjectId
+                      - teacherId
+                      - name
+                      - type
+                      - date
+                      - maxScore
+                      - weight
+                      - status
+                      - createdAt
+                      - updatedAt
                   meta:
                     type: object
                     properties:
@@ -3152,6 +2928,22 @@ paths:
                       updatedAt:
                         type: string
                         format: date-time
+                    required:
+                      - id
+                      - schoolId
+                      - academicYearId
+                      - termId
+                      - classId
+                      - subjectId
+                      - teacherId
+                      - name
+                      - type
+                      - date
+                      - maxScore
+                      - weight
+                      - status
+                      - createdAt
+                      - updatedAt
                   meta:
                     type: object
                     properties:
@@ -3658,56 +3450,6 @@ paths:
                   checkedAt: '2026-03-18T07:40:00.000Z'
                 meta:
                   correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-        '201':
-          description: Recurso criado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: object
-                    properties:
-                      status:
-                        type: string
-                        enum:
-                          - ACTIVE
-                          - BLOCKED
-                      checkedAt:
-                        type: string
-                        format: date-time
-                    required:
-                      - status
-                      - checkedAt
-                    example:
-                      status: ACTIVE
-                      checkedAt: '2026-03-18T07:40:00.000Z'
-                  meta:
-                    type: object
-                    properties:
-                      correlationId:
-                        type: string
-                      page:
-                        type: number
-                      pageSize:
-                        type: number
-                      total:
-                        type: number
-                required:
-                  - data
-                  - meta
-                example:
-                  data:
-                    status: ACTIVE
-                    checkedAt: '2026-03-18T07:40:00.000Z'
-                  meta:
-                    correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-              example:
-                data:
-                  status: ACTIVE
-                  checkedAt: '2026-03-18T07:40:00.000Z'
-                meta:
-                  correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
         '400':
           description: Requisição inválida (validação Zod ou regra de domínio)
           content:
@@ -3899,10 +3641,6 @@ paths:
                         assessmentName: Teste 1 — Programação Paralela
                         studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
                         studentName: Abu Bakar Ossum
-                        classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                        className: Engenharia Informática - 1º Ano
-                        subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                        subjectName: Programação Paralela
                         score: 17.5
                         comment: Demonstrou domínio de mapeamento paralelo.
                         status: APPROVED
@@ -3942,6 +3680,14 @@ paths:
                         updatedAt:
                           type: string
                           format: date-time
+                      required:
+                        - id
+                        - assessmentId
+                        - studentId
+                        - score
+                        - status
+                        - createdAt
+                        - updatedAt
                   meta:
                     type: object
                     properties:
@@ -3957,101 +3703,34 @@ paths:
                   - data
                   - meta
                 example:
-                  data: []
-                  meta:
-                    correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                    page: 1
-                    pageSize: 20
-                    total: 3
-              example:
-                data: []
-                meta:
-                  correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                  page: 1
-                  pageSize: 20
-                  total: 3
-        '201':
-          description: Recurso criado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
                   data:
-                    type: array
-                    items:
-                      example:
-                        id: 2f9a1c77-0d3e-4a5b-9c88-2f1d0e7b5a91
-                        assessmentId: 7c75e533-aa49-4dcf-97a2-9ecdd3bfb1d4
-                        assessmentName: Teste 1 — Programação Paralela
-                        studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
-                        studentName: Abu Bakar Ossum
-                        classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                        className: Engenharia Informática - 1º Ano
-                        subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                        subjectName: Programação Paralela
-                        score: 17.5
-                        comment: Demonstrou domínio de mapeamento paralelo.
-                        status: APPROVED
-                        createdAt: '2026-03-15T09:30:00.000Z'
-                        updatedAt: '2026-03-15T09:30:00.000Z'
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          format: uuid
-                        assessmentId:
-                          type: string
-                          format: uuid
-                        assessmentName:
-                          type: string
-                          nullable: true
-                        studentId:
-                          type: string
-                          format: uuid
-                        studentName:
-                          type: string
-                          nullable: true
-                        score:
-                          type: number
-                        comment:
-                          type: string
-                          nullable: true
-                        status:
-                          type: string
-                          enum:
-                            - SUBMITTED
-                            - APPROVED
-                            - REVISED
-                        createdAt:
-                          type: string
-                          format: date-time
-                        updatedAt:
-                          type: string
-                          format: date-time
-                  meta:
-                    type: object
-                    properties:
-                      correlationId:
-                        type: string
-                      page:
-                        type: number
-                      pageSize:
-                        type: number
-                      total:
-                        type: number
-                required:
-                  - data
-                  - meta
-                example:
-                  data: []
+                    - id: 2f9a1c77-0d3e-4a5b-9c88-2f1d0e7b5a91
+                      assessmentId: 7c75e533-aa49-4dcf-97a2-9ecdd3bfb1d4
+                      assessmentName: Teste 1 — Programação Paralela
+                      studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
+                      studentName: Abu Bakar Ossum
+                      score: 17.5
+                      comment: Demonstrou domínio de mapeamento paralelo.
+                      status: APPROVED
+                      createdAt: '2026-03-15T09:30:00.000Z'
+                      updatedAt: '2026-03-15T09:30:00.000Z'
                   meta:
                     correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                     page: 1
                     pageSize: 20
                     total: 3
               example:
-                data: []
+                data:
+                  - id: 2f9a1c77-0d3e-4a5b-9c88-2f1d0e7b5a91
+                    assessmentId: 7c75e533-aa49-4dcf-97a2-9ecdd3bfb1d4
+                    assessmentName: Teste 1 — Programação Paralela
+                    studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
+                    studentName: Abu Bakar Ossum
+                    score: 17.5
+                    comment: Demonstrou domínio de mapeamento paralelo.
+                    status: APPROVED
+                    createdAt: '2026-03-15T09:30:00.000Z'
+                    updatedAt: '2026-03-15T09:30:00.000Z'
                 meta:
                   correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                   page: 1
@@ -4262,10 +3941,6 @@ paths:
                       assessmentName: Teste 1 — Programação Paralela
                       studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
                       studentName: Abu Bakar Ossum
-                      classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                      className: Engenharia Informática - 1º Ano
-                      subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                      subjectName: Programação Paralela
                       score: 17.5
                       comment: Demonstrou domínio de mapeamento paralelo.
                       status: APPROVED
@@ -4305,6 +3980,14 @@ paths:
                       updatedAt:
                         type: string
                         format: date-time
+                    required:
+                      - id
+                      - assessmentId
+                      - studentId
+                      - score
+                      - status
+                      - createdAt
+                      - updatedAt
                   meta:
                     type: object
                     properties:
@@ -4326,10 +4009,6 @@ paths:
                     assessmentName: Teste 1 — Programação Paralela
                     studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
                     studentName: Abu Bakar Ossum
-                    classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                    className: Engenharia Informática - 1º Ano
-                    subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                    subjectName: Programação Paralela
                     score: 17.5
                     comment: Demonstrou domínio de mapeamento paralelo.
                     status: APPROVED
@@ -4344,10 +4023,6 @@ paths:
                   assessmentName: Teste 1 — Programação Paralela
                   studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
                   studentName: Abu Bakar Ossum
-                  classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                  className: Engenharia Informática - 1º Ano
-                  subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                  subjectName: Programação Paralela
                   score: 17.5
                   comment: Demonstrou domínio de mapeamento paralelo.
                   status: APPROVED
@@ -4369,10 +4044,6 @@ paths:
                       assessmentName: Teste 1 — Programação Paralela
                       studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
                       studentName: Abu Bakar Ossum
-                      classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                      className: Engenharia Informática - 1º Ano
-                      subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                      subjectName: Programação Paralela
                       score: 17.5
                       comment: Demonstrou domínio de mapeamento paralelo.
                       status: APPROVED
@@ -4412,6 +4083,14 @@ paths:
                       updatedAt:
                         type: string
                         format: date-time
+                    required:
+                      - id
+                      - assessmentId
+                      - studentId
+                      - score
+                      - status
+                      - createdAt
+                      - updatedAt
                   meta:
                     type: object
                     properties:
@@ -4433,10 +4112,6 @@ paths:
                     assessmentName: Teste 1 — Programação Paralela
                     studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
                     studentName: Abu Bakar Ossum
-                    classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                    className: Engenharia Informática - 1º Ano
-                    subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                    subjectName: Programação Paralela
                     score: 17.5
                     comment: Demonstrou domínio de mapeamento paralelo.
                     status: APPROVED
@@ -4451,10 +4126,6 @@ paths:
                   assessmentName: Teste 1 — Programação Paralela
                   studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
                   studentName: Abu Bakar Ossum
-                  classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                  className: Engenharia Informática - 1º Ano
-                  subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                  subjectName: Programação Paralela
                   score: 17.5
                   comment: Demonstrou domínio de mapeamento paralelo.
                   status: APPROVED
@@ -4651,10 +4322,6 @@ paths:
                       assessmentName: Teste 1 — Programação Paralela
                       studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
                       studentName: Abu Bakar Ossum
-                      classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                      className: Engenharia Informática - 1º Ano
-                      subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                      subjectName: Programação Paralela
                       score: 17.5
                       comment: Demonstrou domínio de mapeamento paralelo.
                       status: APPROVED
@@ -4694,6 +4361,14 @@ paths:
                       updatedAt:
                         type: string
                         format: date-time
+                    required:
+                      - id
+                      - assessmentId
+                      - studentId
+                      - score
+                      - status
+                      - createdAt
+                      - updatedAt
                   meta:
                     type: object
                     properties:
@@ -4715,10 +4390,6 @@ paths:
                     assessmentName: Teste 1 — Programação Paralela
                     studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
                     studentName: Abu Bakar Ossum
-                    classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                    className: Engenharia Informática - 1º Ano
-                    subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                    subjectName: Programação Paralela
                     score: 17.5
                     comment: Demonstrou domínio de mapeamento paralelo.
                     status: APPROVED
@@ -4733,10 +4404,6 @@ paths:
                   assessmentName: Teste 1 — Programação Paralela
                   studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
                   studentName: Abu Bakar Ossum
-                  classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                  className: Engenharia Informática - 1º Ano
-                  subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                  subjectName: Programação Paralela
                   score: 17.5
                   comment: Demonstrou domínio de mapeamento paralelo.
                   status: APPROVED
@@ -4758,10 +4425,6 @@ paths:
                       assessmentName: Teste 1 — Programação Paralela
                       studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
                       studentName: Abu Bakar Ossum
-                      classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                      className: Engenharia Informática - 1º Ano
-                      subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                      subjectName: Programação Paralela
                       score: 17.5
                       comment: Demonstrou domínio de mapeamento paralelo.
                       status: APPROVED
@@ -4801,6 +4464,14 @@ paths:
                       updatedAt:
                         type: string
                         format: date-time
+                    required:
+                      - id
+                      - assessmentId
+                      - studentId
+                      - score
+                      - status
+                      - createdAt
+                      - updatedAt
                   meta:
                     type: object
                     properties:
@@ -4822,10 +4493,6 @@ paths:
                     assessmentName: Teste 1 — Programação Paralela
                     studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
                     studentName: Abu Bakar Ossum
-                    classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                    className: Engenharia Informática - 1º Ano
-                    subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                    subjectName: Programação Paralela
                     score: 17.5
                     comment: Demonstrou domínio de mapeamento paralelo.
                     status: APPROVED
@@ -4840,10 +4507,6 @@ paths:
                   assessmentName: Teste 1 — Programação Paralela
                   studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
                   studentName: Abu Bakar Ossum
-                  classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                  className: Engenharia Informática - 1º Ano
-                  subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                  subjectName: Programação Paralela
                   score: 17.5
                   comment: Demonstrou domínio de mapeamento paralelo.
                   status: APPROVED
@@ -5121,6 +4784,20 @@ paths:
                         updatedAt:
                           type: string
                           format: date-time
+                      required:
+                        - id
+                        - schoolId
+                        - academicYearId
+                        - termId
+                        - classId
+                        - subjectId
+                        - teacherId
+                        - dayOfWeek
+                        - startTime
+                        - endTime
+                        - status
+                        - createdAt
+                        - updatedAt
                   meta:
                     type: object
                     properties:
@@ -5136,135 +4813,48 @@ paths:
                   - data
                   - meta
                 example:
-                  data: []
-                  meta:
-                    correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                    page: 1
-                    pageSize: 20
-                    total: 3
-              example:
-                data: []
-                meta:
-                  correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                  page: 1
-                  pageSize: 20
-                  total: 3
-        '201':
-          description: Recurso criado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
                   data:
-                    type: array
-                    items:
-                      example:
-                        id: 1d3f7a20-6b8e-4c11-9f52-8a7b3d6e4c90
-                        schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                        academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                        academicYearName: '2026'
-                        termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
-                        termName: 1º Período
-                        classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                        className: Engenharia Informática - 1º Ano
-                        subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                        subjectName: Programação Paralela
-                        teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
-                        teacherName: Eng. Maria Tivane
-                        dayOfWeek: MONDAY
-                        startTime: '08:00'
-                        endTime: '10:00'
-                        room: Sala 204
-                        status: ACTIVE
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          format: uuid
-                        schoolId:
-                          type: string
-                          format: uuid
-                        academicYearId:
-                          type: string
-                          format: uuid
-                        termId:
-                          type: string
-                          format: uuid
-                        termName:
-                          type: string
-                          nullable: true
-                        classId:
-                          type: string
-                          format: uuid
-                        className:
-                          type: string
-                          nullable: true
-                        subjectId:
-                          type: string
-                          format: uuid
-                        subjectName:
-                          type: string
-                          nullable: true
-                        teacherId:
-                          type: string
-                          format: uuid
-                        teacherName:
-                          type: string
-                          nullable: true
-                        dayOfWeek:
-                          type: string
-                          enum:
-                            - MONDAY
-                            - TUESDAY
-                            - WEDNESDAY
-                            - THURSDAY
-                            - FRIDAY
-                            - SATURDAY
-                        startTime:
-                          type: string
-                          pattern: ^([01]\d|2[0-3]):[0-5]\d$
-                        endTime:
-                          type: string
-                          pattern: ^([01]\d|2[0-3]):[0-5]\d$
-                        room:
-                          type: string
-                          nullable: true
-                        status:
-                          type: string
-                          enum:
-                            - ACTIVE
-                            - INACTIVE
-                            - CANCELLED
-                        createdAt:
-                          type: string
-                          format: date-time
-                        updatedAt:
-                          type: string
-                          format: date-time
-                  meta:
-                    type: object
-                    properties:
-                      correlationId:
-                        type: string
-                      page:
-                        type: number
-                      pageSize:
-                        type: number
-                      total:
-                        type: number
-                required:
-                  - data
-                  - meta
-                example:
-                  data: []
+                    - id: 1d3f7a20-6b8e-4c11-9f52-8a7b3d6e4c90
+                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                      academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
+                      academicYearName: '2026'
+                      termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
+                      termName: 1º Período
+                      classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
+                      className: Engenharia Informática - 1º Ano
+                      subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
+                      subjectName: Programação Paralela
+                      teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
+                      teacherName: Eng. Maria Tivane
+                      dayOfWeek: MONDAY
+                      startTime: '08:00'
+                      endTime: '10:00'
+                      room: Sala 204
+                      status: ACTIVE
                   meta:
                     correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                     page: 1
                     pageSize: 20
                     total: 3
               example:
-                data: []
+                data:
+                  - id: 1d3f7a20-6b8e-4c11-9f52-8a7b3d6e4c90
+                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                    academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
+                    academicYearName: '2026'
+                    termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
+                    termName: 1º Período
+                    classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
+                    className: Engenharia Informática - 1º Ano
+                    subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
+                    subjectName: Programação Paralela
+                    teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
+                    teacherName: Eng. Maria Tivane
+                    dayOfWeek: MONDAY
+                    startTime: '08:00'
+                    endTime: '10:00'
+                    room: Sala 204
+                    status: ACTIVE
                 meta:
                   correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                   page: 1
@@ -5559,6 +5149,20 @@ paths:
                       updatedAt:
                         type: string
                         format: date-time
+                    required:
+                      - id
+                      - schoolId
+                      - academicYearId
+                      - termId
+                      - classId
+                      - subjectId
+                      - teacherId
+                      - dayOfWeek
+                      - startTime
+                      - endTime
+                      - status
+                      - createdAt
+                      - updatedAt
                   meta:
                     type: object
                     properties:
@@ -5706,6 +5310,20 @@ paths:
                       updatedAt:
                         type: string
                         format: date-time
+                    required:
+                      - id
+                      - schoolId
+                      - academicYearId
+                      - termId
+                      - classId
+                      - subjectId
+                      - teacherId
+                      - dayOfWeek
+                      - startTime
+                      - endTime
+                      - status
+                      - createdAt
+                      - updatedAt
                   meta:
                     type: object
                     properties:
@@ -6003,153 +5621,20 @@ paths:
                       updatedAt:
                         type: string
                         format: date-time
-                  meta:
-                    type: object
-                    properties:
-                      correlationId:
-                        type: string
-                      page:
-                        type: number
-                      pageSize:
-                        type: number
-                      total:
-                        type: number
-                required:
-                  - data
-                  - meta
-                example:
-                  data:
-                    id: 1d3f7a20-6b8e-4c11-9f52-8a7b3d6e4c90
-                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                    academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                    academicYearName: '2026'
-                    termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
-                    termName: 1º Período
-                    classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                    className: Engenharia Informática - 1º Ano
-                    subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                    subjectName: Programação Paralela
-                    teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
-                    teacherName: Eng. Maria Tivane
-                    dayOfWeek: MONDAY
-                    startTime: '08:00'
-                    endTime: '10:00'
-                    room: Sala 204
-                    status: ACTIVE
-                  meta:
-                    correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-              example:
-                data:
-                  id: 1d3f7a20-6b8e-4c11-9f52-8a7b3d6e4c90
-                  schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                  academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                  academicYearName: '2026'
-                  termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
-                  termName: 1º Período
-                  classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                  className: Engenharia Informática - 1º Ano
-                  subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                  subjectName: Programação Paralela
-                  teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
-                  teacherName: Eng. Maria Tivane
-                  dayOfWeek: MONDAY
-                  startTime: '08:00'
-                  endTime: '10:00'
-                  room: Sala 204
-                  status: ACTIVE
-                meta:
-                  correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-        '201':
-          description: Recurso criado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    example:
-                      id: 1d3f7a20-6b8e-4c11-9f52-8a7b3d6e4c90
-                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                      academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                      academicYearName: '2026'
-                      termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
-                      termName: 1º Período
-                      classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                      className: Engenharia Informática - 1º Ano
-                      subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                      subjectName: Programação Paralela
-                      teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
-                      teacherName: Eng. Maria Tivane
-                      dayOfWeek: MONDAY
-                      startTime: '08:00'
-                      endTime: '10:00'
-                      room: Sala 204
-                      status: ACTIVE
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
-                      schoolId:
-                        type: string
-                        format: uuid
-                      academicYearId:
-                        type: string
-                        format: uuid
-                      termId:
-                        type: string
-                        format: uuid
-                      termName:
-                        type: string
-                        nullable: true
-                      classId:
-                        type: string
-                        format: uuid
-                      className:
-                        type: string
-                        nullable: true
-                      subjectId:
-                        type: string
-                        format: uuid
-                      subjectName:
-                        type: string
-                        nullable: true
-                      teacherId:
-                        type: string
-                        format: uuid
-                      teacherName:
-                        type: string
-                        nullable: true
-                      dayOfWeek:
-                        type: string
-                        enum:
-                          - MONDAY
-                          - TUESDAY
-                          - WEDNESDAY
-                          - THURSDAY
-                          - FRIDAY
-                          - SATURDAY
-                      startTime:
-                        type: string
-                        pattern: ^([01]\d|2[0-3]):[0-5]\d$
-                      endTime:
-                        type: string
-                        pattern: ^([01]\d|2[0-3]):[0-5]\d$
-                      room:
-                        type: string
-                        nullable: true
-                      status:
-                        type: string
-                        enum:
-                          - ACTIVE
-                          - INACTIVE
-                          - CANCELLED
-                      createdAt:
-                        type: string
-                        format: date-time
-                      updatedAt:
-                        type: string
-                        format: date-time
+                    required:
+                      - id
+                      - schoolId
+                      - academicYearId
+                      - termId
+                      - classId
+                      - subjectId
+                      - teacherId
+                      - dayOfWeek
+                      - startTime
+                      - endTime
+                      - status
+                      - createdAt
+                      - updatedAt
                   meta:
                     type: object
                     properties:
@@ -6502,6 +5987,20 @@ paths:
                       updatedAt:
                         type: string
                         format: date-time
+                    required:
+                      - id
+                      - schoolId
+                      - academicYearId
+                      - termId
+                      - classId
+                      - subjectId
+                      - teacherId
+                      - dayOfWeek
+                      - startTime
+                      - endTime
+                      - status
+                      - createdAt
+                      - updatedAt
                   meta:
                     type: object
                     properties:
@@ -6649,6 +6148,20 @@ paths:
                       updatedAt:
                         type: string
                         format: date-time
+                    required:
+                      - id
+                      - schoolId
+                      - academicYearId
+                      - termId
+                      - classId
+                      - subjectId
+                      - teacherId
+                      - dayOfWeek
+                      - startTime
+                      - endTime
+                      - status
+                      - createdAt
+                      - updatedAt
                   meta:
                     type: object
                     properties:
@@ -7228,6 +6741,18 @@ paths:
                         updatedAt:
                           type: string
                           format: date-time
+                      required:
+                        - id
+                        - schoolId
+                        - academicYearId
+                        - termId
+                        - classId
+                        - subjectId
+                        - studentId
+                        - status
+                        - calculatedAt
+                        - createdAt
+                        - updatedAt
                   meta:
                     type: object
                     properties:
@@ -7243,144 +6768,54 @@ paths:
                   - data
                   - meta
                 example:
-                  data: []
-                  meta:
-                    correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                    page: 1
-                    pageSize: 20
-                    total: 3
-              example:
-                data: []
-                meta:
-                  correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                  page: 1
-                  pageSize: 20
-                  total: 3
-        '201':
-          description: Recurso criado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
                   data:
-                    type: array
-                    items:
-                      example:
-                        id: b7e4d2a9-5c3f-4a8e-9d61-7f2b8c4e5a30
-                        schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                        academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                        academicYearName: '2026'
-                        termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
-                        termName: 1º Período
-                        classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                        className: Engenharia Informática - 1º Ano
-                        subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                        subjectName: Programação Paralela
-                        studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
-                        studentName: Abu Bakar Ossum
-                        teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
-                        teacherName: Eng. Maria Tivane
-                        average: 16.4
-                        finalScore: 16.4
-                        weightedTotal: 16.4
-                        status: APPROVED
-                        calculationMethod: WEIGHTED_PERCENTAGE
-                        calculatedAt: '2026-03-20T07:45:00.000Z'
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          format: uuid
-                        schoolId:
-                          type: string
-                          format: uuid
-                        academicYearId:
-                          type: string
-                          format: uuid
-                        termId:
-                          type: string
-                          format: uuid
-                        termName:
-                          type: string
-                          nullable: true
-                        classId:
-                          type: string
-                          format: uuid
-                        className:
-                          type: string
-                          nullable: true
-                        subjectId:
-                          type: string
-                          format: uuid
-                        subjectName:
-                          type: string
-                          nullable: true
-                        studentId:
-                          type: string
-                          format: uuid
-                        studentName:
-                          type: string
-                          nullable: true
-                        average:
-                          type: number
-                          nullable: true
-                        finalScore:
-                          type: number
-                          nullable: true
-                        calculationMethod:
-                          type: string
-                          enum:
-                            - ARITHMETIC_MEAN
-                            - WEIGHTED_PERCENTAGE
-                            - PERCENTAGE_SUM
-                            - NORMALIZED_WEIGHTED_MEAN
-                            - COMPONENT_BASED
-                            - CUSTOM_WEIGHTED
-                          nullable: true
-                        status:
-                          type: string
-                          enum:
-                            - APPROVED
-                            - FAILED
-                            - RECOVERY
-                            - PENDING
-                            - IN_PROGRESS
-                        calculatedAt:
-                          type: string
-                          format: date-time
-                        weightedTotal:
-                          type: number
-                          nullable: true
-                        createdAt:
-                          type: string
-                          format: date-time
-                        updatedAt:
-                          type: string
-                          format: date-time
-                  meta:
-                    type: object
-                    properties:
-                      correlationId:
-                        type: string
-                      page:
-                        type: number
-                      pageSize:
-                        type: number
-                      total:
-                        type: number
-                required:
-                  - data
-                  - meta
-                example:
-                  data: []
+                    - id: b7e4d2a9-5c3f-4a8e-9d61-7f2b8c4e5a30
+                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                      academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
+                      academicYearName: '2026'
+                      termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
+                      termName: 1º Período
+                      classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
+                      className: Engenharia Informática - 1º Ano
+                      subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
+                      subjectName: Programação Paralela
+                      studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
+                      studentName: Abu Bakar Ossum
+                      teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
+                      teacherName: Eng. Maria Tivane
+                      average: 16.4
+                      finalScore: 16.4
+                      weightedTotal: 16.4
+                      status: APPROVED
+                      calculationMethod: WEIGHTED_PERCENTAGE
+                      calculatedAt: '2026-03-20T07:45:00.000Z'
                   meta:
                     correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                     page: 1
                     pageSize: 20
                     total: 3
               example:
-                data: []
+                data:
+                  - id: b7e4d2a9-5c3f-4a8e-9d61-7f2b8c4e5a30
+                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                    academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
+                    academicYearName: '2026'
+                    termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
+                    termName: 1º Período
+                    classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
+                    className: Engenharia Informática - 1º Ano
+                    subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
+                    subjectName: Programação Paralela
+                    studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
+                    studentName: Abu Bakar Ossum
+                    teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
+                    teacherName: Eng. Maria Tivane
+                    average: 16.4
+                    finalScore: 16.4
+                    weightedTotal: 16.4
+                    status: APPROVED
+                    calculationMethod: WEIGHTED_PERCENTAGE
+                    calculatedAt: '2026-03-20T07:45:00.000Z'
                 meta:
                   correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                   page: 1
@@ -7678,6 +7113,18 @@ paths:
                         updatedAt:
                           type: string
                           format: date-time
+                      required:
+                        - id
+                        - schoolId
+                        - academicYearId
+                        - termId
+                        - classId
+                        - subjectId
+                        - studentId
+                        - status
+                        - calculatedAt
+                        - createdAt
+                        - updatedAt
                   meta:
                     type: object
                     properties:
@@ -7693,14 +7140,54 @@ paths:
                   - data
                   - meta
                 example:
-                  data: []
+                  data:
+                    - id: b7e4d2a9-5c3f-4a8e-9d61-7f2b8c4e5a30
+                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                      academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
+                      academicYearName: '2026'
+                      termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
+                      termName: 1º Período
+                      classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
+                      className: Engenharia Informática - 1º Ano
+                      subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
+                      subjectName: Programação Paralela
+                      studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
+                      studentName: Abu Bakar Ossum
+                      teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
+                      teacherName: Eng. Maria Tivane
+                      average: 16.4
+                      finalScore: 16.4
+                      weightedTotal: 16.4
+                      status: APPROVED
+                      calculationMethod: WEIGHTED_PERCENTAGE
+                      calculatedAt: '2026-03-20T07:45:00.000Z'
                   meta:
                     correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                     page: 1
                     pageSize: 20
                     total: 3
               example:
-                data: []
+                data:
+                  - id: b7e4d2a9-5c3f-4a8e-9d61-7f2b8c4e5a30
+                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                    academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
+                    academicYearName: '2026'
+                    termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
+                    termName: 1º Período
+                    classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
+                    className: Engenharia Informática - 1º Ano
+                    subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
+                    subjectName: Programação Paralela
+                    studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
+                    studentName: Abu Bakar Ossum
+                    teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
+                    teacherName: Eng. Maria Tivane
+                    average: 16.4
+                    finalScore: 16.4
+                    weightedTotal: 16.4
+                    status: APPROVED
+                    calculationMethod: WEIGHTED_PERCENTAGE
+                    calculatedAt: '2026-03-20T07:45:00.000Z'
                 meta:
                   correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                   page: 1
@@ -7808,6 +7295,18 @@ paths:
                         updatedAt:
                           type: string
                           format: date-time
+                      required:
+                        - id
+                        - schoolId
+                        - academicYearId
+                        - termId
+                        - classId
+                        - subjectId
+                        - studentId
+                        - status
+                        - calculatedAt
+                        - createdAt
+                        - updatedAt
                   meta:
                     type: object
                     properties:
@@ -7823,14 +7322,54 @@ paths:
                   - data
                   - meta
                 example:
-                  data: []
+                  data:
+                    - id: b7e4d2a9-5c3f-4a8e-9d61-7f2b8c4e5a30
+                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                      academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
+                      academicYearName: '2026'
+                      termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
+                      termName: 1º Período
+                      classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
+                      className: Engenharia Informática - 1º Ano
+                      subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
+                      subjectName: Programação Paralela
+                      studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
+                      studentName: Abu Bakar Ossum
+                      teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
+                      teacherName: Eng. Maria Tivane
+                      average: 16.4
+                      finalScore: 16.4
+                      weightedTotal: 16.4
+                      status: APPROVED
+                      calculationMethod: WEIGHTED_PERCENTAGE
+                      calculatedAt: '2026-03-20T07:45:00.000Z'
                   meta:
                     correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                     page: 1
                     pageSize: 20
                     total: 3
               example:
-                data: []
+                data:
+                  - id: b7e4d2a9-5c3f-4a8e-9d61-7f2b8c4e5a30
+                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                    academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
+                    academicYearName: '2026'
+                    termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
+                    termName: 1º Período
+                    classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
+                    className: Engenharia Informática - 1º Ano
+                    subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
+                    subjectName: Programação Paralela
+                    studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
+                    studentName: Abu Bakar Ossum
+                    teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
+                    teacherName: Eng. Maria Tivane
+                    average: 16.4
+                    finalScore: 16.4
+                    weightedTotal: 16.4
+                    status: APPROVED
+                    calculationMethod: WEIGHTED_PERCENTAGE
+                    calculatedAt: '2026-03-20T07:45:00.000Z'
                 meta:
                   correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                   page: 1
@@ -8087,168 +7626,18 @@ paths:
                       updatedAt:
                         type: string
                         format: date-time
-                  meta:
-                    type: object
-                    properties:
-                      correlationId:
-                        type: string
-                      page:
-                        type: number
-                      pageSize:
-                        type: number
-                      total:
-                        type: number
-                required:
-                  - data
-                  - meta
-                example:
-                  data:
-                    id: b7e4d2a9-5c3f-4a8e-9d61-7f2b8c4e5a30
-                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                    academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                    academicYearName: '2026'
-                    termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
-                    termName: 1º Período
-                    classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                    className: Engenharia Informática - 1º Ano
-                    subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                    subjectName: Programação Paralela
-                    studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
-                    studentName: Abu Bakar Ossum
-                    teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
-                    teacherName: Eng. Maria Tivane
-                    average: 16.4
-                    finalScore: 16.4
-                    weightedTotal: 16.4
-                    status: APPROVED
-                    calculationMethod: WEIGHTED_PERCENTAGE
-                    calculatedAt: '2026-03-20T07:45:00.000Z'
-                  meta:
-                    correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-              example:
-                data:
-                  id: b7e4d2a9-5c3f-4a8e-9d61-7f2b8c4e5a30
-                  schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                  academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                  academicYearName: '2026'
-                  termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
-                  termName: 1º Período
-                  classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                  className: Engenharia Informática - 1º Ano
-                  subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                  subjectName: Programação Paralela
-                  studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
-                  studentName: Abu Bakar Ossum
-                  teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
-                  teacherName: Eng. Maria Tivane
-                  average: 16.4
-                  finalScore: 16.4
-                  weightedTotal: 16.4
-                  status: APPROVED
-                  calculationMethod: WEIGHTED_PERCENTAGE
-                  calculatedAt: '2026-03-20T07:45:00.000Z'
-                meta:
-                  correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-        '201':
-          description: Recurso criado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    example:
-                      id: b7e4d2a9-5c3f-4a8e-9d61-7f2b8c4e5a30
-                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                      academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                      academicYearName: '2026'
-                      termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
-                      termName: 1º Período
-                      classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                      className: Engenharia Informática - 1º Ano
-                      subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                      subjectName: Programação Paralela
-                      studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
-                      studentName: Abu Bakar Ossum
-                      teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
-                      teacherName: Eng. Maria Tivane
-                      average: 16.4
-                      finalScore: 16.4
-                      weightedTotal: 16.4
-                      status: APPROVED
-                      calculationMethod: WEIGHTED_PERCENTAGE
-                      calculatedAt: '2026-03-20T07:45:00.000Z'
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
-                      schoolId:
-                        type: string
-                        format: uuid
-                      academicYearId:
-                        type: string
-                        format: uuid
-                      termId:
-                        type: string
-                        format: uuid
-                      termName:
-                        type: string
-                        nullable: true
-                      classId:
-                        type: string
-                        format: uuid
-                      className:
-                        type: string
-                        nullable: true
-                      subjectId:
-                        type: string
-                        format: uuid
-                      subjectName:
-                        type: string
-                        nullable: true
-                      studentId:
-                        type: string
-                        format: uuid
-                      studentName:
-                        type: string
-                        nullable: true
-                      average:
-                        type: number
-                        nullable: true
-                      finalScore:
-                        type: number
-                        nullable: true
-                      calculationMethod:
-                        type: string
-                        enum:
-                          - ARITHMETIC_MEAN
-                          - WEIGHTED_PERCENTAGE
-                          - PERCENTAGE_SUM
-                          - NORMALIZED_WEIGHTED_MEAN
-                          - COMPONENT_BASED
-                          - CUSTOM_WEIGHTED
-                        nullable: true
-                      status:
-                        type: string
-                        enum:
-                          - APPROVED
-                          - FAILED
-                          - RECOVERY
-                          - PENDING
-                          - IN_PROGRESS
-                      calculatedAt:
-                        type: string
-                        format: date-time
-                      weightedTotal:
-                        type: number
-                        nullable: true
-                      createdAt:
-                        type: string
-                        format: date-time
-                      updatedAt:
-                        type: string
-                        format: date-time
+                    required:
+                      - id
+                      - schoolId
+                      - academicYearId
+                      - termId
+                      - classId
+                      - subjectId
+                      - studentId
+                      - status
+                      - calculatedAt
+                      - createdAt
+                      - updatedAt
                   meta:
                     type: object
                     properties:
@@ -8588,6 +7977,18 @@ paths:
                       updatedAt:
                         type: string
                         format: date-time
+                    required:
+                      - id
+                      - schoolId
+                      - academicYearId
+                      - termId
+                      - classId
+                      - subjectId
+                      - studentId
+                      - status
+                      - calculatedAt
+                      - createdAt
+                      - updatedAt
                   meta:
                     type: object
                     properties:
@@ -8750,6 +8151,18 @@ paths:
                       updatedAt:
                         type: string
                         format: date-time
+                    required:
+                      - id
+                      - schoolId
+                      - academicYearId
+                      - termId
+                      - classId
+                      - subjectId
+                      - studentId
+                      - status
+                      - calculatedAt
+                      - createdAt
+                      - updatedAt
                   meta:
                     type: object
                     properties:
@@ -9238,6 +8651,10 @@ paths:
                           phone:
                             type: string
                             nullable: true
+                        required:
+                          - id
+                          - name
+                          - code
                       class:
                         example:
                           id: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
@@ -9269,6 +8686,11 @@ paths:
                           room:
                             type: string
                             nullable: true
+                        required:
+                          - id
+                          - schoolId
+                          - academicYearId
+                          - name
                       academicYear:
                         example:
                           id: e902338e-b3e1-47dc-995b-13bec814c404
@@ -9286,6 +8708,10 @@ paths:
                             format: uuid
                           name:
                             type: string
+                        required:
+                          - id
+                          - schoolId
+                          - name
                       term:
                         example:
                           id: df8c0eac-1660-4e17-95c9-22fb27a33a5e
@@ -9315,6 +8741,14 @@ paths:
                             format: date-time
                           status:
                             type: string
+                        required:
+                          - id
+                          - schoolId
+                          - academicYearId
+                          - name
+                          - startDate
+                          - endDate
+                          - status
                       slots:
                         type: array
                         items:
@@ -9401,331 +8835,20 @@ paths:
                             updatedAt:
                               type: string
                               format: date-time
-                    required:
-                      - school
-                      - class
-                      - academicYear
-                      - term
-                      - slots
-                    example:
-                      school:
-                        id: f266cdec-aee4-45a5-a962-9d961a95638b
-                        name: Universidade Júnior de Angola e Moçambique
-                        code: UJAC
-                        phone: +258 843 000 111
-                      class:
-                        id: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                        schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                        academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                        name: Engenharia Informática - 1º Ano
-                        grade: '1'
-                        shift: Manhã
-                        room: Sala 204
-                      academicYear:
-                        id: e902338e-b3e1-47dc-995b-13bec814c404
-                        schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                        name: '2026'
-                        startDate: '2026-02-01T00:00:00.000Z'
-                        endDate: '2026-12-31T00:00:00.000Z'
-                      term:
-                        id: df8c0eac-1660-4e17-95c9-22fb27a33a5e
-                        schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                        academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                        name: 1º Período
-                        startDate: '2026-02-23T00:00:00.000Z'
-                        endDate: '2026-07-10T00:00:00.000Z'
-                      slots:
-                        - id: 1d3f7a20-6b8e-4c11-9f52-8a7b3d6e4c90
-                          dayOfWeek: MONDAY
-                          startTime: '08:00'
-                          endTime: '10:00'
-                          room: Sala 204
-                          subjectName: Programação Paralela
-                          teacherName: Eng. Maria Tivane
-                          status: ACTIVE
-                  meta:
-                    type: object
-                    properties:
-                      correlationId:
-                        type: string
-                      page:
-                        type: number
-                      pageSize:
-                        type: number
-                      total:
-                        type: number
-                required:
-                  - data
-                  - meta
-                example:
-                  data:
-                    school:
-                      id: f266cdec-aee4-45a5-a962-9d961a95638b
-                      name: Universidade Júnior de Angola e Moçambique
-                      code: UJAC
-                      phone: +258 843 000 111
-                    class:
-                      id: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                      academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                      name: Engenharia Informática - 1º Ano
-                      grade: '1'
-                      shift: Manhã
-                      room: Sala 204
-                    academicYear:
-                      id: e902338e-b3e1-47dc-995b-13bec814c404
-                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                      name: '2026'
-                      startDate: '2026-02-01T00:00:00.000Z'
-                      endDate: '2026-12-31T00:00:00.000Z'
-                    term:
-                      id: df8c0eac-1660-4e17-95c9-22fb27a33a5e
-                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                      academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                      name: 1º Período
-                      startDate: '2026-02-23T00:00:00.000Z'
-                      endDate: '2026-07-10T00:00:00.000Z'
-                    slots:
-                      - id: 1d3f7a20-6b8e-4c11-9f52-8a7b3d6e4c90
-                        dayOfWeek: MONDAY
-                        startTime: '08:00'
-                        endTime: '10:00'
-                        room: Sala 204
-                        subjectName: Programação Paralela
-                        teacherName: Eng. Maria Tivane
-                        status: ACTIVE
-                  meta:
-                    correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-              example:
-                data:
-                  school:
-                    id: f266cdec-aee4-45a5-a962-9d961a95638b
-                    name: Universidade Júnior de Angola e Moçambique
-                    code: UJAC
-                    phone: +258 843 000 111
-                  class:
-                    id: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                    academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                    name: Engenharia Informática - 1º Ano
-                    grade: '1'
-                    shift: Manhã
-                    room: Sala 204
-                  academicYear:
-                    id: e902338e-b3e1-47dc-995b-13bec814c404
-                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                    name: '2026'
-                    startDate: '2026-02-01T00:00:00.000Z'
-                    endDate: '2026-12-31T00:00:00.000Z'
-                  term:
-                    id: df8c0eac-1660-4e17-95c9-22fb27a33a5e
-                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                    academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                    name: 1º Período
-                    startDate: '2026-02-23T00:00:00.000Z'
-                    endDate: '2026-07-10T00:00:00.000Z'
-                  slots:
-                    - id: 1d3f7a20-6b8e-4c11-9f52-8a7b3d6e4c90
-                      dayOfWeek: MONDAY
-                      startTime: '08:00'
-                      endTime: '10:00'
-                      room: Sala 204
-                      subjectName: Programação Paralela
-                      teacherName: Eng. Maria Tivane
-                      status: ACTIVE
-                meta:
-                  correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-        '201':
-          description: Recurso criado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: object
-                    properties:
-                      school:
-                        example:
-                          id: f266cdec-aee4-45a5-a962-9d961a95638b
-                          name: Universidade Júnior de Angola e Moçambique
-                          code: UJAC
-                          phone: +258 843 000 111
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                            format: uuid
-                          name:
-                            type: string
-                          code:
-                            type: string
-                          phone:
-                            type: string
-                            nullable: true
-                      class:
-                        example:
-                          id: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                          schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                          academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                          name: Engenharia Informática - 1º Ano
-                          grade: '1'
-                          shift: Manhã
-                          room: Sala 204
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                            format: uuid
-                          schoolId:
-                            type: string
-                            format: uuid
-                          academicYearId:
-                            type: string
-                            format: uuid
-                          name:
-                            type: string
-                          grade:
-                            type: string
-                            nullable: true
-                          shift:
-                            type: string
-                            nullable: true
-                          room:
-                            type: string
-                            nullable: true
-                      academicYear:
-                        example:
-                          id: e902338e-b3e1-47dc-995b-13bec814c404
-                          schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                          name: '2026'
-                          startDate: '2026-02-01T00:00:00.000Z'
-                          endDate: '2026-12-31T00:00:00.000Z'
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                            format: uuid
-                          schoolId:
-                            type: string
-                            format: uuid
-                          name:
-                            type: string
-                      term:
-                        example:
-                          id: df8c0eac-1660-4e17-95c9-22fb27a33a5e
-                          schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                          academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                          name: 1º Período
-                          startDate: '2026-02-23T00:00:00.000Z'
-                          endDate: '2026-07-10T00:00:00.000Z'
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                            format: uuid
-                          schoolId:
-                            type: string
-                            format: uuid
-                          academicYearId:
-                            type: string
-                            format: uuid
-                          name:
-                            type: string
-                          startDate:
-                            type: string
-                            format: date-time
-                          endDate:
-                            type: string
-                            format: date-time
-                          status:
-                            type: string
-                      slots:
-                        type: array
-                        items:
-                          example:
-                            id: 1d3f7a20-6b8e-4c11-9f52-8a7b3d6e4c90
-                            schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                            academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                            academicYearName: '2026'
-                            termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
-                            termName: 1º Período
-                            classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                            className: Engenharia Informática - 1º Ano
-                            subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                            subjectName: Programação Paralela
-                            teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
-                            teacherName: Eng. Maria Tivane
-                            dayOfWeek: MONDAY
-                            startTime: '08:00'
-                            endTime: '10:00'
-                            room: Sala 204
-                            status: ACTIVE
-                          type: object
-                          properties:
-                            id:
-                              type: string
-                              format: uuid
-                            schoolId:
-                              type: string
-                              format: uuid
-                            academicYearId:
-                              type: string
-                              format: uuid
-                            termId:
-                              type: string
-                              format: uuid
-                            termName:
-                              type: string
-                              nullable: true
-                            classId:
-                              type: string
-                              format: uuid
-                            className:
-                              type: string
-                              nullable: true
-                            subjectId:
-                              type: string
-                              format: uuid
-                            subjectName:
-                              type: string
-                              nullable: true
-                            teacherId:
-                              type: string
-                              format: uuid
-                            teacherName:
-                              type: string
-                              nullable: true
-                            dayOfWeek:
-                              type: string
-                              enum:
-                                - MONDAY
-                                - TUESDAY
-                                - WEDNESDAY
-                                - THURSDAY
-                                - FRIDAY
-                                - SATURDAY
-                            startTime:
-                              type: string
-                              pattern: ^([01]\d|2[0-3]):[0-5]\d$
-                            endTime:
-                              type: string
-                              pattern: ^([01]\d|2[0-3]):[0-5]\d$
-                            room:
-                              type: string
-                              nullable: true
-                            status:
-                              type: string
-                              enum:
-                                - ACTIVE
-                                - INACTIVE
-                                - CANCELLED
-                            createdAt:
-                              type: string
-                              format: date-time
-                            updatedAt:
-                              type: string
-                              format: date-time
+                          required:
+                            - id
+                            - schoolId
+                            - academicYearId
+                            - termId
+                            - classId
+                            - subjectId
+                            - teacherId
+                            - dayOfWeek
+                            - startTime
+                            - endTime
+                            - status
+                            - createdAt
+                            - updatedAt
                     required:
                       - school
                       - class
@@ -10051,6 +9174,10 @@ paths:
                           phone:
                             type: string
                             nullable: true
+                        required:
+                          - id
+                          - name
+                          - code
                       class:
                         example:
                           id: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
@@ -10082,6 +9209,11 @@ paths:
                           room:
                             type: string
                             nullable: true
+                        required:
+                          - id
+                          - schoolId
+                          - academicYearId
+                          - name
                       academicYear:
                         example:
                           id: e902338e-b3e1-47dc-995b-13bec814c404
@@ -10099,6 +9231,10 @@ paths:
                             format: uuid
                           name:
                             type: string
+                        required:
+                          - id
+                          - schoolId
+                          - name
                       term:
                         example:
                           id: df8c0eac-1660-4e17-95c9-22fb27a33a5e
@@ -10128,6 +9264,14 @@ paths:
                             format: date-time
                           status:
                             type: string
+                        required:
+                          - id
+                          - schoolId
+                          - academicYearId
+                          - name
+                          - startDate
+                          - endDate
+                          - status
                       subject:
                         example:
                           id: 9406a157-34f4-4d70-b6de-defdbaf496fa
@@ -10148,6 +9292,10 @@ paths:
                           code:
                             type: string
                             nullable: true
+                        required:
+                          - id
+                          - schoolId
+                          - name
                       teacher:
                         example:
                           id: 294481dd-a867-4db8-998c-db6851fafdd2
@@ -10170,384 +9318,10 @@ paths:
                           email:
                             type: string
                             nullable: true
-                      rows:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            studentId:
-                              type: string
-                              format: uuid
-                            studentName:
-                              type: string
-                            enrollmentNumber:
-                              type: string
-                            assessments:
-                              type: array
-                              items:
-                                type: object
-                                properties:
-                                  name:
-                                    type: string
-                                  score:
-                                    type: number
-                                    nullable: true
-                                  weight:
-                                    type: number
-                                  maxScore:
-                                    type: number
-                            average:
-                              type: number
-                              nullable: true
-                            weightedTotal:
-                              type: number
-                              nullable: true
-                            status:
-                              type: string
-                              enum:
-                                - APPROVED
-                                - FAILED
-                                - RECOVERY
-                                - PENDING
-                                - IN_PROGRESS
-                            debtRestricted:
-                              type: boolean
-                    required:
-                      - school
-                      - class
-                      - academicYear
-                      - term
-                      - subject
-                      - rows
-                    example:
-                      school:
-                        id: f266cdec-aee4-45a5-a962-9d961a95638b
-                        name: Universidade Júnior de Angola e Moçambique
-                        code: UJAC
-                        phone: +258 843 000 111
-                      class:
-                        id: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                        schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                        academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                        name: Engenharia Informática - 1º Ano
-                        grade: '1'
-                        shift: Manhã
-                        room: Sala 204
-                      academicYear:
-                        id: e902338e-b3e1-47dc-995b-13bec814c404
-                        schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                        name: '2026'
-                        startDate: '2026-02-01T00:00:00.000Z'
-                        endDate: '2026-12-31T00:00:00.000Z'
-                      term:
-                        id: df8c0eac-1660-4e17-95c9-22fb27a33a5e
-                        schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                        academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                        name: 1º Período
-                        startDate: '2026-02-23T00:00:00.000Z'
-                        endDate: '2026-07-10T00:00:00.000Z'
-                      subject:
-                        id: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                        schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                        name: Programação Paralela
-                        code: SUBJ3
-                        description: Computação distribuída e modelos de programação concorrente.
-                      teacher:
-                        id: 294481dd-a867-4db8-998c-db6851fafdd2
-                        schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                        name: Eng. Maria Tivane
-                        email: maria.tivane@ucjac.ac.mz
-                        employeeNumber: DOC-2019-014
-                        specialization: Sistemas Distribuídos
-                        status: ACTIVE
-                      rows:
-                        - studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
-                          studentName: Abu Bakar Ossum
-                          enrollmentNumber: UCJAC-2026-001
-                          assessments:
-                            - name: Teste 1
-                              score: 17.5
-                              weight: 40
-                              maxScore: 20
-                          average: 17.5
-                          weightedTotal: 17.5
-                          status: APPROVED
-                          debtRestricted: false
-                  meta:
-                    type: object
-                    properties:
-                      correlationId:
-                        type: string
-                      page:
-                        type: number
-                      pageSize:
-                        type: number
-                      total:
-                        type: number
-                required:
-                  - data
-                  - meta
-                example:
-                  data:
-                    school:
-                      id: f266cdec-aee4-45a5-a962-9d961a95638b
-                      name: Universidade Júnior de Angola e Moçambique
-                      code: UJAC
-                      phone: +258 843 000 111
-                    class:
-                      id: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                      academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                      name: Engenharia Informática - 1º Ano
-                      grade: '1'
-                      shift: Manhã
-                      room: Sala 204
-                    academicYear:
-                      id: e902338e-b3e1-47dc-995b-13bec814c404
-                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                      name: '2026'
-                      startDate: '2026-02-01T00:00:00.000Z'
-                      endDate: '2026-12-31T00:00:00.000Z'
-                    term:
-                      id: df8c0eac-1660-4e17-95c9-22fb27a33a5e
-                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                      academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                      name: 1º Período
-                      startDate: '2026-02-23T00:00:00.000Z'
-                      endDate: '2026-07-10T00:00:00.000Z'
-                    subject:
-                      id: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                      name: Programação Paralela
-                      code: SUBJ3
-                      description: Computação distribuída e modelos de programação concorrente.
-                    teacher:
-                      id: 294481dd-a867-4db8-998c-db6851fafdd2
-                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                      name: Eng. Maria Tivane
-                      email: maria.tivane@ucjac.ac.mz
-                      employeeNumber: DOC-2019-014
-                      specialization: Sistemas Distribuídos
-                      status: ACTIVE
-                    rows:
-                      - studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
-                        studentName: Abu Bakar Ossum
-                        enrollmentNumber: UCJAC-2026-001
-                        assessments:
-                          - name: Teste 1
-                            score: 17.5
-                            weight: 40
-                            maxScore: 20
-                        average: 17.5
-                        weightedTotal: 17.5
-                        status: APPROVED
-                        debtRestricted: false
-                  meta:
-                    correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-              example:
-                data:
-                  school:
-                    id: f266cdec-aee4-45a5-a962-9d961a95638b
-                    name: Universidade Júnior de Angola e Moçambique
-                    code: UJAC
-                    phone: +258 843 000 111
-                  class:
-                    id: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                    academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                    name: Engenharia Informática - 1º Ano
-                    grade: '1'
-                    shift: Manhã
-                    room: Sala 204
-                  academicYear:
-                    id: e902338e-b3e1-47dc-995b-13bec814c404
-                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                    name: '2026'
-                    startDate: '2026-02-01T00:00:00.000Z'
-                    endDate: '2026-12-31T00:00:00.000Z'
-                  term:
-                    id: df8c0eac-1660-4e17-95c9-22fb27a33a5e
-                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                    academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                    name: 1º Período
-                    startDate: '2026-02-23T00:00:00.000Z'
-                    endDate: '2026-07-10T00:00:00.000Z'
-                  subject:
-                    id: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                    name: Programação Paralela
-                    code: SUBJ3
-                    description: Computação distribuída e modelos de programação concorrente.
-                  teacher:
-                    id: 294481dd-a867-4db8-998c-db6851fafdd2
-                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                    name: Eng. Maria Tivane
-                    email: maria.tivane@ucjac.ac.mz
-                    employeeNumber: DOC-2019-014
-                    specialization: Sistemas Distribuídos
-                    status: ACTIVE
-                  rows:
-                    - studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
-                      studentName: Abu Bakar Ossum
-                      enrollmentNumber: UCJAC-2026-001
-                      assessments:
-                        - name: Teste 1
-                          score: 17.5
-                          weight: 40
-                          maxScore: 20
-                      average: 17.5
-                      weightedTotal: 17.5
-                      status: APPROVED
-                      debtRestricted: false
-                meta:
-                  correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-        '201':
-          description: Recurso criado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: object
-                    properties:
-                      school:
-                        example:
-                          id: f266cdec-aee4-45a5-a962-9d961a95638b
-                          name: Universidade Júnior de Angola e Moçambique
-                          code: UJAC
-                          phone: +258 843 000 111
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                            format: uuid
-                          name:
-                            type: string
-                          code:
-                            type: string
-                          phone:
-                            type: string
-                            nullable: true
-                      class:
-                        example:
-                          id: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                          schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                          academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                          name: Engenharia Informática - 1º Ano
-                          grade: '1'
-                          shift: Manhã
-                          room: Sala 204
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                            format: uuid
-                          schoolId:
-                            type: string
-                            format: uuid
-                          academicYearId:
-                            type: string
-                            format: uuid
-                          name:
-                            type: string
-                          grade:
-                            type: string
-                            nullable: true
-                          shift:
-                            type: string
-                            nullable: true
-                          room:
-                            type: string
-                            nullable: true
-                      academicYear:
-                        example:
-                          id: e902338e-b3e1-47dc-995b-13bec814c404
-                          schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                          name: '2026'
-                          startDate: '2026-02-01T00:00:00.000Z'
-                          endDate: '2026-12-31T00:00:00.000Z'
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                            format: uuid
-                          schoolId:
-                            type: string
-                            format: uuid
-                          name:
-                            type: string
-                      term:
-                        example:
-                          id: df8c0eac-1660-4e17-95c9-22fb27a33a5e
-                          schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                          academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                          name: 1º Período
-                          startDate: '2026-02-23T00:00:00.000Z'
-                          endDate: '2026-07-10T00:00:00.000Z'
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                            format: uuid
-                          schoolId:
-                            type: string
-                            format: uuid
-                          academicYearId:
-                            type: string
-                            format: uuid
-                          name:
-                            type: string
-                          startDate:
-                            type: string
-                            format: date-time
-                          endDate:
-                            type: string
-                            format: date-time
-                          status:
-                            type: string
-                      subject:
-                        example:
-                          id: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                          schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                          name: Programação Paralela
-                          code: SUBJ3
-                          description: Computação distribuída e modelos de programação concorrente.
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                            format: uuid
-                          schoolId:
-                            type: string
-                            format: uuid
-                          name:
-                            type: string
-                          code:
-                            type: string
-                            nullable: true
-                      teacher:
-                        example:
-                          id: 294481dd-a867-4db8-998c-db6851fafdd2
-                          schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                          name: Eng. Maria Tivane
-                          email: maria.tivane@ucjac.ac.mz
-                          employeeNumber: DOC-2019-014
-                          specialization: Sistemas Distribuídos
-                          status: ACTIVE
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                            format: uuid
-                          schoolId:
-                            type: string
-                            format: uuid
-                          name:
-                            type: string
-                          email:
-                            type: string
-                            nullable: true
+                        required:
+                          - id
+                          - schoolId
+                          - name
                       rows:
                         type: array
                         items:
@@ -10986,6 +9760,10 @@ paths:
                         phone:
                           type: string
                           nullable: true
+                      required:
+                        - id
+                        - name
+                        - code
                   meta:
                     type: object
                     properties:
@@ -11001,69 +9779,22 @@ paths:
                   - data
                   - meta
                 example:
-                  data: []
-                  meta:
-                    correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                    page: 1
-                    pageSize: 20
-                    total: 3
-              example:
-                data: []
-                meta:
-                  correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                  page: 1
-                  pageSize: 20
-                  total: 3
-        '201':
-          description: Recurso criado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
                   data:
-                    type: array
-                    items:
-                      example:
-                        id: f266cdec-aee4-45a5-a962-9d961a95638b
-                        name: Universidade Júnior de Angola e Moçambique
-                        code: UJAC
-                        phone: +258 843 000 111
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          format: uuid
-                        name:
-                          type: string
-                        code:
-                          type: string
-                        phone:
-                          type: string
-                          nullable: true
-                  meta:
-                    type: object
-                    properties:
-                      correlationId:
-                        type: string
-                      page:
-                        type: number
-                      pageSize:
-                        type: number
-                      total:
-                        type: number
-                required:
-                  - data
-                  - meta
-                example:
-                  data: []
+                    - id: f266cdec-aee4-45a5-a962-9d961a95638b
+                      name: Universidade Júnior de Angola e Moçambique
+                      code: UJAC
+                      phone: +258 843 000 111
                   meta:
                     correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                     page: 1
                     pageSize: 20
                     total: 3
               example:
-                data: []
+                data:
+                  - id: f266cdec-aee4-45a5-a962-9d961a95638b
+                    name: Universidade Júnior de Angola e Moçambique
+                    code: UJAC
+                    phone: +258 843 000 111
                 meta:
                   correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                   page: 1
@@ -11252,6 +9983,10 @@ paths:
                           format: uuid
                         name:
                           type: string
+                      required:
+                        - id
+                        - schoolId
+                        - name
                   meta:
                     type: object
                     properties:
@@ -11267,68 +10002,24 @@ paths:
                   - data
                   - meta
                 example:
-                  data: []
-                  meta:
-                    correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                    page: 1
-                    pageSize: 20
-                    total: 3
-              example:
-                data: []
-                meta:
-                  correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                  page: 1
-                  pageSize: 20
-                  total: 3
-        '201':
-          description: Recurso criado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
                   data:
-                    type: array
-                    items:
-                      example:
-                        id: e902338e-b3e1-47dc-995b-13bec814c404
-                        schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                        name: '2026'
-                        startDate: '2026-02-01T00:00:00.000Z'
-                        endDate: '2026-12-31T00:00:00.000Z'
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          format: uuid
-                        schoolId:
-                          type: string
-                          format: uuid
-                        name:
-                          type: string
-                  meta:
-                    type: object
-                    properties:
-                      correlationId:
-                        type: string
-                      page:
-                        type: number
-                      pageSize:
-                        type: number
-                      total:
-                        type: number
-                required:
-                  - data
-                  - meta
-                example:
-                  data: []
+                    - id: e902338e-b3e1-47dc-995b-13bec814c404
+                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                      name: '2026'
+                      startDate: '2026-02-01T00:00:00.000Z'
+                      endDate: '2026-12-31T00:00:00.000Z'
                   meta:
                     correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                     page: 1
                     pageSize: 20
                     total: 3
               example:
-                data: []
+                data:
+                  - id: e902338e-b3e1-47dc-995b-13bec814c404
+                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                    name: '2026'
+                    startDate: '2026-02-01T00:00:00.000Z'
+                    endDate: '2026-12-31T00:00:00.000Z'
                 meta:
                   correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                   page: 1
@@ -11535,6 +10226,14 @@ paths:
                           format: date-time
                         status:
                           type: string
+                      required:
+                        - id
+                        - schoolId
+                        - academicYearId
+                        - name
+                        - startDate
+                        - endDate
+                        - status
                   meta:
                     type: object
                     properties:
@@ -11550,80 +10249,26 @@ paths:
                   - data
                   - meta
                 example:
-                  data: []
-                  meta:
-                    correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                    page: 1
-                    pageSize: 20
-                    total: 3
-              example:
-                data: []
-                meta:
-                  correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                  page: 1
-                  pageSize: 20
-                  total: 3
-        '201':
-          description: Recurso criado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
                   data:
-                    type: array
-                    items:
-                      example:
-                        id: df8c0eac-1660-4e17-95c9-22fb27a33a5e
-                        schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                        academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                        name: 1º Período
-                        startDate: '2026-02-23T00:00:00.000Z'
-                        endDate: '2026-07-10T00:00:00.000Z'
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          format: uuid
-                        schoolId:
-                          type: string
-                          format: uuid
-                        academicYearId:
-                          type: string
-                          format: uuid
-                        name:
-                          type: string
-                        startDate:
-                          type: string
-                          format: date-time
-                        endDate:
-                          type: string
-                          format: date-time
-                        status:
-                          type: string
-                  meta:
-                    type: object
-                    properties:
-                      correlationId:
-                        type: string
-                      page:
-                        type: number
-                      pageSize:
-                        type: number
-                      total:
-                        type: number
-                required:
-                  - data
-                  - meta
-                example:
-                  data: []
+                    - id: df8c0eac-1660-4e17-95c9-22fb27a33a5e
+                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                      academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
+                      name: 1º Período
+                      startDate: '2026-02-23T00:00:00.000Z'
+                      endDate: '2026-07-10T00:00:00.000Z'
                   meta:
                     correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                     page: 1
                     pageSize: 20
                     total: 3
               example:
-                data: []
+                data:
+                  - id: df8c0eac-1660-4e17-95c9-22fb27a33a5e
+                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                    academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
+                    name: 1º Período
+                    startDate: '2026-02-23T00:00:00.000Z'
+                    endDate: '2026-07-10T00:00:00.000Z'
                 meta:
                   correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                   page: 1
@@ -11837,6 +10482,11 @@ paths:
                         room:
                           type: string
                           nullable: true
+                      required:
+                        - id
+                        - schoolId
+                        - academicYearId
+                        - name
                   meta:
                     type: object
                     properties:
@@ -11852,82 +10502,28 @@ paths:
                   - data
                   - meta
                 example:
-                  data: []
-                  meta:
-                    correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                    page: 1
-                    pageSize: 20
-                    total: 3
-              example:
-                data: []
-                meta:
-                  correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                  page: 1
-                  pageSize: 20
-                  total: 3
-        '201':
-          description: Recurso criado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
                   data:
-                    type: array
-                    items:
-                      example:
-                        id: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-                        schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                        academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
-                        name: Engenharia Informática - 1º Ano
-                        grade: '1'
-                        shift: Manhã
-                        room: Sala 204
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          format: uuid
-                        schoolId:
-                          type: string
-                          format: uuid
-                        academicYearId:
-                          type: string
-                          format: uuid
-                        name:
-                          type: string
-                        grade:
-                          type: string
-                          nullable: true
-                        shift:
-                          type: string
-                          nullable: true
-                        room:
-                          type: string
-                          nullable: true
-                  meta:
-                    type: object
-                    properties:
-                      correlationId:
-                        type: string
-                      page:
-                        type: number
-                      pageSize:
-                        type: number
-                      total:
-                        type: number
-                required:
-                  - data
-                  - meta
-                example:
-                  data: []
+                    - id: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
+                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                      academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
+                      name: Engenharia Informática - 1º Ano
+                      grade: '1'
+                      shift: Manhã
+                      room: Sala 204
                   meta:
                     correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                     page: 1
                     pageSize: 20
                     total: 3
               example:
-                data: []
+                data:
+                  - id: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
+                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                    academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
+                    name: Engenharia Informática - 1º Ano
+                    grade: '1'
+                    shift: Manhã
+                    room: Sala 204
                 meta:
                   correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                   page: 1
@@ -12119,6 +10715,10 @@ paths:
                         code:
                           type: string
                           nullable: true
+                      required:
+                        - id
+                        - schoolId
+                        - name
                   meta:
                     type: object
                     properties:
@@ -12134,71 +10734,24 @@ paths:
                   - data
                   - meta
                 example:
-                  data: []
-                  meta:
-                    correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                    page: 1
-                    pageSize: 20
-                    total: 3
-              example:
-                data: []
-                meta:
-                  correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                  page: 1
-                  pageSize: 20
-                  total: 3
-        '201':
-          description: Recurso criado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
                   data:
-                    type: array
-                    items:
-                      example:
-                        id: 9406a157-34f4-4d70-b6de-defdbaf496fa
-                        schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                        name: Programação Paralela
-                        code: SUBJ3
-                        description: Computação distribuída e modelos de programação concorrente.
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          format: uuid
-                        schoolId:
-                          type: string
-                          format: uuid
-                        name:
-                          type: string
-                        code:
-                          type: string
-                          nullable: true
-                  meta:
-                    type: object
-                    properties:
-                      correlationId:
-                        type: string
-                      page:
-                        type: number
-                      pageSize:
-                        type: number
-                      total:
-                        type: number
-                required:
-                  - data
-                  - meta
-                example:
-                  data: []
+                    - id: 9406a157-34f4-4d70-b6de-defdbaf496fa
+                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                      name: Programação Paralela
+                      code: SUBJ3
+                      description: Computação distribuída e modelos de programação concorrente.
                   meta:
                     correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                     page: 1
                     pageSize: 20
                     total: 3
               example:
-                data: []
+                data:
+                  - id: 9406a157-34f4-4d70-b6de-defdbaf496fa
+                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                    name: Programação Paralela
+                    code: SUBJ3
+                    description: Computação distribuída e modelos de programação concorrente.
                 meta:
                   correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                   page: 1
@@ -12392,6 +10945,10 @@ paths:
                         email:
                           type: string
                           nullable: true
+                      required:
+                        - id
+                        - schoolId
+                        - name
                   meta:
                     type: object
                     properties:
@@ -12407,73 +10964,28 @@ paths:
                   - data
                   - meta
                 example:
-                  data: []
-                  meta:
-                    correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                    page: 1
-                    pageSize: 20
-                    total: 3
-              example:
-                data: []
-                meta:
-                  correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                  page: 1
-                  pageSize: 20
-                  total: 3
-        '201':
-          description: Recurso criado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
                   data:
-                    type: array
-                    items:
-                      example:
-                        id: 294481dd-a867-4db8-998c-db6851fafdd2
-                        schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                        name: Eng. Maria Tivane
-                        email: maria.tivane@ucjac.ac.mz
-                        employeeNumber: DOC-2019-014
-                        specialization: Sistemas Distribuídos
-                        status: ACTIVE
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          format: uuid
-                        schoolId:
-                          type: string
-                          format: uuid
-                        name:
-                          type: string
-                        email:
-                          type: string
-                          nullable: true
-                  meta:
-                    type: object
-                    properties:
-                      correlationId:
-                        type: string
-                      page:
-                        type: number
-                      pageSize:
-                        type: number
-                      total:
-                        type: number
-                required:
-                  - data
-                  - meta
-                example:
-                  data: []
+                    - id: 294481dd-a867-4db8-998c-db6851fafdd2
+                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                      name: Eng. Maria Tivane
+                      email: maria.tivane@ucjac.ac.mz
+                      employeeNumber: DOC-2019-014
+                      specialization: Sistemas Distribuídos
+                      status: ACTIVE
                   meta:
                     correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                     page: 1
                     pageSize: 20
                     total: 3
               example:
-                data: []
+                data:
+                  - id: 294481dd-a867-4db8-998c-db6851fafdd2
+                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                    name: Eng. Maria Tivane
+                    email: maria.tivane@ucjac.ac.mz
+                    employeeNumber: DOC-2019-014
+                    specialization: Sistemas Distribuídos
+                    status: ACTIVE
                 meta:
                   correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                   page: 1
@@ -12680,6 +11192,10 @@ paths:
                         enrollmentNumber:
                           type: string
                           nullable: true
+                      required:
+                        - id
+                        - schoolId
+                        - name
                   meta:
                     type: object
                     properties:
@@ -12695,75 +11211,26 @@ paths:
                   - data
                   - meta
                 example:
-                  data: []
-                  meta:
-                    correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                    page: 1
-                    pageSize: 20
-                    total: 3
-              example:
-                data: []
-                meta:
-                  correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
-                  page: 1
-                  pageSize: 20
-                  total: 3
-        '201':
-          description: Recurso criado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
                   data:
-                    type: array
-                    items:
-                      example:
-                        id: 02e95780-9708-48e6-bced-d8607a61fa5a
-                        schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
-                        name: Abu Bakar Ossum
-                        email: aluno1@student.ucjac.ac.mz
-                        enrollmentNumber: UCJAC-2026-001
-                        status: ACTIVE
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          format: uuid
-                        schoolId:
-                          type: string
-                          format: uuid
-                        name:
-                          type: string
-                        email:
-                          type: string
-                          nullable: true
-                        enrollmentNumber:
-                          type: string
-                          nullable: true
-                  meta:
-                    type: object
-                    properties:
-                      correlationId:
-                        type: string
-                      page:
-                        type: number
-                      pageSize:
-                        type: number
-                      total:
-                        type: number
-                required:
-                  - data
-                  - meta
-                example:
-                  data: []
+                    - id: 02e95780-9708-48e6-bced-d8607a61fa5a
+                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                      name: Abu Bakar Ossum
+                      email: aluno1@student.ucjac.ac.mz
+                      enrollmentNumber: UCJAC-2026-001
+                      status: ACTIVE
                   meta:
                     correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                     page: 1
                     pageSize: 20
                     total: 3
               example:
-                data: []
+                data:
+                  - id: 02e95780-9708-48e6-bced-d8607a61fa5a
+                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                    name: Abu Bakar Ossum
+                    email: aluno1@student.ucjac.ac.mz
+                    enrollmentNumber: UCJAC-2026-001
+                    status: ACTIVE
                 meta:
                   correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
                   page: 1
@@ -13000,6 +11467,22 @@ components:
         updatedAt:
           type: string
           format: date-time
+      required:
+        - id
+        - schoolId
+        - academicYearId
+        - termId
+        - classId
+        - subjectId
+        - teacherId
+        - name
+        - type
+        - date
+        - maxScore
+        - weight
+        - status
+        - createdAt
+        - updatedAt
     AssessmentBody:
       type: object
       required:
@@ -13065,10 +11548,6 @@ components:
         assessmentName: Teste 1 — Programação Paralela
         studentId: 02e95780-9708-48e6-bced-d8607a61fa5a
         studentName: Abu Bakar Ossum
-        classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
-        className: Engenharia Informática - 1º Ano
-        subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
-        subjectName: Programação Paralela
         score: 17.5
         comment: Demonstrou domínio de mapeamento paralelo.
         status: APPROVED
@@ -13108,6 +11587,14 @@ components:
         updatedAt:
           type: string
           format: date-time
+      required:
+        - id
+        - assessmentId
+        - studentId
+        - score
+        - status
+        - createdAt
+        - updatedAt
     GradeBody:
       type: object
       required:
@@ -13207,6 +11694,20 @@ components:
         updatedAt:
           type: string
           format: date-time
+      required:
+        - id
+        - schoolId
+        - academicYearId
+        - termId
+        - classId
+        - subjectId
+        - teacherId
+        - dayOfWeek
+        - startTime
+        - endTime
+        - status
+        - createdAt
+        - updatedAt
     ScheduleBody:
       type: object
       required:
@@ -13351,6 +11852,18 @@ components:
         updatedAt:
           type: string
           format: date-time
+      required:
+        - id
+        - schoolId
+        - academicYearId
+        - termId
+        - classId
+        - subjectId
+        - studentId
+        - status
+        - calculatedAt
+        - createdAt
+        - updatedAt
     ResultBody:
       type: object
       required:
@@ -13669,6 +12182,10 @@ components:
         phone:
           type: string
           nullable: true
+      required:
+        - id
+        - name
+        - code
     AcademicYear:
       example:
         id: e902338e-b3e1-47dc-995b-13bec814c404
@@ -13686,6 +12203,10 @@ components:
           format: uuid
         name:
           type: string
+      required:
+        - id
+        - schoolId
+        - name
     Term:
       example:
         id: df8c0eac-1660-4e17-95c9-22fb27a33a5e
@@ -13715,6 +12236,14 @@ components:
           format: date-time
         status:
           type: string
+      required:
+        - id
+        - schoolId
+        - academicYearId
+        - name
+        - startDate
+        - endDate
+        - status
     Class:
       example:
         id: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
@@ -13746,6 +12275,11 @@ components:
         room:
           type: string
           nullable: true
+      required:
+        - id
+        - schoolId
+        - academicYearId
+        - name
     Subject:
       example:
         id: 9406a157-34f4-4d70-b6de-defdbaf496fa
@@ -13766,6 +12300,10 @@ components:
         code:
           type: string
           nullable: true
+      required:
+        - id
+        - schoolId
+        - name
     Teacher:
       example:
         id: 294481dd-a867-4db8-998c-db6851fafdd2
@@ -13788,6 +12326,10 @@ components:
         email:
           type: string
           nullable: true
+      required:
+        - id
+        - schoolId
+        - name
     Student:
       example:
         id: 02e95780-9708-48e6-bced-d8607a61fa5a
@@ -13812,6 +12354,10 @@ components:
         enrollmentNumber:
           type: string
           nullable: true
+      required:
+        - id
+        - schoolId
+        - name
     Error:
       type: object
       properties:

@@ -24,6 +24,24 @@ interface OpenApiSchema {
   [key: string]: unknown;
 }
 
+/**
+ * Deriva `required` a partir das propriedades não-nullable.
+ *
+ * Uma propriedade marcada `nullable: true` pode não vir; todas as outras são
+ * garantidas. Sem `required`, um consumidor do spec não consegue distinguir
+ * "campo opcional" de "campo que a API promete sempre" — e o guia pede
+ * schemas completos.
+ */
+function requireNonNullable<T extends OpenApiSchema>(schema: T): T {
+  const properties = schema.properties ?? {};
+  const required = Object.entries(properties)
+    .filter(([, property]) => (property as { nullable?: boolean }).nullable !== true)
+    .map(([key]) => key);
+  if (required.length === 0) return schema;
+  const merged = new Set([...(schema.required ?? []), ...required]);
+  return { ...schema, required: [...merged] };
+}
+
 const uuid: OpenApiSchema = { type: 'string', format: 'uuid' };
 const dateTime: OpenApiSchema = { type: 'string', format: 'date-time' };
 const hhmm: OpenApiSchema = { type: 'string', pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' };
@@ -128,7 +146,7 @@ const financialStatus: OpenApiSchema = {
   example: { status: 'ACTIVE', checkedAt: '2026-03-18T07:40:00.000Z' },
 };
 
-const school: OpenApiSchema = {
+const school: OpenApiSchema = requireNonNullable({
   example: {
     id: 'f266cdec-aee4-45a5-a962-9d961a95638b',
     name: 'Universidade Júnior de Angola e Moçambique',
@@ -142,9 +160,9 @@ const school: OpenApiSchema = {
     code: { type: 'string' },
     phone: { type: 'string', nullable: true },
   },
-};
+});
 
-const academicYear: OpenApiSchema = {
+const academicYear: OpenApiSchema = requireNonNullable({
   example: {
     id: 'e902338e-b3e1-47dc-995b-13bec814c404',
     schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
@@ -158,9 +176,9 @@ const academicYear: OpenApiSchema = {
     schoolId: uuid,
     name: { type: 'string' },
   },
-};
+});
 
-const term: OpenApiSchema = {
+const term: OpenApiSchema = requireNonNullable({
   example: {
     id: 'df8c0eac-1660-4e17-95c9-22fb27a33a5e',
     schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
@@ -179,9 +197,9 @@ const term: OpenApiSchema = {
     endDate: dateTime,
     status: { type: 'string' },
   },
-};
+});
 
-const classSchema: OpenApiSchema = {
+const classSchema: OpenApiSchema = requireNonNullable({
   example: {
     id: 'ff47d5a7-c2e3-4bff-8ea7-2e816902c9db',
     schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
@@ -201,9 +219,9 @@ const classSchema: OpenApiSchema = {
     shift: { type: 'string', nullable: true },
     room: { type: 'string', nullable: true },
   },
-};
+});
 
-const subject: OpenApiSchema = {
+const subject: OpenApiSchema = requireNonNullable({
   example: {
     id: '9406a157-34f4-4d70-b6de-defdbaf496fa',
     schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
@@ -218,9 +236,9 @@ const subject: OpenApiSchema = {
     name: { type: 'string' },
     code: { type: 'string', nullable: true },
   },
-};
+});
 
-const teacher: OpenApiSchema = {
+const teacher: OpenApiSchema = requireNonNullable({
   example: {
     id: '294481dd-a867-4db8-998c-db6851fafdd2',
     schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
@@ -237,9 +255,9 @@ const teacher: OpenApiSchema = {
     name: { type: 'string' },
     email: { type: 'string', nullable: true },
   },
-};
+});
 
-const student: OpenApiSchema = {
+const student: OpenApiSchema = requireNonNullable({
   example: {
     id: '02e95780-9708-48e6-bced-d8607a61fa5a',
     schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
@@ -256,9 +274,9 @@ const student: OpenApiSchema = {
     email: { type: 'string', nullable: true },
     enrollmentNumber: { type: 'string', nullable: true },
   },
-};
+});
 
-const assessment: OpenApiSchema = {
+const assessment: OpenApiSchema = requireNonNullable({
   example: {
     id: '7c75e533-aa49-4dcf-97a2-9ecdd3bfb1d4',
     schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
@@ -306,7 +324,7 @@ const assessment: OpenApiSchema = {
     createdAt: dateTime,
     updatedAt: dateTime,
   },
-};
+});
 
 const assessmentBody: OpenApiSchema = {
   type: 'object',
@@ -327,17 +345,15 @@ const assessmentBody: OpenApiSchema = {
   },
 };
 
-const grade: OpenApiSchema = {
+const grade: OpenApiSchema = requireNonNullable({
+  // Campos exactamente iguais aos de `gradeDto` em @smartcampus/shared-types:
+  // o exemplo não pode prometer campos que a API não devolve.
   example: {
     id: '2f9a1c77-0d3e-4a5b-9c88-2f1d0e7b5a91',
     assessmentId: '7c75e533-aa49-4dcf-97a2-9ecdd3bfb1d4',
     assessmentName: 'Teste 1 — Programação Paralela',
     studentId: '02e95780-9708-48e6-bced-d8607a61fa5a',
     studentName: 'Abu Bakar Ossum',
-    classId: 'ff47d5a7-c2e3-4bff-8ea7-2e816902c9db',
-    className: 'Engenharia Informática - 1º Ano',
-    subjectId: '9406a157-34f4-4d70-b6de-defdbaf496fa',
-    subjectName: 'Programação Paralela',
     score: 17.5,
     comment: 'Demonstrou domínio de mapeamento paralelo.',
     status: 'APPROVED',
@@ -357,7 +373,7 @@ const grade: OpenApiSchema = {
     createdAt: dateTime,
     updatedAt: dateTime,
   },
-};
+});
 
 const gradeBody: OpenApiSchema = {
   type: 'object',
@@ -369,7 +385,7 @@ const gradeBody: OpenApiSchema = {
   },
 };
 
-const schedule: OpenApiSchema = {
+const schedule: OpenApiSchema = requireNonNullable({
   example: {
     id: '1d3f7a20-6b8e-4c11-9f52-8a7b3d6e4c90',
     schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
@@ -410,7 +426,7 @@ const schedule: OpenApiSchema = {
     createdAt: dateTime,
     updatedAt: dateTime,
   },
-};
+});
 
 const scheduleBody: OpenApiSchema = {
   type: 'object',
@@ -429,7 +445,7 @@ const scheduleBody: OpenApiSchema = {
   },
 };
 
-const result: OpenApiSchema = {
+const result: OpenApiSchema = requireNonNullable({
   example: {
     id: 'b7e4d2a9-5c3f-4a8e-9d61-7f2b8c4e5a30',
     schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
@@ -474,7 +490,7 @@ const result: OpenApiSchema = {
     createdAt: dateTime,
     updatedAt: dateTime,
   },
-};
+});
 
 const resultBody: OpenApiSchema = {
   type: 'object',
@@ -806,7 +822,11 @@ const listMetaExample = {
  * módulo para endpoints de listagem.
  */
 function successExample(items: OpenApiSchema, options: { list?: boolean; singleExample?: unknown } = {}): unknown {
-  const single = options.singleExample ?? (items as { example?: unknown }).example;
+  // Numa listagem, `items` é `{ type: 'array', items: <entidade> }`: o exemplo
+  // realisticamente está no elemento, não no array. Sem esta leitura o exemplo
+  // da listagem saía vazio e não ensinava nada ao consumidor.
+  const elementExample = (items as { example?: unknown }).example ?? (items.items as { example?: unknown } | undefined)?.example;
+  const single = options.singleExample ?? elementExample;
   if (options.list) return { data: single === undefined ? [] : [single], meta: listMetaExample };
   return single === undefined ? undefined : { data: single, meta: { correlationId: CORRELATION_ID_EXAMPLE } };
 }
@@ -926,7 +946,16 @@ function withOperationIds(paths: Record<string, Record<string, unknown>>): Recor
         methods[key] = operation;
         continue;
       }
-      methods[key] = { operationId: deriveOperationId(key, path), ...(operation as Record<string, unknown>) };
+      const withId: Record<string, unknown> = { operationId: deriveOperationId(key, path), ...(operation as Record<string, unknown>) };
+
+      // Um GET nunca cria um recurso: documentar 201 numa leitura e' ru'ido que
+      // faz o consumidor duvidar do contrato. Remove-se o 201 das leituras.
+      if (key === 'get') {
+        const responses = (withId.responses ?? {}) as Record<string, unknown>;
+        const { 201: _unused, ...rest } = responses;
+        withId.responses = rest;
+      }
+      methods[key] = withId;
     }
     result[path] = methods;
   }
