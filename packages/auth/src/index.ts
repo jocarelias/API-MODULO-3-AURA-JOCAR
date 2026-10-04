@@ -1,17 +1,22 @@
 import { createHmac, timingSafeEqual, randomBytes, scryptSync, createHash, randomUUID } from 'node:crypto';
+import { createHmacVerifier, type SyncTokenVerifier } from './verifiers';
 
 const HEADER_B64 = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
 
 export type TokenType = 'access' | 'refresh';
 
 export interface TokenClaims {
-  jti: string;
+  jti?: string;
   sub: string;
   role: string;
   schoolId: string;
   type: TokenType;
-  iat: number;
+  iat?: number;
   exp: number;
+  nbf?: number;
+  iss?: string;
+  aud?: string | string[];
+  scopes?: string[];
 }
 
 export interface LoginUser {
@@ -44,29 +49,16 @@ export function signToken(user: LoginUser, secret: string, ttlSeconds = 3600, ty
   return `${signingInput}.${signature}`;
 }
 
+const hmacVerifiers = new Map<string, SyncTokenVerifier>();
+
 export function verifyToken(token: string, secret: string, expectedType: TokenType = 'access'): TokenClaims {
-  const parts = token.split('.');
-  if (parts.length !== 3) {
-    throw new Error('Token malformado');
+  const cacheKey = `${expectedType}:${secret}`;
+  let verifier = hmacVerifiers.get(cacheKey);
+  if (!verifier) {
+    verifier = createHmacVerifier(secret, { expectedType });
+    hmacVerifiers.set(cacheKey, verifier);
   }
-  const [header, payload, signature] = parts;
-  if (header !== HEADER_B64) {
-    throw new Error('Algoritmo não suportado');
-  }
-  const expected = b64url(createHmac('sha256', secret).update(`${header}.${payload}`).digest());
-  const a = Buffer.from(signature);
-  const b = Buffer.from(expected);
-  if (a.length !== b.length || !timingSafeEqual(a, b)) {
-    throw new Error('Assinatura inválida');
-  }
-  const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as TokenClaims;
-  if (claims.type !== expectedType || !claims.sub || !claims.role || !claims.schoolId) {
-    throw new Error('Reclamações inválidas');
-  }
-  if (claims.exp <= unixNow()) {
-    throw new Error('Token expirado');
-  }
-  return claims;
+  return verifier(token);
 }
 
 export function hashToken(token: string): string {
@@ -94,3 +86,11 @@ export function verifyPassword(password: string, stored: string): boolean {
 
 export { createAuthMiddleware, requireRoles, SERVICE_ROLE } from './express';
 export type { AuthRequest, AuthContext, AuthUserRecord, AuthMiddlewareOptions } from './express';
+export {
+  createHmacVerifier,
+  createJwksVerifier,
+  TokenVerificationError,
+  SUPPORTED_HMAC_ALGORITHMS,
+  SUPPORTED_ASYMMETRIC_ALGORITHMS,
+} from './verifiers';
+export type { TokenVerifier, SyncTokenVerifier, ClaimConstraints, JwksVerifierOptions, JwksDocument, Jwk } from './verifiers';

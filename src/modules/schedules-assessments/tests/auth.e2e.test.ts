@@ -5,6 +5,7 @@ import { createApp } from '../../../app';
 import { startContractServices, ContractTestContext } from './contractTestEnv';
 
 describe('G3 Autenticação, RBAC e scoping (e2e)', () => {
+  let seedSchoolId = '';
   let app: ReturnType<typeof createApp>;
   let server: ReturnType<typeof app.listen>;
   let apiBase: string;
@@ -23,6 +24,7 @@ describe('G3 Autenticação, RBAC e scoping (e2e)', () => {
   beforeAll(async () => {
     testContext = await startContractServices();
     prisma = new PrismaClient();
+    seedSchoolId = (await prisma.term.findFirst({ where: { name: { startsWith: '1º' } }, orderBy: { createdAt: 'asc' } }))!.schoolId;
     app = createApp();
     server = app.listen(0);
     await new Promise((resolve) => server.once('listening', resolve));
@@ -31,17 +33,17 @@ describe('G3 Autenticação, RBAC e scoping (e2e)', () => {
     api = request.agent(apiBase);
 
     const [term, academicYear, classRecord, subject, teacher, assessment] = await Promise.all([
-      prisma.term.findFirst({ where: { name: { startsWith: '1º' } } }),
-      prisma.academicYear.findFirst({ where: { status: 'ACTIVE' } }),
-      prisma.class.findFirst({ where: { status: 'ACTIVE' } }),
-      prisma.subject.findFirst({ where: { status: 'ACTIVE' } }),
-      prisma.teacher.findFirst({ where: { status: 'ACTIVE' } }),
-      prisma.assessment.findFirst({ where: {} }),
+      prisma.term.findFirst({ where: { name: { startsWith: '1º' } }, orderBy: { createdAt: 'asc' } }),
+      prisma.academicYear.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } }),
+      prisma.class.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } }),
+      prisma.subject.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } }),
+      prisma.teacher.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } }),
+      prisma.assessment.findFirst({ where: { schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } }),
     ]);
-    const alunos = await prisma.user.findMany({ where: { role: 'STUDENT', status: 'ACTIVE' }, orderBy: { email: 'asc' }, take: 2 });
+    const alunos = await prisma.user.findMany({ where: { role: 'STUDENT', status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { email: 'asc' }, take: 2 });
     const studentLoginUser = await prisma.user.findFirst({ where: { email: 'aluno1@student.ucjac.ac.mz' } });
     const students = await prisma.student.findMany({
-      where: { userId: { in: alunos.map((a) => a.id) }, status: 'ACTIVE' },
+      where: { userId: { in: alunos.map((a) => a.id) }, status: 'ACTIVE', schoolId: seedSchoolId },
     });
     const first = students.find((s) => s.userId === studentLoginUser?.id);
     const rest = students.filter((s) => s.userId !== studentLoginUser?.id);

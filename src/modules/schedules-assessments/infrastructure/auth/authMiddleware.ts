@@ -1,18 +1,48 @@
-import { createAuthMiddleware, AuthUserRecord } from '@smartcampus/auth';
-import { prisma } from '../prisma';
+import { createAuthMiddleware, type AuthUserRecord, type TokenVerifier } from '@smartcampus/auth';
+import {
+  createIdentityProvider,
+  createTokenVerifier,
+  identityConfig,
+  type IdentityProvider,
+  type RequestContext,
+} from './identityProvider';
 
-async function loadUser(userId: string): Promise<AuthUserRecord | null> {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) {
-    return null;
-  }
-  return { id: user.id, role: user.role, schoolId: user.schoolId, status: user.status };
+export interface G3Auth {
+  middleware: ReturnType<typeof createAuthMiddleware>;
+  verify: TokenVerifier;
+  identity: IdentityProvider;
+}
+
+export function createG3Auth(): G3Auth {
+  const config = identityConfig();
+  const identity = createIdentityProvider(config);
+  const verify = createTokenVerifier(config);
+
+  const middleware = createAuthMiddleware({
+    verify,
+    serviceToken: config.serviceToken,
+    loadUser: (userId: string) => identity.loadUser(userId, { correlationId: '' } as RequestContext),
+  });
+
+  return { middleware, verify, identity };
 }
 
 export function createG3AuthMiddleware() {
-  const secret = process.env.JWT_ACCESS_SECRET || process.env.SMARTCAMPUS_JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_ACCESS_SECRET (ou SMARTCAMPUS_JWT_SECRET) é obrigatório para o módulo G3');
-  }
-  return createAuthMiddleware({ secret, loadUser });
+  return createG3Auth().middleware;
 }
+
+export function requestContextOf(req: {
+  correlationId?: string;
+  auth?: { token: string };
+  get(name: string): string | undefined;
+  ip?: string;
+}): RequestContext {
+  return {
+    correlationId: req.correlationId ?? '',
+    token: req.auth?.token,
+    userAgent: req.get('user-agent') ?? undefined,
+    ipAddress: req.ip,
+  };
+}
+
+export type { AuthUserRecord, IdentityProvider };

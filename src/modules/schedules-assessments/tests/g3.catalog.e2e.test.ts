@@ -20,9 +20,18 @@ describe('G3 Catálogo e nomes legíveis (e2e) — API autenticada + contratos',
     scheduleId: string;
     assessmentWithGradesId: string;
     resultId: string | null;
+    catalog: {
+      academicYearId: string;
+      termId: string;
+      classId: string;
+      subjectId: string;
+      foreignClassId: string;
+    };
   };
 
   const prisma = new PrismaClient();
+  let seedSchoolId = '';
+  let seedForeignYearId = '';
 
   beforeAll(async () => {
     testContext = await startContractServices();
@@ -57,6 +66,8 @@ describe('G3 Catálogo e nomes legíveis (e2e) — API autenticada + contratos',
       assessmentWithGrades,
     ]);
 
+    seedSchoolId = resolved[0].schoolId;
+    seedForeignYearId = resolved[1].id;
     ids = {
       termId: resolved[0].id,
       academicYearId: resolved[1].id,
@@ -67,6 +78,7 @@ describe('G3 Catálogo e nomes legíveis (e2e) — API autenticada + contratos',
       studentId: resolved[6].studentId,
       assessmentWithGradesId: resolved[7].id,
       resultId: result?.id ?? null,
+      catalog: await seedCatalogFixtures(prisma, testContext.schoolId, seedSchoolId),
     };
   });
 
@@ -112,7 +124,7 @@ describe('G3 Catálogo e nomes legíveis (e2e) — API autenticada + contratos',
   });
 
   it('catálogo de turmas filtrado por termId: GET /api/v1/classes?termId=...', async () => {
-    const res = await api.get('/api/v1/classes').query({ termId: ids.termId });
+    const res = await api.get('/api/v1/classes').query({ termId: ids.catalog.termId });
     expect(res.status).toBe(200);
     expect(res.body.data.length).toBeGreaterThan(0);
     expect(res.body.data[0]).toHaveProperty('name');
@@ -197,6 +209,24 @@ describe('G3 Catálogo e nomes legíveis (e2e) — API autenticada + contratos',
     expect(res.body.data.termName).toBeTruthy();
   });
 
+  it('isolamento multi-escolar: SCHOOL_ADMIN não vê turmas de outra escola', async () => {
+    const res = await api.get('/api/v1/classes').query({ pageSize: 100 });
+    expect(res.status).toBe(200);
+    const returned = res.body.data as Array<{ id: string; name: string }>;
+    expect(returned.some((item) => item.id === ids.catalog.classId)).toBe(true);
+    expect(returned.some((item) => item.id === ids.catalog.foreignClassId)).toBe(false);
+  });
+
+  it('isolamento multi-escolar: subjects e academic-years também são filtrados por escola', async () => {
+    const subjects = await api.get('/api/v1/subjects').query({ pageSize: 100 });
+    const years = await api.get('/api/v1/academic-years').query({ pageSize: 100 });
+    expect(subjects.status).toBe(200);
+    expect(years.status).toBe(200);
+    expect((subjects.body.data as Array<{ id: string }>).some((s) => s.id === ids.catalog.subjectId)).toBe(true);
+    expect((years.body.data as Array<{ id: string }>).some((y) => y.id === ids.catalog.academicYearId)).toBe(true);
+    expect((years.body.data as Array<{ id: string }>).every((y) => y.id !== seedForeignYearId)).toBe(true);
+  });
+
   it('catálogo usa paginação: /api/v1/classes?page=1&pageSize=2', async () => {
     const res = await api.get('/api/v1/classes').query({ page: 1, pageSize: 2 });
     expect(res.status).toBe(200);
@@ -205,4 +235,51 @@ describe('G3 Catálogo e nomes legíveis (e2e) — API autenticada + contratos',
     expect(res.body.meta.pageSize).toBe(2);
     expect(res.body.meta.total).toBeGreaterThanOrEqual(1);
   });
+
+async function seedCatalogFixtures(
+  prisma: PrismaClient,
+  schoolId: string,
+  foreignSchoolId: string,
+): Promise<G3CatalogTestState['ids']['catalog']> {
+  const now = new Date();
+  const year = await prisma.academicYear.create({
+    data: { schoolId, name: `Ano ${schoolId.slice(0, 4)}`, startDate: now, endDate: new Date(now.getFullYear() + 1, 0, 1) },
+  });
+  const term = await prisma.term.create({
+    data: {
+      schoolId,
+      academicYearId: year.id,
+      name: `1º Período ${schoolId.slice(0, 4)}`,
+      startDate: now,
+      endDate: new Date(now.getFullYear(), 11, 31),
+    },
+  });
+  const classRecord = await prisma.class.create({
+    data: { schoolId, academicYearId: year.id, name: `Turma ${schoolId.slice(0, 4)}`, grade: '1', shift: 'Manhã', room: 'Sala 1' },
+  });
+  const subject = await prisma.subject.create({
+    data: { schoolId, name: `Disciplina ${schoolId.slice(0, 4)}`, code: `SUB${schoolId.slice(0, 4)}` },
+  });
+
+  const foreignYear = await prisma.academicYear.findFirst({ where: { schoolId: foreignSchoolId } });
+  const foreignClass =
+    foreignYear &&
+    (await prisma.class.create({
+      data: {
+        schoolId: foreignSchoolId,
+        academicYearId: foreignYear.id,
+        name: `Turma Estrangeira ${schoolId.slice(0, 4)}`,
+        grade: '9',
+      },
+    }));
+
+  return {
+    academicYearId: year.id,
+    termId: term.id,
+    classId: classRecord.id,
+    subjectId: subject.id,
+    foreignClassId: foreignClass?.id ?? '',
+  };
+}
+
 });

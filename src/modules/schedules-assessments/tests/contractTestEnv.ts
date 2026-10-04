@@ -40,9 +40,14 @@ export async function startContractServices(): Promise<ContractTestContext> {
     );
   }
 
+  // O código tem de ser praticamente único: cada ficheiro de teste cria a sua
+  // escola e `code` tem um índice único. Com apenas 3 caracteres hexadecimais
+  // (~4 mil combinações) passavam a colidir com regularidade, tornando a suite
+  // intermitente. Usamos 12 caracteres + PID para garantir unicidade.
   const schoolId = randomUUID();
+  const schoolCode = `GE2${schoolId.replace(/-/g, '').slice(0, 12)}${process.pid.toString(36)}`.slice(0, 24);
   await prisma.school.create({
-    data: { id: schoolId, name: `G3 E2E ${schoolId.slice(0, 6)}`, code: `GE2${schoolId.slice(0, 3)}`, status: 'ACTIVE' },
+    data: { id: schoolId, name: `G3 E2E ${schoolId.slice(0, 6)}`, code: schoolCode, status: 'ACTIVE' },
   });
   const userId = randomUUID();
   await prisma.user.create({
@@ -78,6 +83,51 @@ export async function startContractServices(): Promise<ContractTestContext> {
     schoolId,
     stop: async () => {
       await Promise.all(servers.map((server) => new Promise<void>((resolve) => server.close(() => resolve()))));
+      // Limpa a escola descartável (cascata apaga utilizadores, turmas, notas, etc.)
+      // para não contaminar execuções seguintes.
+      const cleanup = new PrismaClient();
+      try {
+        await cleanup.school.deleteMany({ where: { id: schoolId } });
+      } finally {
+        await cleanup.$disconnect();
+      }
     },
   };
+}
+export interface SeedFixtures {
+  schoolId: string;
+  termId: string;
+  academicYearId: string;
+  classId: string;
+  subjectId: string;
+  teacherId: string;
+}
+
+/**
+ * Resolve as entidades do seed de forma DETERMINÍSTICA.
+ *
+ * Os testes criam as suas próprias escolas e registos (por exemplo a suite
+ * anti-BOLA), pelo que procurar apenas por `status: 'ACTIVE'` ou por
+ * `name startsWith '1º'` é ambíguo e torna os testes dependentes da ordem de
+ * execução. Aqui ancoramos sempre na escola do seed.
+ */
+export async function resolveSeedFixtures(prisma: PrismaClient): Promise<SeedFixtures> {
+  const term = await prisma.term.findFirst({ where: { name: { startsWith: '1º' } }, orderBy: { createdAt: 'asc' } });
+  if (!term) {
+    throw new Error('Seed ausente: nenhum período encontrado. Executar `npm run db:seed`.');
+  }
+  const schoolId = term.schoolId;
+
+  const [academicYear, classRecord, subject, teacher] = await Promise.all([
+    prisma.academicYear.findFirst({ where: { schoolId, status: 'ACTIVE' }, orderBy: { createdAt: 'asc' } }),
+    prisma.class.findFirst({ where: { schoolId, status: 'ACTIVE' }, orderBy: { createdAt: 'asc' } }),
+    prisma.subject.findFirst({ where: { schoolId, status: 'ACTIVE' }, orderBy: { createdAt: 'asc' } }),
+    prisma.teacher.findFirst({ where: { schoolId, status: 'ACTIVE' }, orderBy: { createdAt: 'asc' } }),
+  ]);
+
+  if (!academicYear || !classRecord || !subject || !teacher) {
+    throw new Error('Seed incompleto: faltam ano letivo, turma, disciplina ou docente');
+  }
+
+  return { schoolId, termId: term.id, academicYearId: academicYear.id, classId: classRecord.id, subjectId: subject.id, teacherId: teacher.id };
 }

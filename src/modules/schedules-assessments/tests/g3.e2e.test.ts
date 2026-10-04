@@ -22,6 +22,7 @@ describe('G3 Avaliações e Horários (e2e) — API autenticada + contratos', ()
   };
 
   const prisma = new PrismaClient();
+  let seedSchoolId = '';
   const created: { assessments: string[]; schedules: string[] } = { assessments: [], schedules: [] };
 
   const unique = (label: string) => `e2e-${label}-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
@@ -38,12 +39,13 @@ describe('G3 Avaliações e Horários (e2e) — API autenticada + contratos', ()
       apiBase = '';
     }
     api = request.agent(apiBase).set('authorization', `Bearer ${testContext.token}`);
+    seedSchoolId = (await prisma.term.findFirst({ where: { name: { startsWith: '1º' } }, orderBy: { createdAt: 'asc' } }))!.schoolId;
 
-    const term = await prisma.term.findFirst({ where: { name: { startsWith: '1º' } } });
-    const academicYear = await prisma.academicYear.findFirst({ where: { status: 'ACTIVE' } });
-    const classRecord = await prisma.class.findFirst({ where: { status: 'ACTIVE' } });
-    const subject = await prisma.subject.findFirst({ where: { status: 'ACTIVE' } });
-    const teacher = await prisma.teacher.findFirst({ where: { status: 'ACTIVE' } });
+    const term = await prisma.term.findFirst({ where: { name: { startsWith: '1º' } }, orderBy: { createdAt: 'asc' } });
+    const academicYear = await prisma.academicYear.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
+    const classRecord = await prisma.class.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
+    const subject = await prisma.subject.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
+    const teacher = await prisma.teacher.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
 
     const seedAssessment = await prisma.assessment.findFirst({
       where: { status: 'OPEN', termId: term.id, classId: classRecord.id, subjectId: subject.id },

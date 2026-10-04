@@ -12,10 +12,15 @@ import {
   CONTRACT_ERROR_CODES,
 } from '@smartcampus/shared-types';
 import { DomainError } from '../../application/schedulesAssessmentsService';
+import { CircuitBreaker, CircuitOpenError, withRetry } from './resilience';
+
+export type ContractService = 'students' | 'teachers' | 'enrolments' | 'finance';
 
 export interface ContractCallContext {
   token: string;
   correlationId: string;
+  userId?: string;
+  role?: string;
 }
 
 export interface ContractApiConfig {
@@ -25,6 +30,11 @@ export interface ContractApiConfig {
   financeUrl?: string;
   timeoutMs?: number;
   financeServiceToken?: string;
+  retryAttempts?: number;
+  retryBaseDelayMs?: number;
+  circuitFailureThreshold?: number;
+  circuitResetTimeoutMs?: number;
+  now?: () => number;
 }
 
 export interface EnrolmentFilters {
@@ -42,6 +52,21 @@ const HTTP_TO_ERROR: Record<number, string> = {
   403: CONTRACT_ERROR_CODES.FORBIDDEN,
 };
 
+function isTransient(error: unknown): boolean {
+  if (!(error instanceof DomainError)) {
+    return true;
+  }
+  const status = error.httpStatus ?? 0;
+  if (status >= 500 || status === 429) {
+    return true;
+  }
+  return (
+    error.code === CONTRACT_ERROR_CODES.UPSTREAM_UNAVAILABLE ||
+    error.code === CONTRACT_ERROR_CODES.UPSTREAM_ERROR ||
+    error.code === CONTRACT_ERROR_CODES.FINANCIAL_VERIFICATION_UNAVAILABLE
+  );
+}
+
 export class ContractGateway {
   private studentsUrl?: string;
   private teachersUrl?: string;
@@ -49,6 +74,9 @@ export class ContractGateway {
   private financeUrl?: string;
   private timeoutMs: number;
   private financeServiceToken?: string;
+  private retryAttempts: number;
+  private retryBaseDelayMs: number;
+  private breakers: Record<ContractService, CircuitBreaker>;
 
   constructor(config: ContractApiConfig = {}) {
     this.studentsUrl = config.studentsUrl;
@@ -57,6 +85,39 @@ export class ContractGateway {
     this.financeUrl = config.financeUrl;
     this.timeoutMs = (config.timeoutMs ?? Number(process.env.CONTRACT_TIMEOUT_MS ?? 5000)) || 5000;
     this.financeServiceToken = config.financeServiceToken ?? process.env.FINANCIAL_SERVICE_TOKEN ?? process.env.SMARTCAMPUS_SERVICE_TOKEN;
+    this.retryAttempts = config.retryAttempts ?? (Number(process.env.CONTRACT_RETRY_ATTEMPTS ?? 2) || 2);
+    this.retryBaseDelayMs = config.retryBaseDelayMs ?? (Number(process.env.CONTRACT_RETRY_BASE_DELAY_MS ?? 50) || 50);
+    const failureThreshold = config.circuitFailureThreshold ?? (Number(process.env.CONTRACT_CIRCUIT_FAILURE_THRESHOLD ?? 5) || 5);
+    const resetTimeoutMs = config.circuitResetTimeoutMs ?? (Number(process.env.CONTRACT_CIRCUIT_RESET_TIMEOUT_MS ?? 30_000) || 30_000);
+    const now = config.now ?? Date.now;
+    this.breakers = (['students', 'teachers', 'enrolments', 'finance'] as const).reduce(
+      (acc, service) => {
+        acc[service] = new CircuitBreaker({ name: service, failureThreshold, resetTimeoutMs, now });
+        return acc;
+      },
+      {} as Record<ContractService, CircuitBreaker>,
+    );
+  }
+
+  circuitStates(): Record<ContractService, { state: string; failures: number }> {
+    return (Object.keys(this.breakers) as ContractService[]).reduce(
+      (acc, service) => {
+        const snapshot = this.breakers[service].snapshot();
+        acc[service] = { state: snapshot.state, failures: snapshot.failures };
+        return acc;
+      },
+      {} as Record<ContractService, { state: string; failures: number }>,
+    );
+  }
+
+  private unavailableError(service: ContractService): DomainError {
+    return new DomainError(
+      service === 'finance' ? CONTRACT_ERROR_CODES.FINANCIAL_VERIFICATION_UNAVAILABLE : CONTRACT_ERROR_CODES.UPSTREAM_UNAVAILABLE,
+      service === 'finance'
+        ? 'Serviço financeiro indisponível — operação bloqueada por segurança'
+        : `Serviço de ${service} indisponível`,
+      [{ service }],
+    );
   }
 
   private studentsBase(): string {
@@ -75,7 +136,7 @@ export class ContractGateway {
     return (this.financeUrl ?? process.env.FINANCE_SERVICE_URL ?? 'http://finance:4104').replace(/\/$/, '');
   }
 
-  private async call(url: string, ctx: ContractCallContext, service: 'students' | 'teachers' | 'enrolments' | 'finance', options: { method?: string; body?: unknown; tokenOverride?: string; retry?: boolean } = {}): Promise<unknown> {
+  private async call(url: string, ctx: ContractCallContext, service: ContractService, options: { method?: string; body?: unknown; tokenOverride?: string; retry?: boolean } = {}): Promise<unknown> {
     const { method = 'GET', body, tokenOverride, retry = false } = options;
     const token = tokenOverride ?? ctx.token;
     const serverError = (upstreamStatus: number): boolean => upstreamStatus >= 500;
@@ -132,16 +193,31 @@ export class ContractGateway {
       }
     };
 
-    const attempts = retry ? 2 : 1;
-    let lastError: unknown;
-    for (let i = 0; i < attempts; i += 1) {
-      try {
-        return await attempt();
-      } catch (error) {
-        lastError = error;
+    const breaker = this.breakers[service];
+    try {
+      breaker.assertCallable();
+    } catch (error) {
+      if (error instanceof CircuitOpenError) {
+        throw this.unavailableError(service);
       }
+      throw error;
     }
-    throw lastError;
+
+    try {
+      const data = await withRetry(attempt, {
+        attempts: retry ? this.retryAttempts : 1,
+        baseDelayMs: this.retryBaseDelayMs,
+        maxDelayMs: this.retryBaseDelayMs * 8,
+        shouldRetry: (error) => isTransient(error),
+      });
+      breaker.onSuccess();
+      return data;
+    } catch (error) {
+      if (isTransient(error)) {
+        breaker.onFailure();
+      }
+      throw error instanceof DomainError ? error : this.unavailableError(service);
+    }
   }
 
   async getStudent(studentId: string, ctx: ContractCallContext): Promise<StudentProfileDto> {

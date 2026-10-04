@@ -1,6 +1,7 @@
 import { Prisma, PrismaClient, EvaluationType, EvaluationStatus, GradeStatus, ScheduleStatus, DayOfWeek, CalculationMethod } from '@prisma/client';
 import { prisma } from '../infrastructure/prisma';
 import { ContractGateway, ContractCallContext } from '../infrastructure/contracts/gateway';
+import { AcademicRegistryClient } from '../infrastructure/contracts/academicRegistry';
 import {
   validateEvaluationType,
   validateWeight,
@@ -55,6 +56,12 @@ export const TYPE_MAP: Record<string, string> = {
   EXAME_NORMAL: 'EXAM',
   EXAME_RECURRENCIA: 'EXAM',
 };
+
+export const NO_ACCESS_SCOPE = '00000000-0000-0000-0000-000000000000';
+
+export const POSSESSION_DENIED = 'FORBIDDEN';
+export const POSSESSION_MESSAGE = 'Só tem permissão para aceder aos seus próprios dados';
+export const POSSESSION_WRITE_MESSAGE = 'Só tem permissão para alterar recursos atribuídos à sua própria docência';
 
 export class DomainError extends Error {
   code: string;
@@ -158,16 +165,23 @@ export interface ResultInput {
 export class SchedulesAssessmentsService {
   private prisma: PrismaClient;
   private gateway: ContractGateway;
+  private registry: AcademicRegistryClient;
 
-  constructor({ db = prisma, gateway }: { db?: PrismaClient; gateway?: ContractGateway } = {}) {
+  constructor({
+    db = prisma,
+    gateway,
+    registry,
+  }: { db?: PrismaClient; gateway?: ContractGateway; registry?: AcademicRegistryClient } = {}) {
     this.prisma = db;
     this.gateway = gateway ?? new ContractGateway();
+    this.registry = registry ?? new AcademicRegistryClient();
   }
 
-  async listAssessments({ termId, classId, subjectId, teacherId }: { termId?: string; classId?: string; subjectId?: string; teacherId?: string } = {}): Promise<AssessmentDto[]> {
+  async listAssessments({ termId, classId, classIds, subjectId, teacherId }: { termId?: string; classId?: string; classIds?: string[]; subjectId?: string; teacherId?: string } = {}): Promise<AssessmentDto[]> {
     const where: Prisma.AssessmentWhereInput = {};
     if (termId) where.termId = termId;
-    if (classId) where.classId = classId;
+    if (classIds) where.classId = { in: classIds.length > 0 ? classIds : [NO_ACCESS_SCOPE] };
+    else if (classId) where.classId = classId;
     if (subjectId) where.subjectId = subjectId;
     if (teacherId) where.teacherId = teacherId;
     const rows = await this.prisma.assessment.findMany({
@@ -189,7 +203,7 @@ export class SchedulesAssessmentsService {
     return assessmentDto(record as unknown as Record<string, unknown>);
   }
 
-  async createAssessment(input: AssessmentInput): Promise<AssessmentDto> {
+  async createAssessment(input: AssessmentInput, ctx?: ContractCallContext): Promise<AssessmentDto> {
     const type = withValidAssessmentType(input.type);
     const weightCheck = validateWeight(input.weight);
     if (!weightCheck.valid) {
@@ -212,6 +226,8 @@ export class SchedulesAssessmentsService {
     assertRelation(subject, 'Disciplina não encontrada');
     assertRelation(teacher, 'Professor não encontrado');
     assertRelation(academicYear, 'Ano letivo não encontrado');
+
+    await this.assertTeacherOwns(teacher.id, ctx);
 
     if (
       term.academicYearId !== classRecord.academicYearId ||
@@ -270,11 +286,13 @@ export class SchedulesAssessmentsService {
     return assessmentDto(record as unknown as Record<string, unknown>);
   }
 
-  async updateAssessment(id: string, patch: Record<string, unknown>): Promise<AssessmentDto> {
+  async updateAssessment(id: string, patch: Record<string, unknown>, ctx?: ContractCallContext): Promise<AssessmentDto> {
     const existing = await this.prisma.assessment.findUnique({ where: { id } });
     if (!existing) {
       throw new DomainError('NOT_FOUND', 'Avaliação não encontrada');
     }
+
+    await this.assertTeacherOwns(existing.teacherId, ctx);
 
     if (patch.weight !== undefined || patch.maxScore !== undefined) {
       const gradeCount = await this.prisma.grade.count({ where: { assessmentId: id } });
@@ -307,7 +325,7 @@ export class SchedulesAssessmentsService {
     return assessmentDto(updated as unknown as Record<string, unknown>);
   }
 
-  async deleteAssessment(id: string): Promise<{ id: string; deleted: boolean }> {
+  async deleteAssessment(id: string, ctx?: ContractCallContext): Promise<{ id: string; deleted: boolean }> {
     const assessment = await this.prisma.assessment.findUnique({
       where: { id },
       include: { _count: { select: { grades: true } } },
@@ -315,6 +333,8 @@ export class SchedulesAssessmentsService {
     if (!assessment) {
       throw new DomainError('NOT_FOUND', 'Avaliação não encontrada');
     }
+
+    await this.assertTeacherOwns(assessment.teacherId, ctx);
     if (assessment._count.grades > 0) {
       throw new DomainError(
         'CONFLICT',
@@ -433,9 +453,69 @@ export class SchedulesAssessmentsService {
       throw new DomainError('STUDENT_NOT_FOUND', 'Perfil de estudante não encontrado para este utilizador');
     }
     if (requestedStudentId && requestedStudentId !== me.id) {
-      throw new DomainError('FORBIDDEN', 'Só tem permissão para consultar os seus próprios dados');
+      throw new DomainError(POSSESSION_DENIED, POSSESSION_MESSAGE);
     }
     return me.id;
+  }
+
+  async listStudentClassIds(studentId: string): Promise<string[]> {
+    const enrolments = await this.prisma.enrollment.findMany({
+      where: { studentId, status: 'ACTIVE' },
+      select: { classId: true },
+      distinct: ['classId'],
+    });
+    return enrolments.map((enrolment) => enrolment.classId);
+  }
+
+  async assertStudentInClass(studentId: string, classId: string): Promise<void> {
+    const enrolment = await this.prisma.enrollment.findFirst({
+      where: { studentId, classId, status: 'ACTIVE' },
+      select: { id: true },
+    });
+    if (!enrolment) {
+      throw new DomainError(POSSESSION_DENIED, POSSESSION_MESSAGE);
+    }
+  }
+
+  private async resolveActorTeacherId(ctx?: ContractCallContext): Promise<string | null> {
+    if (!ctx || ctx.role !== 'TEACHER') {
+      return null;
+    }
+    const teacher = await this.prisma.teacher.findFirst({
+      where: { userId: ctx.userId ?? NO_ACCESS_SCOPE },
+      select: { id: true },
+    });
+    return teacher?.id ?? NO_ACCESS_SCOPE;
+  }
+
+  async assertTeacherOwns(teacherId: string, ctx?: ContractCallContext): Promise<void> {
+    const actorTeacherId = await this.resolveActorTeacherId(ctx);
+    if (actorTeacherId === null) {
+      return;
+    }
+    if (actorTeacherId !== teacherId) {
+      throw new DomainError(POSSESSION_DENIED, 'Só tem permissão para alterar recursos atribuídos à sua própria docência');
+    }
+  }
+
+  async assertTeacherOwnsTeaching(teaching: { classId: string; subjectId: string }, ctx?: ContractCallContext): Promise<void> {
+    const actorTeacherId = await this.resolveActorTeacherId(ctx);
+    if (actorTeacherId === null) {
+      return;
+    }
+    const [schedule, assessment] = await Promise.all([
+      this.prisma.schedule.findFirst({
+        where: { classId: teaching.classId, subjectId: teaching.subjectId, teacherId: actorTeacherId },
+        select: { id: true },
+      }),
+      this.prisma.assessment.findFirst({
+        where: { classId: teaching.classId, subjectId: teaching.subjectId, teacherId: actorTeacherId },
+        select: { id: true },
+      }),
+    ]);
+    if (!schedule && !assessment) {
+      throw new DomainError(POSSESSION_DENIED, 'Só tem permissão para alterar recursos das turmas e disciplinas que leciona');
+    }
   }
 
   private async resolveFinancialStanding(studentId: string, ctx: ContractCallContext): Promise<'ACTIVE' | 'BLOCKED'> {
@@ -466,8 +546,8 @@ export class SchedulesAssessmentsService {
     return ownId;
   }
 
-  async getMyFinancialStanding(ctx: ContractCallContext): Promise<FinancialStandingDto> {
-    const ownId = await this.resolveStudentScope(undefined, ctx);
+  async getMyFinancialStanding(ctx: ContractCallContext, resolvedStudentId?: string): Promise<FinancialStandingDto> {
+    const ownId = resolvedStudentId ?? (await this.resolveStudentScope(undefined, ctx));
     const status = await this.resolveFinancialStanding(ownId, ctx);
     return { status, checkedAt: new Date().toISOString() };
   }
@@ -477,6 +557,9 @@ export class SchedulesAssessmentsService {
     if (!assessment) {
       throw new DomainError('NOT_FOUND', 'Avaliação não encontrada');
     }
+
+    await this.assertTeacherOwns(assessment.teacherId, ctx);
+
     if (assessment.status !== 'OPEN') {
       throw new DomainError('CONFLICT', 'Nota só pode ser lançada em avaliação aberta');
     }
@@ -548,6 +631,9 @@ export class SchedulesAssessmentsService {
     if (!existing || existing.assessmentId !== assessmentId) {
       throw new DomainError('NOT_FOUND', 'Nota não encontrada');
     }
+
+    await this.assertTeacherOwns(assessment.teacherId, ctx);
+
     if (assessment.status !== 'OPEN') {
       throw new DomainError('CONFLICT', 'Nota só pode ser alterada em avaliação aberta');
     }
@@ -605,7 +691,7 @@ export class SchedulesAssessmentsService {
     return rows.map((row) => scheduleDto(row as unknown as Record<string, unknown>));
   }
 
-  async createSchedule(input: ScheduleInput): Promise<ScheduleDto> {
+  async createSchedule(input: ScheduleInput, ctx?: ContractCallContext): Promise<ScheduleDto> {
     const timeCheck = validateTimeRange(input.startTime, input.endTime);
     if (!timeCheck.valid) {
       throw new DomainError('VALIDATION_ERROR', timeCheck.error);
@@ -627,6 +713,8 @@ export class SchedulesAssessmentsService {
     if (term.academicYearId !== input.academicYearId || classRecord.academicYearId !== input.academicYearId) {
       throw new DomainError('CONFLICT', 'Período, turma e ano letivo não pertencem ao mesmo ano letivo');
     }
+
+    await this.assertTeacherOwns(teacher.id, ctx);
 
     const sameDay = await this.prisma.schedule.findMany({
       where: {
@@ -684,11 +772,13 @@ export class SchedulesAssessmentsService {
     return conflicts;
   }
 
-  async updateSchedule(id: string, patch: Record<string, unknown>): Promise<ScheduleDto> {
+  async updateSchedule(id: string, patch: Record<string, unknown>, ctx?: ContractCallContext): Promise<ScheduleDto> {
     const existing = await this.prisma.schedule.findUnique({ where: { id } });
     if (!existing) {
       throw new DomainError('NOT_FOUND', 'Horário não encontrado');
     }
+
+    await this.assertTeacherOwns(existing.teacherId, ctx);
 
     const data: Prisma.ScheduleUpdateInput = {};
     if (patch.dayOfWeek !== undefined) data.dayOfWeek = patch.dayOfWeek as DayOfWeek;
@@ -738,11 +828,13 @@ export class SchedulesAssessmentsService {
     return scheduleDto(existing as unknown as Record<string, unknown>);
   }
 
-  async deleteSchedule(id: string): Promise<{ id: string; deleted: boolean }> {
+  async deleteSchedule(id: string, ctx?: ContractCallContext): Promise<{ id: string; deleted: boolean }> {
     const schedule = await this.prisma.schedule.findUnique({ where: { id } });
     if (!schedule) {
       throw new DomainError('NOT_FOUND', 'Horário não encontrado');
     }
+
+    await this.assertTeacherOwns(schedule.teacherId, ctx);
     await this.prisma.schedule.delete({ where: { id } });
     return { id, deleted: true };
   }
@@ -784,6 +876,8 @@ export class SchedulesAssessmentsService {
   }
 
   async createResults(input: ResultInput, ctx: ContractCallContext): Promise<{ results: ResultDto[]; blockedByDebt: string[] }> {
+    await this.assertTeacherOwnsTeaching({ classId: input.classId, subjectId: input.subjectId }, ctx);
+
     const assessmentCount = await this.prisma.assessment.count({
       where: { classId: input.classId, subjectId: input.subjectId, termId: input.termId },
     });
@@ -810,11 +904,13 @@ export class SchedulesAssessmentsService {
     });
   }
 
-  async deleteResult(id: string): Promise<{ id: string; deleted: boolean }> {
+  async deleteResult(id: string, ctx?: ContractCallContext): Promise<{ id: string; deleted: boolean }> {
     const result = await this.prisma.result.findUnique({ where: { id } });
     if (!result) {
       throw new DomainError('NOT_FOUND', 'Resultado não encontrado');
     }
+
+    await this.assertTeacherOwnsTeaching({ classId: result.classId, subjectId: result.subjectId }, ctx);
     await this.prisma.result.delete({ where: { id } });
     return { id, deleted: true };
   }
@@ -824,6 +920,8 @@ export class SchedulesAssessmentsService {
     if (!result) {
       throw new DomainError('NOT_FOUND', 'Resultado não encontrado');
     }
+
+    await this.assertTeacherOwnsTeaching({ classId: result.classId, subjectId: result.subjectId }, ctx);
 
     await this.assertNoDebt(result.studentId, ctx);
 
@@ -897,36 +995,39 @@ export class SchedulesAssessmentsService {
     return rows.map((row) => schoolDto(row as unknown as Record<string, unknown>));
   }
 
-  async listAcademicYears(): Promise<AcademicYearDto[]> {
-    const rows = await this.prisma.academicYear.findMany({ orderBy: { name: 'desc' } });
-    return rows.map((row) => academicYearDto(row as unknown as Record<string, unknown>));
+  async listAcademicYears({ schoolId }: { schoolId?: string } = {}): Promise<AcademicYearDto[]> {
+    const result = await this.registry.listAcademicYears({ schoolId });
+    return result.items;
   }
 
-  async listTerms({ academicYearId }: { academicYearId?: string } = {}): Promise<TermDto[]> {
-    const where: Prisma.TermWhereInput = {};
-    if (academicYearId) where.academicYearId = academicYearId;
-    const rows = await this.prisma.term.findMany({ where, orderBy: { startDate: 'asc' } });
-    return rows.map((row) => termDto(row as unknown as Record<string, unknown>));
+  async listTerms({ academicYearId, schoolId }: { academicYearId?: string; schoolId?: string } = {}): Promise<TermDto[]> {
+    const result = await this.registry.listTerms({ academicYearId, schoolId });
+    return result.items;
   }
 
-  async listClasses({ termId, academicYearId }: { termId?: string; academicYearId?: string } = {}): Promise<ClassDto[]> {
-    const where: Prisma.ClassWhereInput = {};
+  async listClasses({ termId, academicYearId, schoolId }: { termId?: string; academicYearId?: string; schoolId?: string } = {}): Promise<ClassDto[]> {
     if (termId) {
       const term = await this.prisma.term.findUnique({ where: { id: termId }, select: { academicYearId: true } });
       if (!term) {
         throw new DomainError('NOT_FOUND', 'Período (termo) não encontrado');
       }
-      where.academicYearId = term.academicYearId;
-    } else if (academicYearId) {
-      where.academicYearId = academicYearId;
+      academicYearId = term.academicYearId;
     }
-    const rows = await this.prisma.class.findMany({ where, orderBy: { name: 'asc' } });
-    return rows.map((row) => classDto(row as unknown as Record<string, unknown>));
+    const result = await this.registry.listClasses({ academicYearId, schoolId });
+    return result.items;
   }
 
-  async listSubjects(): Promise<SubjectDto[]> {
-    const rows = await this.prisma.subject.findMany({ orderBy: { name: 'asc' } });
-    return rows.map((row) => subjectDto(row as unknown as Record<string, unknown>));
+  async listSubjects({ schoolId }: { schoolId?: string } = {}): Promise<SubjectDto[]> {
+    const result = await this.registry.listSubjects({ schoolId });
+    return result.items;
+  }
+
+  registryStatus(): { source: string; circuit: string; degraded: boolean } {
+    return {
+      source: this.registry.enabled ? 'academic-registry' : 'local-mirror',
+      circuit: this.registry.circuitState(),
+      degraded: !this.registry.enabled,
+    };
   }
 
   async listTeachers(): Promise<TeacherDto[]> {

@@ -4,6 +4,7 @@ import { SchedulesAssessmentsService } from '../application/schedulesAssessments
 import { startContractServices, ContractTestContext } from './contractTestEnv';
 
 describe('G3 transações ACID (nível de serviço)', () => {
+  let seedSchoolId = '';
   let prisma: PrismaClient;
   let ctx: { token: string; correlationId: string };
   let testContext: ContractTestContext;
@@ -11,6 +12,7 @@ describe('G3 transações ACID (nível de serviço)', () => {
   beforeAll(async () => {
     testContext = await startContractServices();
     prisma = new PrismaClient();
+    seedSchoolId = (await prisma.term.findFirst({ where: { name: { startsWith: '1º' } }, orderBy: { createdAt: 'asc' } }))!.schoolId;
     ctx = { token: testContext.token, correlationId: 'e2e-acid' };
   });
 
@@ -20,11 +22,11 @@ describe('G3 transações ACID (nível de serviço)', () => {
   });
 
   it('lançar nota + recálculo é atómico: falha no recálculo faz rollback total', async () => {
-    const term = await prisma.term.findFirst({ where: { name: { startsWith: '1º' } } });
-    const academicYear = await prisma.academicYear.findFirst({ where: { status: 'ACTIVE' } });
-    const classRecord = await prisma.class.findFirst({ where: { status: 'ACTIVE' } });
-    const subject = await prisma.subject.findFirst({ where: { status: 'ACTIVE' } });
-    const teacher = await prisma.teacher.findFirst({ where: { status: 'ACTIVE' } });
+    const term = await prisma.term.findFirst({ where: { name: { startsWith: '1º' } }, orderBy: { createdAt: 'asc' } });
+    const academicYear = await prisma.academicYear.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
+    const classRecord = await prisma.class.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
+    const subject = await prisma.subject.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
+    const teacher = await prisma.teacher.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
     const enrollment = await prisma.enrollment.findFirst({
       where: { status: 'ACTIVE', termId: term.id, classId: classRecord.id, subjectId: subject.id },
     });
@@ -94,11 +96,11 @@ describe('G3 transações ACID (nível de serviço)', () => {
   });
 
   it('lançar nota + recálculo é atómico: sucesso persiste tudo', async () => {
-    const term = await prisma.term.findFirst({ where: { name: { startsWith: '1º' } } });
-    const academicYear = await prisma.academicYear.findFirst({ where: { status: 'ACTIVE' } });
-    const classRecord = await prisma.class.findFirst({ where: { status: 'ACTIVE' } });
-    const subject = await prisma.subject.findFirst({ where: { status: 'ACTIVE' } });
-    const teacher = await prisma.teacher.findFirst({ where: { status: 'ACTIVE' } });
+    const term = await prisma.term.findFirst({ where: { name: { startsWith: '1º' } }, orderBy: { createdAt: 'asc' } });
+    const academicYear = await prisma.academicYear.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
+    const classRecord = await prisma.class.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
+    const subject = await prisma.subject.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
+    const teacher = await prisma.teacher.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
     const enrollment = await prisma.enrollment.findFirst({
       where: { status: 'ACTIVE', termId: term.id, classId: classRecord.id, subjectId: subject.id },
     });

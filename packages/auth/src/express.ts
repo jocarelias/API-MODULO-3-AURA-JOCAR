@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { verifyToken } from './index';
+import type { TokenVerifier } from './verifiers';
 
 export const SERVICE_ROLE = '__SERVICE__';
 
@@ -24,7 +25,8 @@ export interface AuthUserRecord {
 }
 
 export interface AuthMiddlewareOptions {
-  secret: string;
+  secret?: string;
+  verify?: TokenVerifier;
   loadUser: (userId: string) => Promise<AuthUserRecord | null>;
   serviceToken?: string;
 }
@@ -48,6 +50,11 @@ function sendError(res: Response, req: Request, status: number, code: string, me
 }
 
 export function createAuthMiddleware(options: AuthMiddlewareOptions) {
+  const verify = options.verify;
+  if (!verify && !options.secret) {
+    throw new Error('createAuthMiddleware exige `secret` (HMAC) ou `verify` (verificador customizado, ex.: JWKS do Core)');
+  }
+
   return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     const header = req.get('authorization');
     if (!header || !header.startsWith('Bearer ')) {
@@ -60,14 +67,22 @@ export function createAuthMiddleware(options: AuthMiddlewareOptions) {
       next();
       return;
     }
+
     let claims;
     try {
-      claims = verifyToken(token, options.secret);
+      claims = verify ? await verify(token) : verifyToken(token, options.secret as string);
     } catch {
       sendError(res, req, 401, AUTH_ERROR_CODES.INVALID_TOKEN, 'Token inválido ou expirado');
       return;
     }
-    const user = await options.loadUser(claims.sub);
+
+    let user: AuthUserRecord | null;
+    try {
+      user = await options.loadUser(claims.sub);
+    } catch {
+      sendError(res, req, 503, 'IDENTITY_PROVIDER_UNAVAILABLE', 'Não foi possível confirmar a identidade do utilizador');
+      return;
+    }
     if (!user || user.status !== 'ACTIVE') {
       sendError(res, req, 401, AUTH_ERROR_CODES.INVALID_TOKEN, 'Utilizador inválido ou inativo');
       return;

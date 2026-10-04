@@ -7,6 +7,7 @@ import { startContractServices, ContractTestContext } from './contractTestEnv';
 const unique = (label: string) => `contract-${label}-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
 
 describe('G3 Integração com contratos HTTP e regra de dívida (e2e)', () => {
+  let seedSchoolId = '';
   let app: ReturnType<typeof createApp>;
   let server: ReturnType<typeof app.listen>;
   let apiBase: string;
@@ -30,6 +31,7 @@ describe('G3 Integração com contratos HTTP e regra de dívida (e2e)', () => {
   beforeAll(async () => {
     testContext = await startContractServices();
     prisma = new PrismaClient();
+    seedSchoolId = (await prisma.term.findFirst({ where: { name: { startsWith: '1º' } }, orderBy: { createdAt: 'asc' } }))!.schoolId;
     app = createApp();
     server = app.listen(0);
     await new Promise((resolve) => server.once('listening', resolve));
@@ -38,11 +40,11 @@ describe('G3 Integração com contratos HTTP e regra de dívida (e2e)', () => {
     api = request.agent(apiBase).set('authorization', `Bearer ${testContext.token}`);
 
     const [term, academicYear, classRecord, subject, teacher] = await Promise.all([
-      prisma.term.findFirst({ where: { name: { startsWith: '1º' } } }),
-      prisma.academicYear.findFirst({ where: { status: 'ACTIVE' } }),
-      prisma.class.findFirst({ where: { status: 'ACTIVE' } }),
-      prisma.subject.findFirst({ where: { status: 'ACTIVE' } }),
-      prisma.teacher.findFirst({ where: { status: 'ACTIVE' } }),
+      prisma.term.findFirst({ where: { name: { startsWith: '1º' } }, orderBy: { createdAt: 'asc' } }),
+      prisma.academicYear.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } }),
+      prisma.class.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } }),
+      prisma.subject.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } }),
+      prisma.teacher.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } }),
     ]);
     if (!term || !academicYear || !classRecord || !subject || !teacher) {
       throw new Error('Dados seed insuficientes');
