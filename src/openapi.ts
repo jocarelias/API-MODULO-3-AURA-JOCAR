@@ -28,6 +28,13 @@ const uuid: OpenApiSchema = { type: 'string', format: 'uuid' };
 const dateTime: OpenApiSchema = { type: 'string', format: 'date-time' };
 const hhmm: OpenApiSchema = { type: 'string', pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' };
 
+const deletedAck: OpenApiSchema = {
+  type: 'object',
+  properties: { deleted: { type: 'boolean' }, id: uuid },
+  required: ['deleted', 'id'],
+  example: { deleted: true, id: '7c75e533-aa49-4dcf-97a2-9ecdd3bfb1d4' },
+};
+
 const errorSchema: OpenApiSchema = {
   type: 'object',
   properties: {
@@ -45,6 +52,7 @@ const loginInput: OpenApiSchema = {
     email: { type: 'string', format: 'email' },
     password: { type: 'string', minLength: 1 },
   },
+  example: { email: 'aluno1@student.ucjac.ac.mz', password: 'Aluno@2026' },
 };
 
 const authUser: OpenApiSchema = {
@@ -55,6 +63,13 @@ const authUser: OpenApiSchema = {
     schoolId: uuid,
     name: { type: 'string' },
     email: { type: 'string' },
+  },
+  example: {
+    id: '02e95780-9708-48e6-bced-d8607a61fa5a',
+    role: 'STUDENT',
+    schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
+    name: 'Abu Bakar Ossum',
+    email: 'aluno1@student.ucjac.ac.mz',
   },
 };
 
@@ -69,6 +84,20 @@ const authTokens: OpenApiSchema = {
     user: authUser,
   },
   required: ['accessToken', 'tokenType', 'expiresIn', 'refreshToken', 'refreshExpiresIn', 'user'],
+  example: {
+    accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMmU5NTc4MC05NzA4LTQ4ZTZiY2VkLWQ4NjA3YTYxZmE1YSJ9.Q7x2vJ0m3sTg9pQeYb1nZ8kL4cW6rD5fH7jK0lM9nP2qR4s',
+    tokenType: 'Bearer',
+    expiresIn: 900,
+    refreshToken: 'rt_9f2c7a41b8d64e0f9a3c5d7e1b2f4a6c8e0d2f4a6c8e0d2f4a6c8e0d2f4a6c8',
+    refreshExpiresIn: 604800,
+    user: {
+      id: '02e95780-9708-48e6-bced-d8607a61fa5a',
+      role: 'STUDENT',
+      schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
+      name: 'Abu Bakar Ossum',
+      email: 'aluno1@student.ucjac.ac.mz',
+    },
+  },
 };
 
 const refreshInput: OpenApiSchema = {
@@ -77,6 +106,7 @@ const refreshInput: OpenApiSchema = {
   properties: {
     refreshToken: { type: 'string', minLength: 16 },
   },
+  example: { refreshToken: 'rt_9f2c7a41b8d64e0f9a3c5d7e1b2f4a6c8e0d2f4a6c8e0d2f4a6c8e0d2f4a6c8' },
 };
 
 const logoutInput: OpenApiSchema = {
@@ -85,6 +115,7 @@ const logoutInput: OpenApiSchema = {
   properties: {
     refreshToken: { type: 'string', minLength: 16 },
   },
+  example: { refreshToken: 'rt_9f2c7a41b8d64e0f9a3c5d7e1b2f4a6c8e0d2f4a6c8e0d2f4a6c8e0d2f4a6c8' },
 };
 
 const financialStatus: OpenApiSchema = {
@@ -94,9 +125,16 @@ const financialStatus: OpenApiSchema = {
     checkedAt: dateTime,
   },
   required: ['status', 'checkedAt'],
+  example: { status: 'ACTIVE', checkedAt: '2026-03-18T07:40:00.000Z' },
 };
 
 const school: OpenApiSchema = {
+  example: {
+    id: 'f266cdec-aee4-45a5-a962-9d961a95638b',
+    name: 'Universidade Júnior de Angola e Moçambique',
+    code: 'UJAC',
+    phone: '+258 843 000 111',
+  },
   type: 'object',
   properties: {
     id: uuid,
@@ -107,6 +145,13 @@ const school: OpenApiSchema = {
 };
 
 const academicYear: OpenApiSchema = {
+  example: {
+    id: 'e902338e-b3e1-47dc-995b-13bec814c404',
+    schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
+    name: '2026',
+    startDate: '2026-02-01T00:00:00.000Z',
+    endDate: '2026-12-31T00:00:00.000Z',
+  },
   type: 'object',
   properties: {
     id: uuid,
@@ -116,6 +161,14 @@ const academicYear: OpenApiSchema = {
 };
 
 const term: OpenApiSchema = {
+  example: {
+    id: 'df8c0eac-1660-4e17-95c9-22fb27a33a5e',
+    schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
+    academicYearId: 'e902338e-b3e1-47dc-995b-13bec814c404',
+    name: '1º Período',
+    startDate: '2026-02-23T00:00:00.000Z',
+    endDate: '2026-07-10T00:00:00.000Z',
+  },
   type: 'object',
   properties: {
     id: uuid,
@@ -129,6 +182,15 @@ const term: OpenApiSchema = {
 };
 
 const classSchema: OpenApiSchema = {
+  example: {
+    id: 'ff47d5a7-c2e3-4bff-8ea7-2e816902c9db',
+    schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
+    academicYearId: 'e902338e-b3e1-47dc-995b-13bec814c404',
+    name: 'Engenharia Informática - 1º Ano',
+    grade: '1',
+    shift: 'Manhã',
+    room: 'Sala 204',
+  },
   type: 'object',
   properties: {
     id: uuid,
@@ -142,6 +204,13 @@ const classSchema: OpenApiSchema = {
 };
 
 const subject: OpenApiSchema = {
+  example: {
+    id: '9406a157-34f4-4d70-b6de-defdbaf496fa',
+    schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
+    name: 'Programação Paralela',
+    code: 'SUBJ3',
+    description: 'Computação distribuída e modelos de programação concorrente.',
+  },
   type: 'object',
   properties: {
     id: uuid,
@@ -152,6 +221,15 @@ const subject: OpenApiSchema = {
 };
 
 const teacher: OpenApiSchema = {
+  example: {
+    id: '294481dd-a867-4db8-998c-db6851fafdd2',
+    schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
+    name: 'Eng. Maria Tivane',
+    email: 'maria.tivane@ucjac.ac.mz',
+    employeeNumber: 'DOC-2019-014',
+    specialization: 'Sistemas Distribuídos',
+    status: 'ACTIVE',
+  },
   type: 'object',
   properties: {
     id: uuid,
@@ -162,6 +240,14 @@ const teacher: OpenApiSchema = {
 };
 
 const student: OpenApiSchema = {
+  example: {
+    id: '02e95780-9708-48e6-bced-d8607a61fa5a',
+    schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
+    name: 'Abu Bakar Ossum',
+    email: 'aluno1@student.ucjac.ac.mz',
+    enrollmentNumber: 'UCJAC-2026-001',
+    status: 'ACTIVE',
+  },
   type: 'object',
   properties: {
     id: uuid,
@@ -173,6 +259,29 @@ const student: OpenApiSchema = {
 };
 
 const assessment: OpenApiSchema = {
+  example: {
+    id: '7c75e533-aa49-4dcf-97a2-9ecdd3bfb1d4',
+    schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
+    academicYearId: 'e902338e-b3e1-47dc-995b-13bec814c404',
+    academicYearName: '2026',
+    termId: 'df8c0eac-1660-4e17-95c9-22fb27a33a5e',
+    termName: '1º Período',
+    classId: 'ff47d5a7-c2e3-4bff-8ea7-2e816902c9db',
+    className: 'Engenharia Informática - 1º Ano',
+    subjectId: '9406a157-34f4-4d70-b6de-defdbaf496fa',
+    subjectName: 'Programação Paralela',
+    teacherId: '294481dd-a867-4db8-998c-db6851fafdd2',
+    teacherName: 'Eng. Maria Tivane',
+    name: 'Teste 1 — Programação Paralela',
+    type: 'TEST',
+    description: 'Prova teórica com 12 questões de escolha múltipla.',
+    date: '2026-03-14T09:00:00.000Z',
+    maxScore: 20,
+    weight: 40,
+    status: 'OPEN',
+    createdAt: '2026-03-01T08:12:00.000Z',
+    updatedAt: '2026-03-14T10:05:00.000Z',
+  },
   type: 'object',
   properties: {
     id: uuid,
@@ -219,6 +328,22 @@ const assessmentBody: OpenApiSchema = {
 };
 
 const grade: OpenApiSchema = {
+  example: {
+    id: '2f9a1c77-0d3e-4a5b-9c88-2f1d0e7b5a91',
+    assessmentId: '7c75e533-aa49-4dcf-97a2-9ecdd3bfb1d4',
+    assessmentName: 'Teste 1 — Programação Paralela',
+    studentId: '02e95780-9708-48e6-bced-d8607a61fa5a',
+    studentName: 'Abu Bakar Ossum',
+    classId: 'ff47d5a7-c2e3-4bff-8ea7-2e816902c9db',
+    className: 'Engenharia Informática - 1º Ano',
+    subjectId: '9406a157-34f4-4d70-b6de-defdbaf496fa',
+    subjectName: 'Programação Paralela',
+    score: 17.5,
+    comment: 'Demonstrou domínio de mapeamento paralelo.',
+    status: 'APPROVED',
+    createdAt: '2026-03-15T09:30:00.000Z',
+    updatedAt: '2026-03-15T09:30:00.000Z',
+  },
   type: 'object',
   properties: {
     id: uuid,
@@ -245,6 +370,25 @@ const gradeBody: OpenApiSchema = {
 };
 
 const schedule: OpenApiSchema = {
+  example: {
+    id: '1d3f7a20-6b8e-4c11-9f52-8a7b3d6e4c90',
+    schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
+    academicYearId: 'e902338e-b3e1-47dc-995b-13bec814c404',
+    academicYearName: '2026',
+    termId: 'df8c0eac-1660-4e17-95c9-22fb27a33a5e',
+    termName: '1º Período',
+    classId: 'ff47d5a7-c2e3-4bff-8ea7-2e816902c9db',
+    className: 'Engenharia Informática - 1º Ano',
+    subjectId: '9406a157-34f4-4d70-b6de-defdbaf496fa',
+    subjectName: 'Programação Paralela',
+    teacherId: '294481dd-a867-4db8-998c-db6851fafdd2',
+    teacherName: 'Eng. Maria Tivane',
+    dayOfWeek: 'MONDAY',
+    startTime: '08:00',
+    endTime: '10:00',
+    room: 'Sala 204',
+    status: 'ACTIVE',
+  },
   type: 'object',
   properties: {
     id: uuid,
@@ -286,6 +430,28 @@ const scheduleBody: OpenApiSchema = {
 };
 
 const result: OpenApiSchema = {
+  example: {
+    id: 'b7e4d2a9-5c3f-4a8e-9d61-7f2b8c4e5a30',
+    schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
+    academicYearId: 'e902338e-b3e1-47dc-995b-13bec814c404',
+    academicYearName: '2026',
+    termId: 'df8c0eac-1660-4e17-95c9-22fb27a33a5e',
+    termName: '1º Período',
+    classId: 'ff47d5a7-c2e3-4bff-8ea7-2e816902c9db',
+    className: 'Engenharia Informática - 1º Ano',
+    subjectId: '9406a157-34f4-4d70-b6de-defdbaf496fa',
+    subjectName: 'Programação Paralela',
+    studentId: '02e95780-9708-48e6-bced-d8607a61fa5a',
+    studentName: 'Abu Bakar Ossum',
+    teacherId: '294481dd-a867-4db8-998c-db6851fafdd2',
+    teacherName: 'Eng. Maria Tivane',
+    average: 16.4,
+    finalScore: 16.4,
+    weightedTotal: 16.4,
+    status: 'APPROVED',
+    calculationMethod: 'WEIGHTED_PERCENTAGE',
+    calculatedAt: '2026-03-20T07:45:00.000Z',
+  },
   type: 'object',
   properties: {
     id: uuid,
@@ -392,6 +558,16 @@ const calculationResultSchema: OpenApiSchema = {
     formula: { type: 'string', nullable: true },
     breakdown: { type: 'array', items: calculationBreakdownSchema },
   },
+  example: {
+    method: 'WEIGHTED_PERCENTAGE',
+    value: 16.4,
+    decimals: 2,
+    formula: 'Σ (nota × peso) ÷ Σ pesos',
+    breakdown: [
+      { label: 'Teste 1', value: 17.5, weight: 40 },
+      { label: 'Trabalho de grupo', value: 15.5, weight: 60 },
+    ],
+  },
 };
 
 const calculationMethodMetaSchema: OpenApiSchema = {
@@ -401,6 +577,12 @@ const calculationMethodMetaSchema: OpenApiSchema = {
     name: { type: 'string' },
     description: { type: 'string' },
     formula: { type: 'string' },
+  },
+  example: {
+    code: 'WEIGHTED_PERCENTAGE',
+    name: 'Média ponderada por percentagem',
+    description: 'Soma as notas ponderadas pela percentagem de cada componente e divide pelo total.',
+    formula: 'Σ (nota × peso) ÷ Σ pesos',
   },
 };
 
@@ -424,8 +606,213 @@ const meta: OpenApiSchema = {
   },
 };
 
-function successEnvelope(items: OpenApiSchema): OpenApiSchema {
-  return {
+const pautaRow: OpenApiSchema = {
+  type: 'object',
+  properties: {
+    studentId: uuid,
+    studentName: { type: 'string' },
+    enrollmentNumber: { type: 'string' },
+    assessments: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          score: { type: 'number', nullable: true },
+          weight: { type: 'number' },
+          maxScore: { type: 'number' },
+        },
+      },
+    },
+    average: { type: 'number', nullable: true },
+    weightedTotal: { type: 'number', nullable: true },
+    status: { type: 'string', enum: RESULT_STATUS },
+    debtRestricted: { type: 'boolean' },
+  },
+};
+
+const printableSchedule: OpenApiSchema = {
+  type: 'object',
+  properties: {
+    school: school,
+    class: classSchema,
+    academicYear: academicYear,
+    term: term,
+    slots: { type: 'array', items: schedule },
+  },
+  required: ['school', 'class', 'academicYear', 'term', 'slots'],
+  example: {
+    school: {
+      id: 'f266cdec-aee4-45a5-a962-9d961a95638b',
+      name: 'Universidade Júnior de Angola e Moçambique',
+      code: 'UJAC',
+      phone: '+258 843 000 111',
+    },
+    class: {
+      id: 'ff47d5a7-c2e3-4bff-8ea7-2e816902c9db',
+      schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
+      academicYearId: 'e902338e-b3e1-47dc-995b-13bec814c404',
+      name: 'Engenharia Informática - 1º Ano',
+      grade: '1',
+      shift: 'Manhã',
+      room: 'Sala 204',
+    },
+    academicYear: {
+      id: 'e902338e-b3e1-47dc-995b-13bec814c404',
+      schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
+      name: '2026',
+      startDate: '2026-02-01T00:00:00.000Z',
+      endDate: '2026-12-31T00:00:00.000Z',
+    },
+    term: {
+      id: 'df8c0eac-1660-4e17-95c9-22fb27a33a5e',
+      schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
+      academicYearId: 'e902338e-b3e1-47dc-995b-13bec814c404',
+      name: '1º Período',
+      startDate: '2026-02-23T00:00:00.000Z',
+      endDate: '2026-07-10T00:00:00.000Z',
+    },
+    slots: [
+      {
+        id: '1d3f7a20-6b8e-4c11-9f52-8a7b3d6e4c90',
+        dayOfWeek: 'MONDAY',
+        startTime: '08:00',
+        endTime: '10:00',
+        room: 'Sala 204',
+        subjectName: 'Programação Paralela',
+        teacherName: 'Eng. Maria Tivane',
+        status: 'ACTIVE',
+      },
+    ],
+  },
+};
+
+const printablePauta: OpenApiSchema = {
+  type: 'object',
+  properties: {
+    school: school,
+    class: classSchema,
+    academicYear: academicYear,
+    term: term,
+    subject: subject,
+    teacher: teacher,
+    rows: { type: 'array', items: pautaRow },
+  },
+  required: ['school', 'class', 'academicYear', 'term', 'subject', 'rows'],
+  example: {
+    school: {
+      id: 'f266cdec-aee4-45a5-a962-9d961a95638b',
+      name: 'Universidade Júnior de Angola e Moçambique',
+      code: 'UJAC',
+      phone: '+258 843 000 111',
+    },
+    class: {
+      id: 'ff47d5a7-c2e3-4bff-8ea7-2e816902c9db',
+      schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
+      academicYearId: 'e902338e-b3e1-47dc-995b-13bec814c404',
+      name: 'Engenharia Informática - 1º Ano',
+      grade: '1',
+      shift: 'Manhã',
+      room: 'Sala 204',
+    },
+    academicYear: {
+      id: 'e902338e-b3e1-47dc-995b-13bec814c404',
+      schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
+      name: '2026',
+      startDate: '2026-02-01T00:00:00.000Z',
+      endDate: '2026-12-31T00:00:00.000Z',
+    },
+    term: {
+      id: 'df8c0eac-1660-4e17-95c9-22fb27a33a5e',
+      schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
+      academicYearId: 'e902338e-b3e1-47dc-995b-13bec814c404',
+      name: '1º Período',
+      startDate: '2026-02-23T00:00:00.000Z',
+      endDate: '2026-07-10T00:00:00.000Z',
+    },
+    subject: {
+      id: '9406a157-34f4-4d70-b6de-defdbaf496fa',
+      schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
+      name: 'Programação Paralela',
+      code: 'SUBJ3',
+      description: 'Computação distribuída e modelos de programação concorrente.',
+    },
+    teacher: {
+      id: '294481dd-a867-4db8-998c-db6851fafdd2',
+      schoolId: 'f266cdec-aee4-45a5-a962-9d961a95638b',
+      name: 'Eng. Maria Tivane',
+      email: 'maria.tivane@ucjac.ac.mz',
+      employeeNumber: 'DOC-2019-014',
+      specialization: 'Sistemas Distribuídos',
+      status: 'ACTIVE',
+    },
+    rows: [
+      {
+        studentId: '02e95780-9708-48e6-bced-d8607a61fa5a',
+        studentName: 'Abu Bakar Ossum',
+        enrollmentNumber: 'UCJAC-2026-001',
+        assessments: [{ name: 'Teste 1', score: 17.5, weight: 40, maxScore: 20 }],
+        average: 17.5,
+        weightedTotal: 17.5,
+        status: 'APPROVED',
+        debtRestricted: false,
+      },
+    ],
+  },
+};
+
+const CORRELATION_ID_EXAMPLE = '3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04';
+
+const errorExample = {
+  code: 'VALIDATION_ERROR',
+  message: 'Requisição inválida (validação Zod ou regra de domínio)',
+  details: [{ path: 'weight', message: 'Peso deve ser maior que zero' }],
+  correlationId: CORRELATION_ID_EXAMPLE,
+};
+
+const forbiddenExample = {
+  code: 'FORBIDDEN',
+  message: 'Só tem permissão para aceder aos seus próprios dados',
+  details: [],
+  correlationId: CORRELATION_ID_EXAMPLE,
+};
+
+const unauthenticatedExample = {
+  code: 'UNAUTHENTICATED',
+  message: 'Token em falta',
+  details: [],
+  correlationId: CORRELATION_ID_EXAMPLE,
+};
+
+const notFoundExample = {
+  code: 'NOT_FOUND',
+  message: 'Recurso não encontrado',
+  details: [],
+  correlationId: CORRELATION_ID_EXAMPLE,
+};
+
+const listMetaExample = {
+  correlationId: CORRELATION_ID_EXAMPLE,
+  page: 1,
+  pageSize: 20,
+  total: 3,
+};
+
+/**
+ * Envelope de sucesso com exemplo realista.
+ *
+ * Quando `dataSchema` é um array, o exemplo é apresentado como lista paginada
+ * (`data` + `meta.page/pageSize/total`), que é o formato real devolvido pelo
+ * módulo para endpoints de listagem.
+ */
+function successExample(items: OpenApiSchema, options: { list?: boolean; singleExample?: unknown } = {}): unknown {
+  const single = options.singleExample ?? (items as { example?: unknown }).example;
+  if (options.list) return { data: single === undefined ? [] : [single], meta: listMetaExample };
+  return single === undefined ? undefined : { data: single, meta: { correlationId: CORRELATION_ID_EXAMPLE } };
+}
+
+function successEnvelope(items: OpenApiSchema, options: { list?: boolean; singleExample?: unknown } = {}): OpenApiSchema {
+  const envelope: OpenApiSchema = {
     type: 'object',
     properties: {
       data: items,
@@ -433,37 +820,68 @@ function successEnvelope(items: OpenApiSchema): OpenApiSchema {
     },
     required: ['data', 'meta'],
   };
+  const example = successExample(items, options);
+  if (example !== undefined) envelope.example = example;
+  return envelope;
 }
 
-function responses(dataSchema: OpenApiSchema): Record<string, unknown> {
+/**
+ * Resposta de sucesso com o exemplo nos dois níveis.
+ *
+ * O OpenAPI distingue o exemplo do *schema* (`schema.example`) do exemplo do
+ * *media type* (`content[...].example`). O segundo é o que o Swagger UI e o
+ * Postman mostram por omissão, por isso o exemplo é escrito nos dois sítios.
+ */
+function successResponse(description: string, items: OpenApiSchema, options: { list?: boolean } = {}): Record<string, unknown> {
+  const example = successExample(items, options);
   return {
-    200: {
-      description: 'Operação realizada com sucesso',
-      content: { 'application/json': { schema: successEnvelope(dataSchema) } },
+    description,
+    content: {
+      'application/json': {
+        schema: successEnvelope(items, options),
+        ...(example === undefined ? {} : { example }),
+      },
     },
-    201: {
-      description: 'Recurso criado',
-      content: { 'application/json': { schema: successEnvelope(dataSchema) } },
-    },
-    400: { description: 'Requisição inválida (validação Zod ou regra de domínio)', content: { 'application/json': { schema: errorSchema } } },
-    401: { description: 'Não autenticado — token em falta ou inválido (UNAUTHENTICATED)', content: { 'application/json': { schema: errorSchema } } },
-    404: { description: 'Recurso não encontrado', content: { 'application/json': { schema: errorSchema } } },
-    409: { description: 'Conflito (duplicação, horário, bloqueio por notas)', content: { 'application/json': { schema: errorSchema } } },
-    500: { description: 'Erro interno do servidor', content: { 'application/json': { schema: errorSchema } } },
   };
 }
 
-function studentResponses(dataSchema: OpenApiSchema): Record<string, unknown> {
+function errorResponse(description: string, example: unknown): Record<string, unknown> {
+  return { description, content: { 'application/json': { schema: errorSchema, example } } };
+}
+
+function responses(dataSchema: OpenApiSchema, options: { list?: boolean } = {}): Record<string, unknown> {
   return {
-    ...responses(dataSchema),
-    403: {
-      description: 'Estudante com dívida financeira — bloqueado de consultar notas (FINANCIAL_ACCESS_BLOCKED)',
-      content: { 'application/json': { schema: errorSchema } },
-    },
-    503: {
-      description: 'Serviço financeiro indisponível — falha fechada (FINANCIAL_VERIFICATION_UNAVAILABLE)',
-      content: { 'application/json': { schema: errorSchema } },
-    },
+    200: successResponse('Operação realizada com sucesso', dataSchema, options),
+    201: successResponse('Recurso criado', dataSchema, options),
+    400: errorResponse('Requisição inválida (validação Zod ou regra de domínio)', errorExample),
+    401: errorResponse('Não autenticado — token em falta, expirado ou com assinatura inválida (UNAUTHENTICATED)', unauthenticatedExample),
+    403: errorResponse(
+      'Sem permissão para este recurso — role insuficiente (FORBIDDEN) ou recurso pertence a outro utilizador (verificação de posse)',
+      forbiddenExample,
+    ),
+    404: errorResponse('Recurso inexistente (NOT_FOUND)', notFoundExample),
+    409: errorResponse(
+      'Conflito (duplicação, sobreposição de horário, avaliação com notas já lançadas)',
+      { code: 'CONFLICT', message: 'Conflito de domínio', details: [], correlationId: CORRELATION_ID_EXAMPLE },
+    ),
+    500: errorResponse(
+      'Erro interno do servidor (INTERNAL_ERROR)',
+      { code: 'INTERNAL_ERROR', message: 'Ocorreu um erro inesperado', details: [], correlationId: CORRELATION_ID_EXAMPLE },
+    ),
+  };
+}
+
+function studentResponses(dataSchema: OpenApiSchema, options: { list?: boolean } = {}): Record<string, unknown> {
+  return {
+    ...responses(dataSchema, options),
+    403: errorResponse(
+      'Estudante com dívida financeira — bloqueado de consultar notas (FINANCIAL_ACCESS_BLOCKED), ou recurso de outro estudante (FORBIDDEN)',
+      { code: 'FINANCIAL_ACCESS_BLOCKED', message: 'A consulta das notas está indisponível. Regularize a sua situação financeira.', details: [], correlationId: CORRELATION_ID_EXAMPLE },
+    ),
+    503: errorResponse(
+      'Serviço financeiro indisponível — o acesso falha fechado por segurança (FINANCIAL_VERIFICATION_UNAVAILABLE)',
+      { code: 'FINANCIAL_VERIFICATION_UNAVAILABLE', message: 'Não foi possível confirmar a situação financeira — acesso bloqueado por segurança', details: [], correlationId: CORRELATION_ID_EXAMPLE },
+    ),
   };
 }
 
@@ -478,8 +896,45 @@ function queryParam(name: string): { name: string; in: string; schema: OpenApiSc
 const pageParam = { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } };
 const pageSizeParam = { name: 'pageSize', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 100 } };
 
+const HTTP_METHODS = ['get', 'post', 'patch', 'put', 'delete'] as const;
+
+/**
+ * Deriva um `operationId` estável e legível a partir do método e do caminho.
+ *
+ * Gerar o id em vez de o escrever à mão garante três coisas de que o guia
+ * exige: todos os operações têm id, não há ids duplicados e o id nunca
+ * diverge do caminho documentado.
+ *
+ *   GET /api/v1/assessments/{id}/grades  ->  getAssessmentsIdGrades
+ */
+export function deriveOperationId(method: string, path: string): string {
+  const withoutPrefix = path.replace(/^\/api\/v1\/?/, '');
+  const segments = withoutPrefix
+    .split(/[^a-zA-Z0-9]+/)
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1));
+  const name = segments.length > 0 ? segments.join('') : 'Root';
+  return `${method.toLowerCase()}${name}`;
+}
+
+function withOperationIds(paths: Record<string, Record<string, unknown>>): Record<string, Record<string, unknown>> {
+  const result: Record<string, Record<string, unknown>> = {};
+  for (const [path, item] of Object.entries(paths)) {
+    const methods: Record<string, unknown> = {};
+    for (const [key, operation] of Object.entries(item)) {
+      if (!(HTTP_METHODS as readonly string[]).includes(key)) {
+        methods[key] = operation;
+        continue;
+      }
+      methods[key] = { operationId: deriveOperationId(key, path), ...(operation as Record<string, unknown>) };
+    }
+    result[path] = methods;
+  }
+  return result;
+}
+
 export function buildOpenApi(): Record<string, unknown> {
-  return {
+  const document: Record<string, unknown> = {
     openapi: '3.0.0',
     info: {
       title: 'Smart Campos — Módulo G3 (Avaliações e Horários)',
@@ -499,12 +954,12 @@ export function buildOpenApi(): Record<string, unknown> {
             '(longa duração, 7 dias por omissão). O refreshToken é gerido com rotação e revogação.',
           requestBody: { required: true, content: { 'application/json': { schema: loginInput } } },
           responses: {
-            200: {
-              description: 'Credenciais válidas',
-              content: { 'application/json': { schema: successEnvelope(authTokens) } },
-            },
-            400: { description: 'Requisição inválida', content: { 'application/json': { schema: errorSchema } } },
-            401: { description: 'Credenciais inválidas ou utilizador inativo', content: { 'application/json': { schema: errorSchema } } },
+            200: successResponse('Credenciais válidas — accessToken + refreshToken + perfil', authTokens),
+            400: errorResponse('Requisição inválida (email ou password em falta)', errorExample),
+            401: errorResponse(
+              'Credenciais inválidas ou utilizador inativo',
+              { code: 'UNAUTHENTICATED', message: 'Credenciais inválidas', details: [], correlationId: CORRELATION_ID_EXAMPLE },
+            ),
           },
           security: [],
         },
@@ -518,12 +973,12 @@ export function buildOpenApi(): Record<string, unknown> {
             'Reutilização de um refreshToken já revogado devolve 401 UNAUTHENTICATED.',
           requestBody: { required: true, content: { 'application/json': { schema: refreshInput } } },
           responses: {
-            200: {
-              description: 'Novo par de tokens',
-              content: { 'application/json': { schema: successEnvelope(authTokens) } },
-            },
-            400: { description: 'Requisição inválida', content: { 'application/json': { schema: errorSchema } } },
-            401: { description: 'RefreshToken inválido, expirado ou já utilizado', content: { 'application/json': { schema: errorSchema } } },
+            200: successResponse('Novo par de tokens (o refreshToken anterior foi revogado)', authTokens),
+            400: errorResponse('Requisição inválida (refreshToken em falta)', errorExample),
+            401: errorResponse(
+              'RefreshToken inválido, expirado, já utilizado ou revogado',
+              { code: 'UNAUTHENTICATED', message: 'RefreshToken inválido ou expirado', details: [], correlationId: CORRELATION_ID_EXAMPLE },
+            ),
           },
           security: [],
         },
@@ -535,9 +990,12 @@ export function buildOpenApi(): Record<string, unknown> {
           description: 'Autenticado. Revoga o refreshToken indicado; pedidos posteriores com esse refreshToken devolvem 401.',
           requestBody: { required: true, content: { 'application/json': { schema: logoutInput } } },
           responses: {
-            200: { description: 'Sessão revogada', content: { 'application/json': { schema: successEnvelope({ type: 'object', properties: { revoked: { type: 'boolean' } } }) } } },
-            400: { description: 'Requisição inválida', content: { 'application/json': { schema: errorSchema } } },
-            401: { description: 'Não autenticado', content: { 'application/json': { schema: errorSchema } } },
+            ...responses({ type: 'object', properties: { revoked: { type: 'boolean' } }, example: { revoked: true } }),
+            200: successResponse('Sessão revogada', { type: 'object', properties: { revoked: { type: 'boolean' } }, example: { revoked: true } }),
+            401: errorResponse(
+              'Não autenticado — accessToken em falta, expirado ou revogado (UNAUTHENTICATED)',
+              unauthenticatedExample,
+            ),
           },
         },
       },
@@ -546,7 +1004,7 @@ export function buildOpenApi(): Record<string, unknown> {
           tags: ['Resultados'],
           summary: 'Lista os métodos de cálculo disponíveis',
           description: 'Retorna os 6 métodos de cálculo suportados pelo motor académico.',
-          responses: responses({ type: 'array', items: calculationMethodMetaSchema }),
+          responses: responses({ type: 'array', items: calculationMethodMetaSchema }, { list: true }),
         },
       },
       '/api/v1/results/calculate': {
@@ -571,7 +1029,7 @@ export function buildOpenApi(): Record<string, unknown> {
             pageParam,
             pageSizeParam,
           ],
-          responses: responses({ type: 'array', items: assessment }),
+          responses: responses({ type: 'array', items: assessment }, { list: true }),
         },
         post: {
           tags: ['Avaliações'],
@@ -601,7 +1059,7 @@ export function buildOpenApi(): Record<string, unknown> {
           summary: 'Elimina uma avaliação sem notas',
           description: 'Avaliações com notas lançadas retornam 409.',
           parameters: [idParam('id')],
-          responses: responses({ type: 'object' }),
+          responses: responses(deletedAck),
         },
       },
       '/api/v1/me/financial-status': {
@@ -620,7 +1078,7 @@ export function buildOpenApi(): Record<string, unknown> {
           summary: 'Lista notas de uma avaliação',
           description: 'Para estudantes, devolve 403 cuando o utilizador tem dívida financeira (fail-closed 503 se o serviço financeiro estiver indisponível).',
           parameters: [idParam('assessmentId')],
-          responses: studentResponses({ type: 'array', items: grade }),
+          responses: studentResponses({ type: 'array', items: grade }, { list: true }),
         },
         post: {
           tags: ['Notas'],
@@ -652,7 +1110,7 @@ export function buildOpenApi(): Record<string, unknown> {
             pageParam,
             pageSizeParam,
           ],
-          responses: responses({ type: 'array', items: schedule }),
+          responses: responses({ type: 'array', items: schedule }, { list: true }),
         },
         post: {
           tags: ['Horários'],
@@ -681,7 +1139,7 @@ export function buildOpenApi(): Record<string, unknown> {
           tags: ['Horários'],
           summary: 'Elimina um horário',
           parameters: [idParam('id')],
-          responses: responses({ type: 'object' }),
+          responses: responses(deletedAck),
         },
       },
       '/api/v1/results': {
@@ -697,14 +1155,14 @@ export function buildOpenApi(): Record<string, unknown> {
             pageParam,
             pageSizeParam,
           ],
-          responses: studentResponses({ type: 'array', items: result }),
+          responses: studentResponses({ type: 'array', items: result }, { list: true }),
         },
         post: {
           tags: ['Resultados'],
           summary: 'Calcula/atualiza resultados em lote',
           description: 'Recalcula médias e status de uma turma/disciplina/período em transação atómica.',
           requestBody: { required: true, content: { 'application/json': { schema: resultBody } } },
-          responses: responses({ type: 'array', items: result }),
+          responses: responses({ type: 'array', items: result }, { list: true }),
         },
       },
       '/api/v1/results/{id}': {
@@ -726,7 +1184,7 @@ export function buildOpenApi(): Record<string, unknown> {
           tags: ['Resultados'],
           summary: 'Elimina um resultado',
           parameters: [idParam('id')],
-          responses: responses({ type: 'object' }),
+          responses: responses(deletedAck),
         },
       },
       '/api/v1/print/class/{classId}/schedule': {
@@ -734,7 +1192,7 @@ export function buildOpenApi(): Record<string, unknown> {
           tags: ['Impressão'],
           summary: 'Dados para impressão do horário de uma turma',
           parameters: [idParam('classId'), queryParam('termId')],
-          responses: responses({ type: 'object' }),
+          responses: responses(printableSchedule),
         },
       },
       '/api/v1/print/class/{classId}/pauta': {
@@ -743,7 +1201,7 @@ export function buildOpenApi(): Record<string, unknown> {
           summary: 'Dados para impressão da pauta de uma turma/disciplina',
           description: 'Para estudantes, devolve 403 com dívida financeira (fail-closed 503); o staff vê linhas de endividados mascaradas (debtRestricted).',
           parameters: [idParam('classId'), queryParam('termId'), queryParam('subjectId')],
-          responses: studentResponses({ type: 'object' }),
+          responses: studentResponses(printablePauta),
         },
       },
       '/api/v1/schools': {
@@ -752,7 +1210,7 @@ export function buildOpenApi(): Record<string, unknown> {
           summary: 'Lista escolas (catálogo)',
           description: 'Referência para montar formulários: id + nome + código.',
           parameters: [pageParam, pageSizeParam],
-          responses: responses({ type: 'array', items: school }),
+          responses: responses({ type: 'array', items: school }, { list: true }),
         },
       },
       '/api/v1/academic-years': {
@@ -760,7 +1218,7 @@ export function buildOpenApi(): Record<string, unknown> {
           tags: ['Catálogo'],
           summary: 'Lista anos letivos (catálogo)',
           parameters: [pageParam, pageSizeParam],
-          responses: responses({ type: 'array', items: academicYear }),
+          responses: responses({ type: 'array', items: academicYear }, { list: true }),
         },
       },
       '/api/v1/terms': {
@@ -769,7 +1227,7 @@ export function buildOpenApi(): Record<string, unknown> {
           summary: 'Lista períodos/termos letivos (catálogo)',
           description: 'Filtro opcional por ano letivo.',
           parameters: [queryParam('academicYearId'), pageParam, pageSizeParam],
-          responses: responses({ type: 'array', items: term }),
+          responses: responses({ type: 'array', items: term }, { list: true }),
         },
       },
       '/api/v1/classes': {
@@ -778,7 +1236,7 @@ export function buildOpenApi(): Record<string, unknown> {
           summary: 'Lista turmas (catálogo)',
           description: 'Filtros opcionais por período ou ano letivo.',
           parameters: [queryParam('termId'), queryParam('academicYearId'), pageParam, pageSizeParam],
-          responses: responses({ type: 'array', items: classSchema }),
+          responses: responses({ type: 'array', items: classSchema }, { list: true }),
         },
       },
       '/api/v1/subjects': {
@@ -786,7 +1244,7 @@ export function buildOpenApi(): Record<string, unknown> {
           tags: ['Catálogo'],
           summary: 'Lista disciplinas (catálogo)',
           parameters: [pageParam, pageSizeParam],
-          responses: responses({ type: 'array', items: subject }),
+          responses: responses({ type: 'array', items: subject }, { list: true }),
         },
       },
       '/api/v1/teachers': {
@@ -794,7 +1252,7 @@ export function buildOpenApi(): Record<string, unknown> {
           tags: ['Catálogo'],
           summary: 'Lista professores (catálogo)',
           parameters: [pageParam, pageSizeParam],
-          responses: responses({ type: 'array', items: teacher }),
+          responses: responses({ type: 'array', items: teacher }, { list: true }),
         },
       },
       '/api/v1/students': {
@@ -803,7 +1261,7 @@ export function buildOpenApi(): Record<string, unknown> {
           summary: 'Lista alunos (catálogo)',
           description: 'Filtros opcionais por turma ou período (usa matrículas ativas).',
           parameters: [queryParam('classId'), queryParam('termId'), pageParam, pageSizeParam],
-          responses: responses({ type: 'array', items: student }),
+          responses: responses({ type: 'array', items: student }, { list: true }),
         },
       },
     },
@@ -845,4 +1303,7 @@ export function buildOpenApi(): Record<string, unknown> {
       },
     },
   };
+
+  document.paths = withOperationIds(document.paths as Record<string, Record<string, unknown>>);
+  return document;
 }

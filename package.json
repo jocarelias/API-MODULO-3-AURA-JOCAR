@@ -33,7 +33,9 @@
     "db:reset": "prisma migrate reset",
     "db:seed": "prisma db seed",
     "typecheck": "tsc --noEmit",
-    "docs:access-table": "tsx scripts/generate-access-table.ts"
+    "docs:access-table": "tsx scripts/generate-access-table.ts",
+    "docs:openapi": "tsx scripts/generate-openapi.ts",
+    "docs": "npm run docs:openapi && npm run docs:access-table"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
