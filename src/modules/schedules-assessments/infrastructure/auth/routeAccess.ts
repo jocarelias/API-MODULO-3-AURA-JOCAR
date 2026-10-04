@@ -267,3 +267,55 @@ export function accessRule(method: HttpMethod, path: string): RouteAccessRule {
 export function isSuperAdmin(role: string): boolean {
   return role === 'SUPER_ADMIN';
 }
+/**
+ * Tabela Rota -> Roles em Markdown, gerada a partir de ROUTE_ACCESS.
+ *
+ * A tabela não é mantida à mão: `npm run docs:access-table` regenera
+ * `docs/ROUTE_ACCESS.md` a partir desta fonte de verdade, garantindo que a
+ * documentação nunca diverge do que o código faz.
+ */
+export function renderAccessTableMarkdown(): string {
+  const header = ['| Método | Rota | Roles | Verificação de posse | Descrição |', '| --- | --- | --- | --- | --- |'];
+  const rows = ROUTE_ACCESS.map((rule) => {
+    const roles = rule.roles.length === ROLES.length ? 'TODOS' : rule.roles.join(', ');
+    const possession = rule.possession === POSSESSION.NONE ? '—' : `\`${rule.possession}\``;
+    return `| \`${rule.method}\` | \`${rule.path}\` | ${roles} | ${possession} | ${rule.summary} |`;
+  });
+  const publics = PUBLIC_ROUTES.map((route) => `| \`${route.split(' ')[0]}\` | \`${route.split(' ')[1]}\` | *(público)* | — | Não exige token |`);
+
+  return [
+    '# Tabela Rota → Roles',
+    '',
+    '> Ficheiro **gerado automaticamente** a partir de `ROUTE_ACCESS`',
+    '> (`src/modules/schedules-assessments/infrastructure/auth/routeAccess.ts`).',
+    '> Não editar à mão: alterar `ROUTE_ACCESS` e correr `npm run docs:access-table`.',
+    '',
+    '## Rotas públicas',
+    '',
+    '| Método | Rota | Roles | Verificação de posse | Descrição |',
+    '| --- | --- | --- | --- | --- |',
+    ...publics,
+    '',
+    '## Rotas protegidas',
+    '',
+    ...header,
+    ...rows,
+    '',
+    '## Como ler a coluna "Verificação de posse"',
+    '',
+    'Ter o role certo **não** é suficiente: a tabela declara também, para cada rota,',
+    'a verificação explícita de posse do objecto (`POSSESSION`). Os guards correspondentes',
+    'estão em `infrastructure/auth/accessPolicy.ts` e são aplicados pelo router.',
+    '',
+    `- \`${POSSESSION.STUDENT_OWN_RESULTS}\` — o estudante só acede aos resultados cujo \`studentId\` é o seu.`,
+    `- \`${POSSESSION.STUDENT_OWN_FINANCIAL}\` — só consulta a própria situação financeira.`,
+    `- \`${POSSESSION.STUDENT_CLASS_SCOPE}\` — o recurso tem de pertencer a uma turma em que o estudante está inscrito.`,
+    `- \`${POSSESSION.STUDENT_GRADES_IN_CLASS}\` — notas: turma do recurso **e** dívida regularizada.`,
+    `- \`${POSSESSION.STUDENT_PAUTA_IN_CLASS}\` — pauta: turma do recurso **e** dívida regularizada.`,
+    `- \`${POSSESSION.STUDENT_OWN_GRADES}\` — o estudante recebe apenas as suas notas.`,
+    `- \`${POSSESSION.TEACHER_OWN_ASSESSMENT}\` — só o docente atribuído à avaliação.`,
+    `- \`${POSSESSION.TEACHER_OWN_SCHEDULE}\` — só o docente atribuído ao horário.`,
+    `- \`${POSSESSION.TEACHER_OWN_RESULT}\` — só o docente que leciona a turma/disciplina do resultado.`,
+    '',
+  ].join('\n');
+}

@@ -146,6 +146,27 @@ export interface JwksVerifierOptions extends ClaimConstraints {
 
 export const SUPPORTED_ASYMMETRIC_ALGORITHMS = ['RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512'] as const;
 
+/**
+ * Traduz o identificador JOSE do cabeçalho (`alg`) para o nome de digest que o
+ * `node:crypto` espera. `createVerify('RS256')` lança `ERR_CRYPTO_INVALID_DIGEST`
+ * porque o Node conhece `RSA-SHA256`, não o nome JOSE.
+ */
+const ASYMMETRIC_DIGEST: Record<string, string> = {
+  RS256: 'RSA-SHA256',
+  RS384: 'RSA-SHA384',
+  RS512: 'RSA-SHA512',
+  PS256: 'RSA-SHA256',
+  PS384: 'RSA-SHA384',
+  PS512: 'RSA-SHA512',
+  ES256: 'SHA256',
+  ES384: 'SHA384',
+  ES512: 'SHA512',
+};
+
+export function digestForAlgorithm(alg: string): string | undefined {
+  return ASYMMETRIC_DIGEST[alg];
+}
+
 export function createJwksVerifier(options: JwksVerifierOptions): TokenVerifier {
   if (!options.jwksUri) {
     throw new Error('jwksUri é obrigatório para verificação via JWKS');
@@ -236,7 +257,12 @@ export function createJwksVerifier(options: JwksVerifierOptions): TokenVerifier 
       throw new TokenVerificationError('Chave pública não encontrada para o token');
     }
 
-    const signatureValid = createVerify(parsed.alg)
+    const digest = digestForAlgorithm(parsed.alg);
+    if (!digest) {
+      throw new TokenVerificationError('Algoritmo não suportado');
+    }
+
+    const signatureValid = createVerify(digest)
       .update(`${parsed.header}.${parsed.payload}`)
       .end()
       .verify(publicKey, Buffer.from(parsed.signature, 'base64url'));
