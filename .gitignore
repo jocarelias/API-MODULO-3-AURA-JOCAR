@@ -16,3 +16,6 @@ npm-debug.log*
 *.pdf
 *.docx
 *.xlsx
+
+# Entregáveis que devem ser versionados
+!docs/Guia_Pratico_Modulos_V_VI_Preenchido_G3.pdf

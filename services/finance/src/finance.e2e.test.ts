@@ -9,6 +9,8 @@ const SECRET = 'e2e-secret-finance';
 process.env.SMARTCAMPUS_JWT_SECRET = SECRET;
 process.env.JWT_ACCESS_SECRET = SECRET;
 process.env.FINANCE_SERVICE_PORT = '4104';
+const SERVICE_TOKEN = 'fin-service-e2e-token';
+process.env.SMARTCAMPUS_SERVICE_TOKEN = SERVICE_TOKEN;
 
 const prisma = new PrismaClient();
 const app = createApp();
@@ -220,5 +222,105 @@ describe('services/finance — contrato idempotente de cobranças de avaliação
       .send({ sourceModule: 'G3' });
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('VALIDATION_ERROR');
+  });
+});
+
+describe('services/finance — rota de regularidade (standing) do contrato 03-financeiro', () => {
+  let standingSchoolId = '';
+  let standingAdminId = '';
+  let activeUserId = '';
+  let blockedUserId = '';
+
+  beforeAll(async () => {
+    standingSchoolId = randomUUID();
+    await prisma.school.create({ data: { id: standingSchoolId, name: 'Escola Standing', code: `STD${standingSchoolId.slice(0, 6)}`, status: 'ACTIVE' } });
+    standingAdminId = randomUUID();
+    await prisma.user.create({
+      data: { id: standingAdminId, schoolId: standingSchoolId, role: 'SCHOOL_ADMIN', name: 'Admin Standing', email: `admin.${standingSchoolId}@teste.mz`, passwordHash: 'x', status: 'ACTIVE' },
+    });
+    const activeUser = await prisma.user.create({
+      data: { schoolId: standingSchoolId, role: 'STUDENT', name: 'Aluno Regular', email: `ativo.${standingSchoolId}@teste.mz`, passwordHash: 'x', status: 'ACTIVE' },
+    });
+    activeUserId = activeUser.id;
+    const blockedUser = await prisma.user.create({
+      data: { schoolId: standingSchoolId, role: 'STUDENT', name: 'Aluno Endividado', email: `devedor.${standingSchoolId}@teste.mz`, passwordHash: 'x', status: 'ACTIVE' },
+    });
+    blockedUserId = blockedUser.id;
+    const active = await prisma.student.create({
+      data: { schoolId: standingSchoolId, userId: activeUserId, name: 'Aluno Regular', email: activeUser.email, enrollmentNumber: `STD-${standingSchoolId.slice(0, 8)}`, status: 'ACTIVE' },
+    });
+    await prisma.financialStatus.create({ data: { schoolId: standingSchoolId, studentId: active.id, hasDebt: false, status: 'REGULAR', outstandingAmount: 0 } });
+    const blockedStudent = await prisma.student.create({
+      data: { schoolId: standingSchoolId, userId: blockedUserId, name: 'Aluno Endividado', email: blockedUser.email, enrollmentNumber: `STDB-${standingSchoolId.slice(0, 7)}`, status: 'ACTIVE' },
+    });
+    await prisma.financialStatus.create({ data: { schoolId: standingSchoolId, studentId: blockedStudent.id, hasDebt: true, status: 'IN_DEBT', outstandingAmount: 5000 } });
+  });
+
+  afterAll(async () => {
+    await prisma.financialStatus.deleteMany({ where: { schoolId: standingSchoolId } });
+    await prisma.student.deleteMany({ where: { schoolId: standingSchoolId } });
+    await prisma.user.deleteMany({ where: { schoolId: standingSchoolId } });
+    await prisma.school.delete({ where: { id: standingSchoolId } });
+  });
+
+  it('sem token → 401 UNAUTHENTICATED', async () => {
+    const res = await request(app).get(`/api/v1/financial/integration/students/${activeUserId}/standing`).expect(401);
+    expect(res.body.code).toBe('UNAUTHENTICATED');
+  });
+
+  it('token de utilizador comum (não serviço) → 403 FORBIDDEN', async () => {
+    const res = await request(app)
+      .get(`/api/v1/financial/integration/students/${activeUserId}/standing`)
+      .set('authorization', `Bearer ${tokenFor(standingAdminId, 'SCHOOL_ADMIN')}`)
+      .expect(403);
+    expect(res.body.code).toBe('FORBIDDEN');
+  });
+
+  it('estudante regular → 200 ACTIVE sem expor montantes', async () => {
+    const res = await request(app)
+      .get(`/api/v1/financial/integration/students/${activeUserId}/standing`)
+      .set('authorization', `Bearer ${SERVICE_TOKEN}`)
+      .expect(200);
+    expect(res.body.data.studentUserId).toBe(activeUserId);
+    expect(res.body.data.status).toBe('ACTIVE');
+    expect(typeof res.body.data.checkedAt).toBe('string');
+    expect(JSON.stringify(res.body)).not.toMatch(/amount|outstanding|value/i);
+  });
+
+  it('estudante com dívida → 200 BLOCKED sem revelar o valor em dívida', async () => {
+    const res = await request(app)
+      .get(`/api/v1/financial/integration/students/${blockedUserId}/standing`)
+      .set('authorization', `Bearer ${SERVICE_TOKEN}`)
+      .expect(200);
+    expect(res.body.data.studentUserId).toBe(blockedUserId);
+    expect(res.body.data.status).toBe('BLOCKED');
+    expect(JSON.stringify(res.body)).not.toContain('5000');
+  });
+
+  it('estudante desconhecido → 404 STUDENT_NOT_FOUND', async () => {
+    const res = await request(app)
+      .get(`/api/v1/financial/integration/students/${randomUUID()}/standing`)
+      .set('authorization', `Bearer ${SERVICE_TOKEN}`)
+      .expect(404);
+    expect(res.body.code).toBe('STUDENT_NOT_FOUND');
+  });
+
+  it('identificador malformado → 400 VALIDATION_ERROR', async () => {
+    const res = await request(app)
+      .get('/api/v1/financial/integration/students/nao-e-uuid/standing')
+      .set('authorization', `Bearer ${SERVICE_TOKEN}`)
+      .expect(400);
+    expect(res.body.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('resposta ecoa o x-request-id como correlationId', async () => {
+    const correlationId = randomUUID();
+    const res = await request(app)
+      .get(`/api/v1/financial/integration/students/${activeUserId}/standing`)
+      .set('authorization', `Bearer ${SERVICE_TOKEN}`)
+      .set('x-request-id', correlationId)
+      .expect(200);
+    expect(res.headers['x-request-id']).toBe(correlationId);
+    expect(res.body.meta.correlationId).toBe(correlationId);
   });
 });

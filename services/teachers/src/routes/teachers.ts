@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import { z } from 'zod';
-import { createAuthMiddleware, requireRoles, AuthRequest, AuthUserRecord } from '@smartcampus/auth';
+import { createAuthMiddleware, requireRoles, AuthRequest, AuthUserRecord, SERVICE_ROLE } from '@smartcampus/auth';
 import { teacherProfileDto, TeacherProfileDto, STAFF_ROLES } from '@smartcampus/shared-types';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../infrastructure/prisma';
@@ -71,7 +71,21 @@ export function createTeachersRouter(): Router {
       }
       const { schoolId, status, page = 1, pageSize = 100 } = parsed.data;
       const where: Prisma.TeacherWhereInput = {};
-      if (schoolId) where.schoolId = schoolId;
+
+      // Isolamento por escola. O `schoolId` da query é um FILTRO, nunca uma
+      // autorização: sem isto, omiti-lo devolvia registos de todas as escolas.
+      // `SUPER_ADMIN` tem alcance global; o service token é o gateway, que
+      // aplicou o scoping do tenant antes de chamar; qualquer outro role fica
+      // preso ao `schoolId` do token.
+      const auth = req.auth as { role: string; schoolId: string };
+      if (auth.role === 'SUPER_ADMIN' || auth.role === SERVICE_ROLE) {
+        if (schoolId) where.schoolId = schoolId;
+      } else if (auth.schoolId) {
+        where.schoolId = auth.schoolId;
+      } else {
+        sendError(res, 403, 'FORBIDDEN', 'Token sem escola associada', req.correlationId);
+        return;
+      }
       if (status) where.status = status as Prisma.TeacherWhereInput['status'];
       const rows = await prisma.teacher.findMany({
         where,
@@ -88,7 +102,7 @@ export function createTeachersRouter(): Router {
     '/teachers/:id',
     auth,
     async (req: AuthRequest, res: Response) => {
-      const authData = req.auth as { role: string };
+      const authData = req.auth as { role: string; schoolId: string };
       const parsed = idParamsSchema.safeParse(req.params);
       if (!parsed.success) {
         sendError(res, 400, 'VALIDATION_ERROR', 'Identificador de professor inválido', req.correlationId);
@@ -101,6 +115,11 @@ export function createTeachersRouter(): Router {
       const row = await prisma.teacher.findUnique({ where: { id: parsed.data.id } });
       if (!row) {
         sendError(res, 404, 'TEACHER_NOT_FOUND', 'Professor não encontrado no catálogo', req.correlationId);
+        return;
+      }
+      // Um docente de outra escola não é visível para staff deste campus.
+      if (authData.role !== 'SUPER_ADMIN' && authData.role !== SERVICE_ROLE && row.schoolId !== authData.schoolId) {
+        sendError(res, 403, 'FORBIDDEN', 'Este professor pertence a outra escola', req.correlationId);
         return;
       }
       sendSuccess(res, toProfile(row), req.correlationId);

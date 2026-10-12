@@ -9,6 +9,7 @@ import { enforcePossession, assertStudentOwnsResource } from '../infrastructure/
 import { toHttpError } from '../infrastructure/httpError';
 import {
   createAssessmentSchema,
+  createAssessmentPlanSchema,
   updateAssessmentSchema,
   assessmentQuerySchema,
   createGradeSchema,
@@ -192,9 +193,11 @@ export function createSchedulesAssessmentsRouter(
     handler(async (req, res) => {
       const query = validate(assessmentQuerySchema, req.query);
       const scope = await enforce('GET', '/assessments')(req);
-      const filters = scope.studentId
-        ? { ...query, classId: query.classId ?? scope.classId, classIds: query.classId ? undefined : scope.classIds }
-        : query;
+      const filters = scope.teacherId
+        ? { ...query, teacherId: scope.teacherId }
+        : scope.studentId
+          ? { ...query, classId: query.classId ?? scope.classId, classIds: query.classId ? undefined : scope.classIds }
+          : query;
       const data = await service.listAssessments(filters);
       const { rows, meta } = paginate(data, query);
       return success(res, rows, 200, req.correlationId, meta);
@@ -207,6 +210,16 @@ export function createSchedulesAssessmentsRouter(
     handler(async (req, res) => {
       const body = validate(createAssessmentSchema, req.body);
       const data = await service.createAssessment(body, ctxOf(req));
+      return success(res, data, 201, req.correlationId);
+    }),
+  );
+
+  router.post(
+    '/assessments/plan',
+    guard('POST', '/assessments/plan'),
+    handler(async (req, res) => {
+      const body = validate(createAssessmentPlanSchema, req.body);
+      const data = await service.createAssessmentPlan(body, ctxOf(req));
       return success(res, data, 201, req.correlationId);
     }),
   );
@@ -289,6 +302,7 @@ export function createSchedulesAssessmentsRouter(
         ...query,
         classId: query.classId ?? scope.classId,
         studentId: scope.studentId ?? query.studentId,
+        teacherId: scope.teacherId ?? query.teacherId,
       });
       const { rows, meta } = paginate(data, query);
       return success(res, rows, 200, req.correlationId, meta);
@@ -343,7 +357,11 @@ export function createSchedulesAssessmentsRouter(
     handler(async (req, res) => {
       const query = validate(resultQuerySchema, req.query);
       const scope = await enforce('GET', '/results')(req);
-      const data = await service.listResults({ ...query, studentId: scope.studentId ?? query.studentId });
+      const data = await service.listResults({
+        ...query,
+        studentId: scope.studentId ?? query.studentId,
+        teacherId: scope.teacherId ?? query.teacherId,
+      });
       const { rows, meta } = paginate(data, query);
       return success(res, rows, 200, req.correlationId, meta);
     }),

@@ -1,19 +1,22 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { PrismaClient } from '@prisma/client';
 import { SchedulesAssessmentsService } from '../application/schedulesAssessmentsService';
-import { startContractServices, ContractTestContext } from './contractTestEnv';
+import { startContractServices, createEnrolledStudent, ContractTestContext } from './contractTestEnv';
 
 describe('G3 transações ACID (nível de serviço)', () => {
-  let seedSchoolId = '';
   let prisma: PrismaClient;
   let ctx: { token: string; correlationId: string };
   let testContext: ContractTestContext;
+  let studentId: string;
 
   beforeAll(async () => {
     testContext = await startContractServices();
     prisma = new PrismaClient();
-    seedSchoolId = (await prisma.term.findFirst({ where: { name: { startsWith: '1º' } }, orderBy: { createdAt: 'asc' } }))!.schoolId;
     ctx = { token: testContext.token, correlationId: 'e2e-acid' };
+    // A escola descartável nasce sem alunos: sem uma matrícula real não há
+    // `enrollment` nem Result sobre os quais provar o rollback. O aluno é
+    // criado na mesma escola do token (ver nota em contract-debt).
+    studentId = (await createEnrolledStudent(testContext, 'acid')).studentId;
   });
 
   afterAll(async () => {
@@ -22,13 +25,14 @@ describe('G3 transações ACID (nível de serviço)', () => {
   });
 
   it('lançar nota + recálculo é atómico: falha no recálculo faz rollback total', async () => {
-    const term = await prisma.term.findFirst({ where: { name: { startsWith: '1º' } }, orderBy: { createdAt: 'asc' } });
-    const academicYear = await prisma.academicYear.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
-    const classRecord = await prisma.class.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
-    const subject = await prisma.subject.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
-    const teacher = await prisma.teacher.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
-    const enrollment = await prisma.enrollment.findFirst({
-      where: { status: 'ACTIVE', termId: term.id, classId: classRecord.id, subjectId: subject.id },
+    const fx = testContext.fixtures;
+    const term = { id: fx.termId, schoolId: fx.schoolId, name: fx.termName };
+    const academicYear = { id: fx.academicYearId, name: fx.academicYearName };
+    const classRecord = { id: fx.classId, name: fx.className };
+    const subject = { id: fx.subjectId, name: fx.subjectName, code: fx.subjectCode };
+    const teacher = { id: fx.teacherId, name: fx.teacherName };
+    const enrollment = await prisma.enrollment.findFirstOrThrow({
+      where: { status: 'ACTIVE', termId: term.id, classId: classRecord.id, subjectId: subject.id, studentId },
     });
 
     const name = `e2e-acid-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
@@ -96,13 +100,14 @@ describe('G3 transações ACID (nível de serviço)', () => {
   });
 
   it('lançar nota + recálculo é atómico: sucesso persiste tudo', async () => {
-    const term = await prisma.term.findFirst({ where: { name: { startsWith: '1º' } }, orderBy: { createdAt: 'asc' } });
-    const academicYear = await prisma.academicYear.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
-    const classRecord = await prisma.class.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
-    const subject = await prisma.subject.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
-    const teacher = await prisma.teacher.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
-    const enrollment = await prisma.enrollment.findFirst({
-      where: { status: 'ACTIVE', termId: term.id, classId: classRecord.id, subjectId: subject.id },
+    const fx = testContext.fixtures;
+    const term = { id: fx.termId, schoolId: fx.schoolId, name: fx.termName };
+    const academicYear = { id: fx.academicYearId, name: fx.academicYearName };
+    const classRecord = { id: fx.classId, name: fx.className };
+    const subject = { id: fx.subjectId, name: fx.subjectName, code: fx.subjectCode };
+    const teacher = { id: fx.teacherId, name: fx.teacherName };
+    const enrollment = await prisma.enrollment.findFirstOrThrow({
+      where: { status: 'ACTIVE', termId: term.id, classId: classRecord.id, subjectId: subject.id, studentId },
     });
 
     const name = `e2e-acid-ok-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;

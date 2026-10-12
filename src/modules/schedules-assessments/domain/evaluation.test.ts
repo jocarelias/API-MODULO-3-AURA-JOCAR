@@ -18,10 +18,23 @@ function round2(value: number): number {
 describe('domain/evaluation', () => {
   describe('isValidEvaluationType / validateEvaluationType', () => {
     it('reconhece os tipos de avaliação do módulo', () => {
-      expect(EVALUATION_TYPES).toEqual(['TESTE', 'EXAME_NORMAL', 'EXAME_RECURRENCIA']);
+      expect(EVALUATION_TYPES).toEqual([
+        'TESTE',
+        'EXAME_NORMAL',
+        'EXAME_RECURRENCIA',
+        'TRABALHO',
+        'PROJETO',
+        'QUESTIONARIO',
+        'PRATICA',
+        'ORAL',
+        'OUTRO',
+      ]);
       expect(isValidEvaluationType('TESTE')).toBe(true);
       expect(isValidEvaluationType('EXAME_NORMAL')).toBe(true);
       expect(isValidEvaluationType('EXAME_RECURRENCIA')).toBe(true);
+      expect(isValidEvaluationType('TRABALHO')).toBe(true);
+      expect(isValidEvaluationType('PROJETO')).toBe(true);
+      expect(isValidEvaluationType('ORAL')).toBe(true);
     });
 
     it('rejeita tipos fora do domínio', () => {

@@ -45,7 +45,7 @@ paths:
                   minLength: 1
               example:
                 email: aluno1@student.ucjac.ac.mz
-                password: Aluno@2026
+                password: aluno123
       responses:
         '200':
           description: Credenciais válidas — accessToken + refreshToken + perfil
@@ -867,6 +867,12 @@ paths:
                           - TESTE
                           - EXAME_NORMAL
                           - EXAME_RECURRENCIA
+                          - TRABALHO
+                          - PROJETO
+                          - QUESTIONARIO
+                          - PRATICA
+                          - ORAL
+                          - OUTRO
                       score:
                         type: number
                         minimum: 0
@@ -986,6 +992,12 @@ paths:
                                 - TESTE
                                 - EXAME_NORMAL
                                 - EXAME_RECURRENCIA
+                                - TRABALHO
+                                - PROJETO
+                                - QUESTIONARIO
+                                - PRATICA
+                                - ORAL
+                                - OUTRO
                             label:
                               type: string
                             score:
@@ -1103,6 +1115,12 @@ paths:
                                 - TESTE
                                 - EXAME_NORMAL
                                 - EXAME_RECURRENCIA
+                                - TRABALHO
+                                - PROJETO
+                                - QUESTIONARIO
+                                - PRATICA
+                                - ORAL
+                                - OUTRO
                             label:
                               type: string
                             score:
@@ -1431,6 +1449,12 @@ paths:
                             - TESTE
                             - EXAME_NORMAL
                             - EXAME_RECURRENCIA
+                            - TRABALHO
+                            - PROJETO
+                            - QUESTIONARIO
+                            - PRATICA
+                            - ORAL
+                            - OUTRO
                         description:
                           type: string
                           nullable: true
@@ -1724,6 +1748,12 @@ paths:
                     - TESTE
                     - EXAME_NORMAL
                     - EXAME_RECURRENCIA
+                    - TRABALHO
+                    - PROJETO
+                    - QUESTIONARIO
+                    - PRATICA
+                    - ORAL
+                    - OUTRO
                 description:
                   type: string
                   nullable: true
@@ -1822,6 +1852,12 @@ paths:
                           - TESTE
                           - EXAME_NORMAL
                           - EXAME_RECURRENCIA
+                          - TRABALHO
+                          - PROJETO
+                          - QUESTIONARIO
+                          - PRATICA
+                          - ORAL
+                          - OUTRO
                       description:
                         type: string
                         nullable: true
@@ -2002,6 +2038,12 @@ paths:
                           - TESTE
                           - EXAME_NORMAL
                           - EXAME_RECURRENCIA
+                          - TRABALHO
+                          - PROJETO
+                          - QUESTIONARIO
+                          - PRATICA
+                          - ORAL
+                          - OUTRO
                       description:
                         type: string
                         nullable: true
@@ -2242,6 +2284,617 @@ paths:
                 message: Ocorreu um erro inesperado
                 details: []
                 correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
+  /api/v1/assessments/plan:
+    post:
+      operationId: postAssessmentsPlan
+      tags:
+        - Avaliações
+      summary: Cria o plano de avaliações do docente (nomes, tipos e pesos em lote)
+      description: >-
+        O docente define quantas avaliações existem e o peso de cada uma (ex.: Teste 1 = 40, Teste 2 = 40, Trabalho =
+        20). Tudo é criado numa transação; nomes duplicados no mesmo período, turma e disciplina retornam 409.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - academicYearId
+                - termId
+                - classId
+                - subjectId
+                - teacherId
+                - assessments
+              properties:
+                academicYearId:
+                  type: string
+                  format: uuid
+                termId:
+                  type: string
+                  format: uuid
+                classId:
+                  type: string
+                  format: uuid
+                subjectId:
+                  type: string
+                  format: uuid
+                teacherId:
+                  type: string
+                  format: uuid
+                assessments:
+                  type: array
+                  minItems: 1
+                  maxItems: 30
+                  items:
+                    type: object
+                    required:
+                      - name
+                      - type
+                      - date
+                      - weight
+                    properties:
+                      name:
+                        type: string
+                        minLength: 1
+                      type:
+                        type: string
+                        enum:
+                          - TESTE
+                          - EXAME_NORMAL
+                          - EXAME_RECURRENCIA
+                          - TRABALHO
+                          - PROJETO
+                          - QUESTIONARIO
+                          - PRATICA
+                          - ORAL
+                          - OUTRO
+                      description:
+                        type: string
+                        nullable: true
+                      date:
+                        type: string
+                        format: date-time
+                      maxScore:
+                        type: number
+                        exclusiveMinimum: 0
+                        default: 20
+                      weight:
+                        type: number
+                        exclusiveMinimum: 0
+                      status:
+                        type: string
+                        enum:
+                          - DRAFT
+                          - SCHEDULED
+                          - OPEN
+                          - CLOSED
+                          - CANCELLED
+      responses:
+        '200':
+          description: Operação realizada com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      example:
+                        id: 7c75e533-aa49-4dcf-97a2-9ecdd3bfb1d4
+                        schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                        academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
+                        academicYearName: '2026'
+                        termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
+                        termName: 1º Período
+                        classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
+                        className: Engenharia Informática - 1º Ano
+                        subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
+                        subjectName: Programação Paralela
+                        teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
+                        teacherName: Eng. Maria Tivane
+                        name: Teste 1 — Programação Paralela
+                        type: TEST
+                        description: Prova teórica com 12 questões de escolha múltipla.
+                        date: '2026-03-14T09:00:00.000Z'
+                        maxScore: 20
+                        weight: 40
+                        status: OPEN
+                        createdAt: '2026-03-01T08:12:00.000Z'
+                        updatedAt: '2026-03-14T10:05:00.000Z'
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        schoolId:
+                          type: string
+                          format: uuid
+                        academicYearId:
+                          type: string
+                          format: uuid
+                        academicYearName:
+                          type: string
+                          nullable: true
+                        termId:
+                          type: string
+                          format: uuid
+                        termName:
+                          type: string
+                          nullable: true
+                        classId:
+                          type: string
+                          format: uuid
+                        className:
+                          type: string
+                          nullable: true
+                        subjectId:
+                          type: string
+                          format: uuid
+                        subjectName:
+                          type: string
+                          nullable: true
+                        teacherId:
+                          type: string
+                          format: uuid
+                        teacherName:
+                          type: string
+                          nullable: true
+                        name:
+                          type: string
+                        type:
+                          type: string
+                          enum:
+                            - TESTE
+                            - EXAME_NORMAL
+                            - EXAME_RECURRENCIA
+                            - TRABALHO
+                            - PROJETO
+                            - QUESTIONARIO
+                            - PRATICA
+                            - ORAL
+                            - OUTRO
+                        description:
+                          type: string
+                          nullable: true
+                        date:
+                          type: string
+                          format: date-time
+                        maxScore:
+                          type: number
+                        weight:
+                          type: number
+                        status:
+                          type: string
+                          enum:
+                            - DRAFT
+                            - SCHEDULED
+                            - OPEN
+                            - CLOSED
+                            - CANCELLED
+                        createdAt:
+                          type: string
+                          format: date-time
+                        updatedAt:
+                          type: string
+                          format: date-time
+                      required:
+                        - id
+                        - schoolId
+                        - academicYearId
+                        - termId
+                        - classId
+                        - subjectId
+                        - teacherId
+                        - name
+                        - type
+                        - date
+                        - maxScore
+                        - weight
+                        - status
+                        - createdAt
+                        - updatedAt
+                  meta:
+                    type: object
+                    properties:
+                      correlationId:
+                        type: string
+                      page:
+                        type: number
+                      pageSize:
+                        type: number
+                      total:
+                        type: number
+                required:
+                  - data
+                  - meta
+                example:
+                  data:
+                    - id: 7c75e533-aa49-4dcf-97a2-9ecdd3bfb1d4
+                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                      academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
+                      academicYearName: '2026'
+                      termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
+                      termName: 1º Período
+                      classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
+                      className: Engenharia Informática - 1º Ano
+                      subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
+                      subjectName: Programação Paralela
+                      teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
+                      teacherName: Eng. Maria Tivane
+                      name: Teste 1 — Programação Paralela
+                      type: TEST
+                      description: Prova teórica com 12 questões de escolha múltipla.
+                      date: '2026-03-14T09:00:00.000Z'
+                      maxScore: 20
+                      weight: 40
+                      status: OPEN
+                      createdAt: '2026-03-01T08:12:00.000Z'
+                      updatedAt: '2026-03-14T10:05:00.000Z'
+                  meta:
+                    correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
+                    page: 1
+                    pageSize: 20
+                    total: 3
+              example:
+                data:
+                  - id: 7c75e533-aa49-4dcf-97a2-9ecdd3bfb1d4
+                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                    academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
+                    academicYearName: '2026'
+                    termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
+                    termName: 1º Período
+                    classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
+                    className: Engenharia Informática - 1º Ano
+                    subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
+                    subjectName: Programação Paralela
+                    teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
+                    teacherName: Eng. Maria Tivane
+                    name: Teste 1 — Programação Paralela
+                    type: TEST
+                    description: Prova teórica com 12 questões de escolha múltipla.
+                    date: '2026-03-14T09:00:00.000Z'
+                    maxScore: 20
+                    weight: 40
+                    status: OPEN
+                    createdAt: '2026-03-01T08:12:00.000Z'
+                    updatedAt: '2026-03-14T10:05:00.000Z'
+                meta:
+                  correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
+                  page: 1
+                  pageSize: 20
+                  total: 3
+        '201':
+          description: Recurso criado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      example:
+                        id: 7c75e533-aa49-4dcf-97a2-9ecdd3bfb1d4
+                        schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                        academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
+                        academicYearName: '2026'
+                        termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
+                        termName: 1º Período
+                        classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
+                        className: Engenharia Informática - 1º Ano
+                        subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
+                        subjectName: Programação Paralela
+                        teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
+                        teacherName: Eng. Maria Tivane
+                        name: Teste 1 — Programação Paralela
+                        type: TEST
+                        description: Prova teórica com 12 questões de escolha múltipla.
+                        date: '2026-03-14T09:00:00.000Z'
+                        maxScore: 20
+                        weight: 40
+                        status: OPEN
+                        createdAt: '2026-03-01T08:12:00.000Z'
+                        updatedAt: '2026-03-14T10:05:00.000Z'
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        schoolId:
+                          type: string
+                          format: uuid
+                        academicYearId:
+                          type: string
+                          format: uuid
+                        academicYearName:
+                          type: string
+                          nullable: true
+                        termId:
+                          type: string
+                          format: uuid
+                        termName:
+                          type: string
+                          nullable: true
+                        classId:
+                          type: string
+                          format: uuid
+                        className:
+                          type: string
+                          nullable: true
+                        subjectId:
+                          type: string
+                          format: uuid
+                        subjectName:
+                          type: string
+                          nullable: true
+                        teacherId:
+                          type: string
+                          format: uuid
+                        teacherName:
+                          type: string
+                          nullable: true
+                        name:
+                          type: string
+                        type:
+                          type: string
+                          enum:
+                            - TESTE
+                            - EXAME_NORMAL
+                            - EXAME_RECURRENCIA
+                            - TRABALHO
+                            - PROJETO
+                            - QUESTIONARIO
+                            - PRATICA
+                            - ORAL
+                            - OUTRO
+                        description:
+                          type: string
+                          nullable: true
+                        date:
+                          type: string
+                          format: date-time
+                        maxScore:
+                          type: number
+                        weight:
+                          type: number
+                        status:
+                          type: string
+                          enum:
+                            - DRAFT
+                            - SCHEDULED
+                            - OPEN
+                            - CLOSED
+                            - CANCELLED
+                        createdAt:
+                          type: string
+                          format: date-time
+                        updatedAt:
+                          type: string
+                          format: date-time
+                      required:
+                        - id
+                        - schoolId
+                        - academicYearId
+                        - termId
+                        - classId
+                        - subjectId
+                        - teacherId
+                        - name
+                        - type
+                        - date
+                        - maxScore
+                        - weight
+                        - status
+                        - createdAt
+                        - updatedAt
+                  meta:
+                    type: object
+                    properties:
+                      correlationId:
+                        type: string
+                      page:
+                        type: number
+                      pageSize:
+                        type: number
+                      total:
+                        type: number
+                required:
+                  - data
+                  - meta
+                example:
+                  data:
+                    - id: 7c75e533-aa49-4dcf-97a2-9ecdd3bfb1d4
+                      schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                      academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
+                      academicYearName: '2026'
+                      termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
+                      termName: 1º Período
+                      classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
+                      className: Engenharia Informática - 1º Ano
+                      subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
+                      subjectName: Programação Paralela
+                      teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
+                      teacherName: Eng. Maria Tivane
+                      name: Teste 1 — Programação Paralela
+                      type: TEST
+                      description: Prova teórica com 12 questões de escolha múltipla.
+                      date: '2026-03-14T09:00:00.000Z'
+                      maxScore: 20
+                      weight: 40
+                      status: OPEN
+                      createdAt: '2026-03-01T08:12:00.000Z'
+                      updatedAt: '2026-03-14T10:05:00.000Z'
+                  meta:
+                    correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
+                    page: 1
+                    pageSize: 20
+                    total: 3
+              example:
+                data:
+                  - id: 7c75e533-aa49-4dcf-97a2-9ecdd3bfb1d4
+                    schoolId: f266cdec-aee4-45a5-a962-9d961a95638b
+                    academicYearId: e902338e-b3e1-47dc-995b-13bec814c404
+                    academicYearName: '2026'
+                    termId: df8c0eac-1660-4e17-95c9-22fb27a33a5e
+                    termName: 1º Período
+                    classId: ff47d5a7-c2e3-4bff-8ea7-2e816902c9db
+                    className: Engenharia Informática - 1º Ano
+                    subjectId: 9406a157-34f4-4d70-b6de-defdbaf496fa
+                    subjectName: Programação Paralela
+                    teacherId: 294481dd-a867-4db8-998c-db6851fafdd2
+                    teacherName: Eng. Maria Tivane
+                    name: Teste 1 — Programação Paralela
+                    type: TEST
+                    description: Prova teórica com 12 questões de escolha múltipla.
+                    date: '2026-03-14T09:00:00.000Z'
+                    maxScore: 20
+                    weight: 40
+                    status: OPEN
+                    createdAt: '2026-03-01T08:12:00.000Z'
+                    updatedAt: '2026-03-14T10:05:00.000Z'
+                meta:
+                  correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
+                  page: 1
+                  pageSize: 20
+                  total: 3
+        '400':
+          description: Requisição inválida (validação Zod ou regra de domínio)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  message:
+                    type: string
+                  details:
+                    type: array
+                    items:
+                      type: object
+                  correlationId:
+                    type: string
+              example:
+                code: VALIDATION_ERROR
+                message: Requisição inválida (validação Zod ou regra de domínio)
+                details:
+                  - path: weight
+                    message: Peso deve ser maior que zero
+                correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
+        '401':
+          description: Não autenticado — token em falta, expirado ou com assinatura inválida (UNAUTHENTICATED)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  message:
+                    type: string
+                  details:
+                    type: array
+                    items:
+                      type: object
+                  correlationId:
+                    type: string
+              example:
+                code: UNAUTHENTICATED
+                message: Token em falta
+                details: []
+                correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
+        '403':
+          description: >-
+            Sem permissão para este recurso — role insuficiente (FORBIDDEN) ou recurso pertence a outro utilizador
+            (verificação de posse)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  message:
+                    type: string
+                  details:
+                    type: array
+                    items:
+                      type: object
+                  correlationId:
+                    type: string
+              example:
+                code: FORBIDDEN
+                message: Só tem permissão para aceder aos seus próprios dados
+                details: []
+                correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
+        '404':
+          description: Recurso inexistente (NOT_FOUND)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  message:
+                    type: string
+                  details:
+                    type: array
+                    items:
+                      type: object
+                  correlationId:
+                    type: string
+              example:
+                code: NOT_FOUND
+                message: Recurso não encontrado
+                details: []
+                correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
+        '409':
+          description: Conflito (duplicação, sobreposição de horário, avaliação com notas já lançadas)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  message:
+                    type: string
+                  details:
+                    type: array
+                    items:
+                      type: object
+                  correlationId:
+                    type: string
+              example:
+                code: CONFLICT
+                message: Conflito de domínio
+                details: []
+                correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
+        '500':
+          description: Erro interno do servidor (INTERNAL_ERROR)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  message:
+                    type: string
+                  details:
+                    type: array
+                    items:
+                      type: object
+                  correlationId:
+                    type: string
+              example:
+                code: INTERNAL_ERROR
+                message: Ocorreu um erro inesperado
+                details: []
+                correlationId: 3f7c1b52-9a4e-4d18-8b6f-2e5a9c7d1e04
   /api/v1/assessments/{id}:
     get:
       operationId: getAssessmentsId
@@ -2332,6 +2985,12 @@ paths:
                           - TESTE
                           - EXAME_NORMAL
                           - EXAME_RECURRENCIA
+                          - TRABALHO
+                          - PROJETO
+                          - QUESTIONARIO
+                          - PRATICA
+                          - ORAL
+                          - OUTRO
                       description:
                         type: string
                         nullable: true
@@ -2626,6 +3285,12 @@ paths:
                     - TESTE
                     - EXAME_NORMAL
                     - EXAME_RECURRENCIA
+                    - TRABALHO
+                    - PROJETO
+                    - QUESTIONARIO
+                    - PRATICA
+                    - ORAL
+                    - OUTRO
                 description:
                   type: string
                   nullable: true
@@ -2724,6 +3389,12 @@ paths:
                           - TESTE
                           - EXAME_NORMAL
                           - EXAME_RECURRENCIA
+                          - TRABALHO
+                          - PROJETO
+                          - QUESTIONARIO
+                          - PRATICA
+                          - ORAL
+                          - OUTRO
                       description:
                         type: string
                         nullable: true
@@ -2904,6 +3575,12 @@ paths:
                           - TESTE
                           - EXAME_NORMAL
                           - EXAME_RECURRENCIA
+                          - TRABALHO
+                          - PROJETO
+                          - QUESTIONARIO
+                          - PRATICA
+                          - ORAL
+                          - OUTRO
                       description:
                         type: string
                         nullable: true
@@ -3615,7 +4292,7 @@ paths:
         - Notas
       summary: Lista notas de uma avaliação
       description: >-
-        Para estudantes, devolve 403 cuando o utilizador tem dívida financeira (fail-closed 503 se o serviço financeiro
+        Para estudantes, devolve 403 quando o utilizador tem dívida financeira (fail-closed 503 se o serviço financeiro
         estiver indisponível).
       parameters:
         - name: assessmentId
@@ -11443,6 +12120,12 @@ components:
             - TESTE
             - EXAME_NORMAL
             - EXAME_RECURRENCIA
+            - TRABALHO
+            - PROJETO
+            - QUESTIONARIO
+            - PRATICA
+            - ORAL
+            - OUTRO
         description:
           type: string
           nullable: true
@@ -11520,6 +12203,12 @@ components:
             - TESTE
             - EXAME_NORMAL
             - EXAME_RECURRENCIA
+            - TRABALHO
+            - PROJETO
+            - QUESTIONARIO
+            - PRATICA
+            - ORAL
+            - OUTRO
         description:
           type: string
           nullable: true
@@ -11541,6 +12230,79 @@ components:
             - OPEN
             - CLOSED
             - CANCELLED
+    AssessmentPlanBody:
+      type: object
+      required:
+        - academicYearId
+        - termId
+        - classId
+        - subjectId
+        - teacherId
+        - assessments
+      properties:
+        academicYearId:
+          type: string
+          format: uuid
+        termId:
+          type: string
+          format: uuid
+        classId:
+          type: string
+          format: uuid
+        subjectId:
+          type: string
+          format: uuid
+        teacherId:
+          type: string
+          format: uuid
+        assessments:
+          type: array
+          minItems: 1
+          maxItems: 30
+          items:
+            type: object
+            required:
+              - name
+              - type
+              - date
+              - weight
+            properties:
+              name:
+                type: string
+                minLength: 1
+              type:
+                type: string
+                enum:
+                  - TESTE
+                  - EXAME_NORMAL
+                  - EXAME_RECURRENCIA
+                  - TRABALHO
+                  - PROJETO
+                  - QUESTIONARIO
+                  - PRATICA
+                  - ORAL
+                  - OUTRO
+              description:
+                type: string
+                nullable: true
+              date:
+                type: string
+                format: date-time
+              maxScore:
+                type: number
+                exclusiveMinimum: 0
+                default: 20
+              weight:
+                type: number
+                exclusiveMinimum: 0
+              status:
+                type: string
+                enum:
+                  - DRAFT
+                  - SCHEDULED
+                  - OPEN
+                  - CLOSED
+                  - CANCELLED
     Grade:
       example:
         id: 2f9a1c77-0d3e-4a5b-9c88-2f1d0e7b5a91
@@ -11928,6 +12690,12 @@ components:
                   - TESTE
                   - EXAME_NORMAL
                   - EXAME_RECURRENCIA
+                  - TRABALHO
+                  - PROJETO
+                  - QUESTIONARIO
+                  - PRATICA
+                  - ORAL
+                  - OUTRO
               score:
                 type: number
                 minimum: 0
@@ -12020,6 +12788,12 @@ components:
             - TESTE
             - EXAME_NORMAL
             - EXAME_RECURRENCIA
+            - TRABALHO
+            - PROJETO
+            - QUESTIONARIO
+            - PRATICA
+            - ORAL
+            - OUTRO
         score:
           type: number
           minimum: 0
@@ -12092,6 +12866,12 @@ components:
                   - TESTE
                   - EXAME_NORMAL
                   - EXAME_RECURRENCIA
+                  - TRABALHO
+                  - PROJETO
+                  - QUESTIONARIO
+                  - PRATICA
+                  - ORAL
+                  - OUTRO
               label:
                 type: string
               score:
@@ -12402,7 +13182,7 @@ components:
           minLength: 1
       example:
         email: aluno1@student.ucjac.ac.mz
-        password: Aluno@2026
+        password: aluno123
     RefreshInput:
       type: object
       required:

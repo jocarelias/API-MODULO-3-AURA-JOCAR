@@ -4,7 +4,7 @@
 
 ## Objectivo
 
-Disponibilizar uma **API pública e aberta** (sem autenticação) para a gestão de:
+Disponibilizar uma **API autenticada e com autorização por role (RBAC)** para a gestão de:
 
 ```text
 Avaliações  ·  Notas  ·  Médias ponderadas  ·  Resultados  ·  Horários  ·  Impressão de pautas e horários
@@ -13,18 +13,26 @@ Avaliações  ·  Notas  ·  Médias ponderadas  ·  Resultados  ·  Horários  
 para uma instituição de ensino superior (UCT-JAC, Moçambique), alinhada com o núcleo académico
 do Smart Campus (anos lectivos, termos, turmas, alunos, disciplinas, professores, matrículas).
 
+> **Actualizado (Módulo 5 do guia).** A ficha original descrevia o G3 como uma API
+> pública e sem autenticação. A Sessão de Autenticação, Autorização e RBAC passou a
+> fazer parte do módulo: o G3 valida o JWT, aplica `requireRole` por rota e mantém
+> o utilizador dentro dos seus próprios recursos (anti-BOLA). A tabela de
+> responsabilidades está em `docs/ROUTE_ACCESS.md`, gerada a partir de
+> `infrastructure/auth/routeAccess.ts`.
+
 ## Actores funcionais
 
 | Actor | Descrição | Interacção com o módulo |
 |---|---|---|
-| Coordenador académico | Cria/edita avaliações e horários | Não autenticado (API aberta) |
-| Professor | Lança e corrige notas; consulta pautas | Não autenticado (API aberta) |
-| Aluno | Consulta resultados e horário da turma | Não autenticado (API aberta) |
-| Secretaria académica | Imprime pautas/horários | Não autenticado (API aberta) |
-| Cliente externo / SDK | Qualquer consumidor via `packages/api-client` | Não autenticado (API aberta) |
+| Coordenador académico | Cria/edita avaliações e horários | Autenticado, role `COORDINATOR` (ou superior) |
+| Professor | Lança e corrige notas; consulta pautas | Autenticado, role `TEACHER`, limitado às turmas que lecciona |
+| Aluno | Consulta resultados, notas e horário da turma | Autenticado, role `STUDENT`, limitado aos seus próprios dados |
+| Secretaria académica | Imprime pautas/horários | Autenticado, role `SECRETARY` |
+| Cliente externo / SDK | Qualquer consumidor via `packages/api-client` | Autenticado, com `Authorization: Bearer <JWT>` |
 
-> **Nota:** a instituição já existe na base (schema do núcleo). Este módulo **não cria utilizadores,
-> nem credenciais, nem autenticação**.
+> **Nota:** a instituição já existe na base (schema do núcleo). Este módulo **não cria
+> utilizadores nem credenciais** — apenas **valida** as credenciais que o Core emite
+> e autoriza cada pedido. A emissão de tokens é responsabilidade do Core.
 
 ## Casos de uso
 
@@ -58,8 +66,9 @@ do Smart Campus (anos lectivos, termos, turmas, alunos, disciplinas, professores
 
 ## Fora do escopo
 
-- Autenticação, autorização, RBAC, JWT, logins, passwords, refresh tokens.
-- Gestão de utilizadores.
+- **Emissão** de tokens: login, passwords, refresh tokens e gestão de utilizadores
+  pertencem ao Core. O G3 apenas consome e valida o JWT (`Authorization: Bearer`).
+- Gestão de utilizadores (CRUD de utilizadores).
 - CRUD de escolas, anos lectivos, termos, turmas, alunos, disciplinas, professores e matrículas
   (fazem parte do núcleo; são apenas lidos/reutilizados).
 - Pautas finais de ano / aprovação institucional (fora do G3).

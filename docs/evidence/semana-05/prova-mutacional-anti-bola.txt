@@ -1,0 +1,74 @@
+PROVA MUTACIONAL — a suite anti-BOLA falha quando a verificacao de posse e removida?
+==================================================================================
+Alvo: o endpoint escolhido na Semana 6 e a defesa anti-BOLA da Semana 5.
+Metodo: remover de proposito uma unica verificacao de posse, correr a suite e
+        confirmar que ela falha; depois restaurar o codigo e confirmar que volta
+        a passar. Se a suite passasse com a verificacao removida, os testes
+        estariam a testar a coisa errada.
+
+----------------------------------------------------------------------------------
+MUTACAO 1 — posse por escalao de STUDENT (resolveStudentScope)
+----------------------------------------------------------------------------------
+Ficheiro : src/modules/schedules-assessments/application/schedulesAssessmentsService.ts
+Metodo  : resolveStudentScope(), linhas 455-457
+Codigo removido:
+
+    if (requestedStudentId && requestedStudentId !== me.id) {
+      throw new DomainError(POSSESSION_DENIED, POSSESSION_MESSAGE);
+    }
+
+Resultado (npm run test:e2e):
+
+  FAIL  tests/auth.e2e.test.ts > Scoping — STUDENT bloqueado para resultados de
+        terceiros (403)
+  FAIL  tests/bola.e2e.test.ts > LEITURA — GET /results?studentId=<B> com token do A
+        -> 403 (resolveStudentScope)
+  FAIL  tests/bola.e2e.test.ts > LEITURA — GET /me/financial-status?studentId=<B>
+        com token do A -> 403
+
+  Test Files  2 failed | 9 passed (11)
+  Tests       3 failed | 147 passed (150)
+
+Conclusao: a suite detecta a remocao da comparacao de identidade do estudante.
+
+----------------------------------------------------------------------------------
+MUTACAO 2 — posse por linha nas notas do endpoint escolhido
+----------------------------------------------------------------------------------
+Ficheiro : src/modules/schedules-assessments/http/schedulesAssessmentsRouter.ts
+Metodo  : handler de GET /assessments/:assessmentId/grades, linhas 253-254
+Codigo removido:
+
+    const data = scope.studentId
+      ? all.filter((row: { studentId: string }) => row.studentId === scope.studentId)
+      : all;
+
+Substituido por:  const data = all;
+
+Resultado (npm run test:e2e):
+
+  FAIL  tests/auth.e2e.test.ts > Scoping — STUDENT ve apenas os seus relatorios de notas
+  FAIL  tests/spec-conformance.e2e.test.ts > Módulo VI — conformidade:
+        GET /api/v1/assessments/{assessmentId}/grades > o estudante recebe apenas
+        as suas notas (o spec nao promete mais do que a API entrega)
+
+  Test Files  2 failed | 9 passed (11)
+  Tests       2 failed | 148 passed (150)
+
+Conclusao: mesmo com o estudante correctamente autenticado e inscrito na turma,
+os testes exigem que ele veja UMENAS as suas notas. A suite nao passa se a
+filtragem por linha desaparecer.
+
+----------------------------------------------------------------------------------
+RESTAURACAO
+----------------------------------------------------------------------------------
+Ambos os ficheiros foram repostos a partir de copia de segurança e conferidos
+com `git diff --stat`, que devolveu vazio (identico ao HEAD). A suite completa
+volta a passar:
+
+  npm run test:e2e  ->  Test Files 11 passed (11) | Tests 150 passed (150)
+
+CONCLUSAO GERAL
+----------------------------------------------------------------------------------
+A suite anti-BOLA e sensivel a mutacao: falla quando a verificacao de posse e
+removida, nos dois niveis em que a posse e imposta (escalao do estudante e
+linha do recurso). Nao sao testes decorativos.

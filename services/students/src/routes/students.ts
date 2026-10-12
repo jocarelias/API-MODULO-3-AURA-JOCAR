@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { createAuthMiddleware, requireRoles, AuthRequest, AuthUserRecord } from '@smartcampus/auth';
+import { createAuthMiddleware, requireRoles, AuthRequest, AuthUserRecord, SERVICE_ROLE } from '@smartcampus/auth';
 import { studentProfileDto, StudentProfileDto, STAFF_ROLES } from '@smartcampus/shared-types';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../infrastructure/prisma';
@@ -72,7 +72,21 @@ export function createStudentsRouter(): Router {
       }
       const { schoolId, userId, status, page = 1, pageSize = 100 } = parsed.data;
       const where: Prisma.StudentWhereInput = {};
-      if (schoolId) where.schoolId = schoolId;
+
+      // Isolamento por escola. O `schoolId` da query é um FILTRO, nunca uma
+      // autorização: sem isto, omiti-lo devolvia registos de todas as escolas.
+      // `SUPER_ADMIN` tem alcance global; o service token é o gateway, que
+      // aplicou o scoping do tenant antes de chamar; qualquer outro role fica
+      // preso ao `schoolId` do token.
+      const auth = req.auth as { role: string; schoolId: string };
+      if (auth.role === 'SUPER_ADMIN' || auth.role === SERVICE_ROLE) {
+        if (schoolId) where.schoolId = schoolId;
+      } else if (auth.schoolId) {
+        where.schoolId = auth.schoolId;
+      } else {
+        sendError(res, 403, 'FORBIDDEN', 'Token sem escola associada', req.correlationId);
+        return;
+      }
       if (userId) where.userId = userId;
       if (status) where.status = status as Prisma.StudentWhereInput['status'];
       const rows = await prisma.student.findMany({
@@ -112,7 +126,7 @@ export function createStudentsRouter(): Router {
     '/students/:id',
     auth,
     async (req: AuthRequest, res: Response) => {
-      const authData = req.auth as { role: string };
+      const authData = req.auth as { role: string; schoolId: string };
       const parsed = idParamsSchema.safeParse(req.params);
       if (!parsed.success) {
         sendError(res, 400, 'VALIDATION_ERROR', 'Identificador de estudante inválido', req.correlationId);
@@ -125,6 +139,12 @@ export function createStudentsRouter(): Router {
       const row = await prisma.student.findUnique({ where: { id: parsed.data.id }, include: { user: true } });
       if (!row) {
         sendError(res, 404, 'STUDENT_NOT_FOUND', 'Aluno não encontrado no catálogo', req.correlationId);
+        return;
+      }
+      // Perfis de outras escolas não são acessíveis, mesmo a staff: sem esta
+      // verificação qualquer administrador via :id de outra escola.
+      if (authData.role !== 'SUPER_ADMIN' && authData.role !== SERVICE_ROLE && row.schoolId !== authData.schoolId) {
+        sendError(res, 403, 'FORBIDDEN', 'Este estudante pertence a outra escola', req.correlationId);
         return;
       }
       sendSuccess(res, toProfile(row), req.correlationId);

@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
-import { PrismaClient, Assessment } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { createApp } from '../../../app';
-import { startContractServices, TEST_JWT_SECRET, ContractTestContext } from './contractTestEnv';
+import { startContractServices, createEnrolledStudent, ContractTestContext } from './contractTestEnv';
 
 describe('G3 Avaliações e Horários (e2e) — API autenticada + contratos', () => {
   let app: ReturnType<typeof createApp>;
@@ -18,11 +18,10 @@ describe('G3 Avaliações e Horários (e2e) — API autenticada + contratos', ()
     teacherId: string;
     seedAssessmentId: string;
     studentId: string;
-    seedResult: { id: string } | null;
+    seedResult: { id: string };
   };
 
   const prisma = new PrismaClient();
-  let seedSchoolId = '';
   const created: { assessments: string[]; schedules: string[] } = { assessments: [], schedules: [] };
 
   const unique = (label: string) => `e2e-${label}-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
@@ -39,56 +38,51 @@ describe('G3 Avaliações e Horários (e2e) — API autenticada + contratos', ()
       apiBase = '';
     }
     api = request.agent(apiBase).set('authorization', `Bearer ${testContext.token}`);
-    seedSchoolId = (await prisma.term.findFirst({ where: { name: { startsWith: '1º' } }, orderBy: { createdAt: 'asc' } }))!.schoolId;
 
-    const term = await prisma.term.findFirst({ where: { name: { startsWith: '1º' } }, orderBy: { createdAt: 'asc' } });
-    const academicYear = await prisma.academicYear.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
-    const classRecord = await prisma.class.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
-    const subject = await prisma.subject.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
-    const teacher = await prisma.teacher.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } });
+    // Fixtures na mesma escola do token (ver nota em contract-debt).
+    const fx = testContext.fixtures;
 
-    const seedAssessment = await prisma.assessment.findFirst({
-      where: { status: 'OPEN', termId: term.id, classId: classRecord.id, subjectId: subject.id },
-      include: { _count: { select: { grades: true } } },
+    // A escola descartável nasce sem alunos: o estudante matriculado é criado
+    // aqui para que os lançamentos de nota tenham um aluno real e validado
+    // pelos contratos (matrícula + situação financeira).
+    const studentId = (await createEnrolledStudent(testContext, 'g3')).studentId;
+
+    // Avaliação e nota de base. Lançar a nota recalcula resultados, o que dá um
+    // `Result` com id conhecido: sem isto os testes que operam sobre
+    // `seedResult` não teriam sobre o que trabalhar.
+    const baseline = await api.post('/api/v1/assessments').send({
+      academicYearId: fx.academicYearId,
+      termId: fx.termId,
+      classId: fx.classId,
+      subjectId: fx.subjectId,
+      teacherId: fx.teacherId,
+      name: unique('Base'),
+      type: 'TESTE',
+      date: '2026-12-01T10:00:00.000Z',
+      weight: 1,
+      status: 'OPEN',
+    });
+    expect(baseline.status).toBe(201);
+    created.assessments.push(baseline.body.data.id);
+
+    const baselineGrade = await api
+      .post(`/api/v1/assessments/${baseline.body.data.id}/grades`)
+      .send({ studentId, score: 10 });
+    expect(baselineGrade.status).toBe(201);
+
+    const seedResult = await prisma.result.findFirstOrThrow({
+      where: { termId: fx.termId, classId: fx.classId, subjectId: fx.subjectId, studentId },
     });
 
-    const enrollment = seedAssessment
-      ? await prisma.enrollment.findFirst({
-          where: {
-            status: 'ACTIVE',
-            termId: term.id,
-            classId: seedAssessment.classId,
-            subjectId: seedAssessment.subjectId,
-          },
-        })
-      : null;
-
-    const createAll = await Promise.all([
-      term,
-      academicYear,
-      classRecord,
-      subject,
-      teacher,
-      seedAssessment,
-      enrollment,
-    ]);
-
     ids = {
-      termId: createAll[0].id,
-      academicYearId: createAll[1].id,
-      classId: createAll[2].id,
-      subjectId: createAll[3].id,
-      teacherId: createAll[4].id,
-      seedAssessmentId: createAll[5].id,
-      studentId: createAll[6].studentId,
-      seedResult: await prisma.result.findFirst({
-        where: {
-          termId: createAll[0].id,
-          classId: createAll[2].id,
-          subjectId: createAll[3].id,
-          studentId: createAll[6].studentId,
-        },
-      }),
+      termId: fx.termId,
+      academicYearId: fx.academicYearId,
+      classId: fx.classId,
+      subjectId: fx.subjectId,
+      teacherId: fx.teacherId,
+      seedAssessmentId: baseline.body.data.id,
+      studentId,
+      seedResult,
     };
   });
 
@@ -334,8 +328,6 @@ describe('G3 Avaliações e Horários (e2e) — API autenticada + contratos', ()
   });
 
   it('PATCH recalcula um resultado individual', async () => {
-    if (!ids.seedResult) return;
-
     const before = await api.get(`/api/v1/results/${ids.seedResult.id}`);
     expect(before.status).toBe(200);
 
@@ -466,18 +458,34 @@ describe('G3 Avaliações e Horários (e2e) — API autenticada + contratos', ()
     expect(first.status).toBe(201);
     created.schedules.push(first.body.data.id);
 
-    const classRecord2 = await prisma.class.findFirst({ where: { status: 'ACTIVE', id: { not: ids.classId } } });
-    const teacher2 = await prisma.teacher.findFirst({ where: { status: 'ACTIVE', id: { not: ids.teacherId } } });
-    if (classRecord2 && teacher2) {
-      const conflict = await api.post('/api/v1/schedules').send({
-        ...base,
-        classId: classRecord2.id,
-        teacherId: teacher2.id,
-      });
-      expect(conflict.status).toBe(409);
-      expect(conflict.body.code).toBe('CONFLICT');
-      expect(conflict.body.details.some((d: { type: string }) => d.type === 'ROOM')).toBe(true);
-    }
+    // A 2ª turma e o 2º docente são criados aqui (e não procurados na base)
+    // porque o conflito tem de ser *apenas* de sala. Uma turma de outra escola
+    // ou de outro ano letivo faria o `createSchedule` devolver 409 pela validação
+    // de ano letivo — o mesmo status, mas com `details` sem `ROOM` — e o teste
+    // deixaria de provar a regra que diz verificar.
+    const classRecord2 = await prisma.class.create({
+      data: {
+        schoolId: testContext.schoolId,
+        academicYearId: ids.academicYearId,
+        name: unique('Turma'),
+        grade: '2',
+        status: 'ACTIVE',
+      },
+    });
+    const teacher2 = await prisma.teacher.create({
+      data: { schoolId: testContext.schoolId, name: unique('Docente'), status: 'ACTIVE' },
+    });
+
+    const conflict = await api.post('/api/v1/schedules').send({
+      ...base,
+      classId: classRecord2.id,
+      teacherId: teacher2.id,
+    });
+    expect(conflict.status).toBe(409);
+    expect(conflict.body.code).toBe('CONFLICT');
+    expect(conflict.body.details).toEqual([
+      expect.objectContaining({ type: 'ROOM', message: expect.stringContaining(room) }),
+    ]);
 
     await api.delete(`/api/v1/schedules/${first.body.data.id}`);
     created.schedules = created.schedules.filter((id) => id !== first.body.data.id);

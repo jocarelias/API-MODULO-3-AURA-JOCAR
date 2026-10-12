@@ -7,6 +7,8 @@ import {
   enrolmentDto,
   FinancialStatusDto,
   financialStatusDto,
+  FinancialStandingCheckDto,
+  financialStandingCheckDto,
   AssessmentChargeDto,
   AssessmentChargeInputDto,
   CONTRACT_ERROR_CODES,
@@ -266,6 +268,21 @@ export class ContractGateway {
       { tokenOverride: this.financeServiceToken, retry: true },
     );
     return financialStatusDto(data as Record<string, unknown>);
+  }
+
+  /**
+   * Consulta de regularidade pela rota de integração do contrato
+   * 03-financeiro (`/financial/integration/students/:studentUserId/standing`).
+   * `studentUserId` é o `User.id` do Core. Devolve apenas ACTIVE/BLOCKED.
+   */
+  async getFinancialStandingCheck(studentUserId: string, ctx: ContractCallContext): Promise<FinancialStandingCheckDto> {
+    const data = await this.call(
+      `${this.financeBase()}/api/v1/financial/integration/students/${encodeURIComponent(studentUserId)}/standing`,
+      ctx,
+      'finance',
+      { tokenOverride: this.financeServiceToken, retry: true },
+    );
+    return financialStandingCheckDto(data as Record<string, unknown>);
   }
 
   async chargeAssessment(input: AssessmentChargeInputDto, ctx: ContractCallContext): Promise<AssessmentChargeDto> {

@@ -153,7 +153,7 @@ Cria uma avaliação.
 
 | Campo | Regra |
 | --- | --- |
-| `type` | `TESTE` | `EXAME_NORMAL` | `EXAME_RECURRENCIA` |
+| `type` | `TESTE` | `EXAME_NORMAL` | `EXAME_RECURRENCIA` | `TRABALHO` | `PROJETO` | `QUESTIONARIO` | `PRATICA` | `ORAL` | `OUTRO` |
 | `name` | obrigatório, `1..200` |
 | `maxScore` | `0 < maxScore <= 100`, default `20` |
 | `weight` | `> 0` e `<= 100`, default `1` |
@@ -162,6 +162,25 @@ Cria uma avaliação.
 **Regras de negócio:** período/turma/ano letivo compatíveis; professor deve lecionar a disciplina; não duplicar avaliação com o mesmo `termId + classId + subjectId + name` (409).
 
 **201:** `{ data: Assessment, meta }`
+
+### POST `/api/v1/assessments/plan`
+
+Cria, numa só transação, **o plano de avaliações definido pelo docente**: quantas
+avaliações existem, os nomes e o peso de cada uma (ex.: Teste 1 = 40, Teste 2 = 40,
+Trabalho = 20). É o que substitui a lista fixa de avaliações.
+
+**Body:** `{ academicYearId, termId, classId, subjectId, teacherId, assessments[] }`,
+onde cada item tem `{ name, type, date, weight, description?, maxScore?, status? }`
+(1 a 30 itens; `type` no mesmo enum de `POST /assessments`; `weight > 0`).
+
+| Regra | Resposta |
+| --- | --- |
+| Plano vazio ou item inválido | 400 `VALIDATION_ERROR` |
+| Nomes repetidos dentro do plano | 400 `VALIDATION_ERROR` |
+| Nome já existente no mesmo `termId+classId+subjectId` | 409 `CONFLICT` |
+| Docente de outra docência | 403 `POSSESSION_DENIED` |
+
+**201:** `{ data: Assessment[], meta }`
 
 ### GET `/api/v1/assessments/:id`
 
@@ -358,6 +377,14 @@ Lista resultados académicos.
 Estado financeiro do próprio estudante (para o frontend refletir bloqueio sem expor valores).
 
 **200:** `{ data: { status: "ACTIVE" | "BLOCKED", checkedAt: "ISO-8601" }, meta }` — *sem* `outstandingAmount` nem `hasDebt`.
+
+**Rota de integração (serviço financeiro → G3):** `GET /api/v1/financial/integration/students/:studentUserId/standing`
+(implementada em `services/finance`, contrato `03-financeiro-avaliacoes-horarios`). Usa o **`User.id` do Core**
+(não o `StudentProfile.id`) e devolve `{ studentUserId, status: "ACTIVE" | "BLOCKED", checkedAt }` sem expor
+montantes. Só é acessível com **service token** (403 `FORBIDDEN` para tokens de utilizador); aluno desconhecido →
+404 `STUDENT_NOT_FOUND`. O G3 consome-a no **caminho de leitura** de notas (`/results`, `/assessments/:id/grades`,
+pauta, `/me/financial-status`); no caminho de escrita (lançar nota, `POST /results`) mantém a rota detalhada
+`/financial-status/:studentId` para poder devolver `409 GRADES_BLOCKED_DUE_TO_DEBT` com `outstandingAmount`.
 
 **Restrições de acesso por papel:**
 - `STUDENT`: consulta apenas os **próprios** resultados (`GET /results`, `/results/:id`, `/assessments/:id/grades`, pauta) — **apenas se não tiver dívida**; com dívida → `403 FINANCIAL_ACCESS_BLOCKED`.
@@ -558,11 +585,13 @@ Todos devolvem `{ data: { id, name, … }[], meta }` com paginação. `id` + nom
 | Método + Rota | Descrição |
 | --- | --- |
 | `GET` / `POST` `/api/v1/assessments` | Listar / criar avaliação |
+| `POST` `/api/v1/assessments/plan` | Criar o plano de avaliações (nomes e pesos) definido pelo docente |
 | `GET` / `PATCH` / `DELETE` `/api/v1/assessments/:id` | Obter / atualizar / eliminar avaliação |
 | `GET` / `POST` `/api/v1/assessments/:assessmentId/grades` | Listar / lançar notas |
 | `PATCH` `/api/v1/assessments/:assessmentId/grades/:gradeId` | Atualizar nota |
 | `POST` `/api/v1/auth/login` | Login (Bearer JWT, TTL 3600s) |
 | `GET` `/api/v1/me/financial-status` | Estado financeiro do próprio estudante |
+| `GET` `/api/v1/financial/integration/students/:studentUserId/standing` | Regularidade (ACTIVE/BLOCKED) — serviço financeiro, service token |
 | `GET` / `POST` `/api/v1/schedules` | Listar / criar horário |
 | `GET` / `PATCH` / `DELETE` `/api/v1/schedules/:id` | Obter / atualizar / eliminar horário |
 | `GET` / `POST` `/api/v1/results` | Listar / calcular em lote |

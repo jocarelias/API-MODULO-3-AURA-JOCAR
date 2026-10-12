@@ -29,6 +29,32 @@ export const createAssessmentSchema = z
   })
   .strict();
 
+export const assessmentPlanItemSchema = z
+  .object({
+    name: z.string().min(1, 'Nome é obrigatório').max(200),
+    type: z.enum(EVALUATION_TYPES as unknown as [string, ...string[]], { errorMap: () => ({ message: 'Tipo de avaliação inválido' }) }),
+    description: z.string().max(500).optional(),
+    date: z.string().datetime({ offset: true, message: 'Data inválida (ISO-8601 com offset)' }),
+    maxScore: z.number().positive('maxScore deve ser positivo').max(100).default(EVALUATION_DEFAULT_MAX_SCORE),
+    weight: z.number().positive('Peso deve ser maior que 0').max(100),
+    status: z.enum(ASSESSMENT_DB_STATUS).optional(),
+  })
+  .strict();
+
+export const createAssessmentPlanSchema = z
+  .object({
+    termId: uuidSchema,
+    academicYearId: uuidSchema,
+    classId: uuidSchema,
+    subjectId: uuidSchema,
+    teacherId: uuidSchema,
+    assessments: z
+      .array(assessmentPlanItemSchema)
+      .min(1, 'Indique pelo menos uma avaliação')
+      .max(30, 'Máximo de 30 avaliações por plano'),
+  })
+  .strict();
+
 export const updateAssessmentSchema = z
   .object({
     name: z.string().min(1, 'Nome é obrigatório').max(200).optional(),
@@ -121,6 +147,7 @@ export const resultQuerySchema = z
     classId: optionalUuid,
     subjectId: optionalUuid,
     studentId: optionalUuid,
+    teacherId: optionalUuid,
     page: pageSchema,
     pageSize: pageSizeSchema,
   })

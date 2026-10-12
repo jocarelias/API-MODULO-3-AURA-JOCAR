@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import { PrismaClient } from '@prisma/client';
 import { createApp } from '../../../app';
-import { startContractServices, ContractTestContext } from './contractTestEnv';
+import { startContractServices, createEnrolledStudent, ContractTestContext } from './contractTestEnv';
 
 const unique = (label: string) => `contract-${label}-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
 
@@ -31,7 +31,9 @@ describe('G3 Integração com contratos HTTP e regra de dívida (e2e)', () => {
   beforeAll(async () => {
     testContext = await startContractServices();
     prisma = new PrismaClient();
-    seedSchoolId = (await prisma.term.findFirst({ where: { name: { startsWith: '1º' } }, orderBy: { createdAt: 'asc' } }))!.schoolId;
+    // Os fixtures vivem na escola descartável, a mesma do token: usar a escola
+    // do seed com este token seria depender de um vazamento entre escolas.
+    seedSchoolId = testContext.schoolId;
     app = createApp();
     server = app.listen(0);
     await new Promise((resolve) => server.once('listening', resolve));
@@ -39,26 +41,17 @@ describe('G3 Integração com contratos HTTP e regra de dívida (e2e)', () => {
     apiBase = typeof address === 'object' && address !== null ? `http://127.0.0.1:${address.port}` : '';
     api = request.agent(apiBase).set('authorization', `Bearer ${testContext.token}`);
 
-    const [term, academicYear, classRecord, subject, teacher] = await Promise.all([
-      prisma.term.findFirst({ where: { name: { startsWith: '1º' } }, orderBy: { createdAt: 'asc' } }),
-      prisma.academicYear.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } }),
-      prisma.class.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } }),
-      prisma.subject.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } }),
-      prisma.teacher.findFirst({ where: { status: 'ACTIVE', schoolId: seedSchoolId }, orderBy: { createdAt: 'asc' } }),
-    ]);
-    if (!term || !academicYear || !classRecord || !subject || !teacher) {
-      throw new Error('Dados seed insuficientes');
-    }
+    const fx = testContext.fixtures;
+    const term = { id: fx.termId, schoolId: fx.schoolId, name: fx.termName };
+    const academicYear = { id: fx.academicYearId, name: fx.academicYearName };
+    const classRecord = { id: fx.classId, name: fx.className };
+    const subject = { id: fx.subjectId, name: fx.subjectName, code: fx.subjectCode };
+    const teacher = { id: fx.teacherId, name: fx.teacherName };
 
-    const cohortEnrolments = await prisma.enrollment.findMany({
-      where: { classId: classRecord.id, subjectId: subject.id, termId: term.id, status: 'ACTIVE' },
-    });
-    const enrolledIds = new Set(cohortEnrolments.map((e) => e.studentId));
-    const enrolledStudentId = cohortEnrolments[0]?.studentId;
-
-    if (!enrolledStudentId) {
-      throw new Error('Dados seed insuficientes (alunos matriculados)');
-    }
+    // Aluno matriculado criado para o teste, na mesma escola do token.
+    const enrolled = await createEnrolledStudent(testContext, 'matriculado');
+    const enrolledStudentId = enrolled.studentId;
+    const enrolledIds = new Set<string>([enrolledStudentId]);
 
     const outsider = await prisma.student.create({
       data: {

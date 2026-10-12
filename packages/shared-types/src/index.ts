@@ -1,6 +1,25 @@
-export type AssessmentType = 'TESTE' | 'EXAME_NORMAL' | 'EXAME_RECURRENCIA';
+export type AssessmentType =
+  | 'TESTE'
+  | 'EXAME_NORMAL'
+  | 'EXAME_RECURRENCIA'
+  | 'TRABALHO'
+  | 'PROJETO'
+  | 'QUESTIONARIO'
+  | 'PRATICA'
+  | 'ORAL'
+  | 'OUTRO';
 
-export const ASSESSMENT_TYPES: AssessmentType[] = ['TESTE', 'EXAME_NORMAL', 'EXAME_RECURRENCIA'];
+export const ASSESSMENT_TYPES: AssessmentType[] = [
+  'TESTE',
+  'EXAME_NORMAL',
+  'EXAME_RECURRENCIA',
+  'TRABALHO',
+  'PROJETO',
+  'QUESTIONARIO',
+  'PRATICA',
+  'ORAL',
+  'OUTRO',
+];
 
 export const ASSESSMENT_DEFAULT_MAX_SCORE = 20;
 export const PASSING_SCORE = 10;
@@ -94,6 +113,12 @@ function toIso(value: unknown): string | null {
 const DB_TYPE_TO_API: Record<string, string> = {
   TEST: 'TESTE',
   EXAM: 'EXAME_NORMAL',
+  ASSIGNMENT: 'TRABALHO',
+  PROJECT: 'PROJETO',
+  QUIZ: 'QUESTIONARIO',
+  PRACTICAL: 'PRATICA',
+  ORAL: 'ORAL',
+  OTHER: 'OUTRO',
 };
 
 function apiAssessmentType(dbType: string): string {
@@ -434,6 +459,26 @@ export type FinancialStandingStatus = 'ACTIVE' | 'BLOCKED';
 export interface FinancialStandingDto {
   status: FinancialStandingStatus;
   checkedAt: string;
+}
+
+/**
+ * Resposta mínima da rota de integração
+ * `GET /api/v1/financial/integration/students/:studentUserId/standing`
+ * (ver contrato 03-financeiro-avaliacoes-horarios). `studentUserId` é o
+ * `User.id` do Core, não o `StudentProfile.id`.
+ */
+export interface FinancialStandingCheckDto {
+  studentUserId: string;
+  status: FinancialStandingStatus;
+  checkedAt: string;
+}
+
+export function financialStandingCheckDto(record: Record<string, unknown>): FinancialStandingCheckDto {
+  return {
+    studentUserId: record.studentUserId as string,
+    status: record.status as FinancialStandingStatus,
+    checkedAt: (record.checkedAt as string | null) ?? new Date().toISOString(),
+  };
 }
 
 export interface AssessmentChargeInputDto {

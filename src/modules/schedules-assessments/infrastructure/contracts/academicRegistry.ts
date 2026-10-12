@@ -94,34 +94,22 @@ export class AcademicRegistryClient {
       now: resolved.now,
     });
 
-    const cacheFor = <T>(load: () => Promise<T[]>, fallback: () => Promise<T[]>) =>
-      new TtlCache<T[]>({
-        ttlMs: resolved.cacheTtlMs,
-        now: resolved.now,
-        load,
-        onError: (error) => {
-          if (!resolved.fallbackToLocalMirror) {
-            return undefined;
-          }
-          if (error instanceof CircuitOpenError) {
-            return fallback();
-          }
-          return undefined;
-        },
-      });
+    // A cache NÃO tem fallback: só carrega e guarda. A degradação para o espelho
+    // local é decidida em `resolve()`, porque só lá sabemos dizer ao cliente a
+    // procedência real dos dados. Servir o espelho dentro de `onError` fazia o
+    // `cache.get()` resolver com sucesso e a resposta sair declarada como
+    // `source: 'academic-registry'` quando os valores vinham do espelho local —
+    // dados degradados vendidos como autoritativos.
+    const cacheFor = <T>(load: () => Promise<T[]>) =>
+      new TtlCache<T[]>({ ttlMs: resolved.cacheTtlMs, now: resolved.now, load });
 
     this.caches = {
-      subjects: cacheFor(() => this.fetchRemote<SubjectDto>('/api/v1/subjects', (row) => subjectDto(row)), () =>
-        this.localSubjects(),
+      subjects: cacheFor(() => this.fetchRemote<SubjectDto>('/api/v1/subjects', (row) => subjectDto(row))),
+      academicYears: cacheFor(() =>
+        this.fetchRemote<AcademicYearDto>('/api/v1/academic-years', (row) => academicYearDto(row)),
       ),
-      academicYears: cacheFor(
-        () => this.fetchRemote<AcademicYearDto>('/api/v1/academic-years', (row) => academicYearDto(row)),
-        () => this.localAcademicYears(),
-      ),
-      terms: cacheFor(() => this.fetchRemote<TermDto>('/api/v1/terms', (row) => termDto(row)), () => this.localTerms()),
-      classes: cacheFor(() => this.fetchRemote<ClassDto>('/api/v1/classes', (row) => classDto(row)), () =>
-        this.localClasses(),
-      ),
+      terms: cacheFor(() => this.fetchRemote<TermDto>('/api/v1/terms', (row) => termDto(row))),
+      classes: cacheFor(() => this.fetchRemote<ClassDto>('/api/v1/classes', (row) => classDto(row))),
     };
   }
 
@@ -221,6 +209,13 @@ export class AcademicRegistryClient {
       if (!this.config.fallbackToLocalMirror) {
         if (error instanceof DomainError) {
           throw error;
+        }
+        // Circuito aberto ou erro de transporte: 503 é a resposta honesta —
+        // dizer "não há subjects" seria mentir sobre a disponibilidade.
+        if (error instanceof CircuitOpenError) {
+          throw new DomainError('UPSTREAM_UNAVAILABLE', 'Registo Académico indisponível (circuito aberto)', [
+            { service: 'academic-registry', circuit: error.circuit, retryAfterMs: error.retryAfterMs },
+          ]);
         }
         throw new DomainError('UPSTREAM_UNAVAILABLE', 'Registo Académico indisponível', [{ service: 'academic-registry' }]);
       }

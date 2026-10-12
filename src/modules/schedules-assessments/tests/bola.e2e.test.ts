@@ -26,9 +26,18 @@ import { startContractServices, TEST_JWT_SECRET, type ContractTestContext } from
  *   GET  /me/financial-status ..... infrastructure/auth/accessPolicy.ts
  *                                    → POSSESSION.STUDENT_OWN_FINANCIAL → resolveStudentScope()
  *   GET  /assessments/:id ......... infrastructure/auth/accessPolicy.ts
- *                                    → POSSESSION.STUDENT_CLASS_SCOPE → service.assertStudentInClass()
+ *                                    → POSSESSION.STUDENT_OR_TEACHER_ASSESSMENT
+ *                                      → student: service.assertStudentInClass(); teacher: assertTeacherOwns()
+ *   GET  /assessments/:id/grades .. infrastructure/auth/accessPolicy.ts
+ *                                    → POSSESSION.STUDENT_OR_TEACHER_GRADES
+ *                                      → student: assertStudentInClass(); teacher: assertTeacherOwnsTeaching()
+ *   GET  /results/:id ............. infrastructure/auth/accessPolicy.ts
+ *                                    → POSSESSION.STUDENT_OR_TEACHER_RESULT
+ *   GET  /schedules, /schedules/:id  infrastructure/auth/accessPolicy.ts
+ *                                    → POSSESSION.STUDENT_OR_TEACHER_SCHEDULE(_LIST)
  *   GET  /print/class/:classId/...  infrastructure/auth/accessPolicy.ts
- *                                    → POSSESSION.STUDENT_CLASS_SCOPE → service.assertStudentInClass()
+ *                                    → POSSESSION.STUDENT_OR_TEACHER_PAUTA
+ *   POST|PATCH|DELETE /schedules ... infrastructure/auth/routeAccess.ts → roles ADMIN (coordenação/administração)
  *   PATCH|DELETE /results/:id ..... application/schedulesAssessmentsService.ts
  *                                    → patchResult()/deleteResult() → assertTeacherOwnsTeaching()
  *   PATCH|DELETE /assessments/:id . application/schedulesAssessmentsService.ts
@@ -62,8 +71,10 @@ interface Fixtures {
   tokenStudentB: string;
   tokenTeacherA: string;
   tokenTeacherB: string;
+  tokenCoordinator: string;
   teacherAId: string;
   teacherBId: string;
+  academicYearId: string;
 }
 
 describe('Anti-BOLA adversarial — posse de objectos por STUDENT e por TEACHER (e2e)', () => {
@@ -82,6 +93,8 @@ describe('Anti-BOLA adversarial — posse de objectos por STUDENT e por TEACHER 
     request(apiBase)[method](url).set('authorization', `Bearer ${f.tokenTeacherA}`);
   const asTeacherB = (method: 'get' | 'post' | 'patch' | 'delete', url: string) =>
     request(apiBase)[method](url).set('authorization', `Bearer ${f.tokenTeacherB}`);
+  const asCoordinator = (method: 'get' | 'post' | 'patch' | 'delete', url: string) =>
+    request(apiBase)[method](url).set('authorization', `Bearer ${f.tokenCoordinator}`);
 
   beforeAll(async () => {
     testContext = await startContractServices();
@@ -293,6 +306,89 @@ describe('Anti-BOLA adversarial — posse de objectos por STUDENT e por TEACHER 
     const stored = await prisma.assessment.findUnique({ where: { id: f.assessmentB } });
     expect(stored?.name).toBe('Avaliação do B');
   });
+
+  /* --------------------------------------------------------------------- */
+  /* LEITURA — Docente A tenta ler recursos da docência do Docente B        */
+  /* (alinhamento com UniversityCampusSystem: TEACHER só lê o que leciona)  */
+  /* --------------------------------------------------------------------- */
+  it('LEITURA — TEACHER A lê a avaliação do B (GET /assessments/:id) → 403', async () => {
+    const res = await asTeacherA('get', `/api/v1/assessments/${f.assessmentB}`);
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('FORBIDDEN');
+  });
+
+  it('LEITURA — TEACHER A lê as notas da avaliação do B (GET /assessments/:id/grades) → 403', async () => {
+    const res = await asTeacherA('get', `/api/v1/assessments/${f.assessmentB}/grades`);
+    expect(res.status).toBe(403);
+  });
+
+  it('LEITURA — TEACHER A lê o resultado do B (GET /results/:id) → 403', async () => {
+    const res = await asTeacherA('get', `/api/v1/results/${f.resultB}`);
+    expect(res.status).toBe(403);
+  });
+
+  it('LEITURA — TEACHER A lista resultados: vê os seus e nunca os do B', async () => {
+    const res = await asTeacherA('get', '/api/v1/results');
+    expect(res.status).toBe(200);
+    const ids = (res.body.data as { id: string }[]).map((r) => r.id);
+    expect(ids).toContain(f.resultA);
+    expect(ids).not.toContain(f.resultB);
+  });
+
+  it('LEITURA — TEACHER A lista horários: vê os seus e nunca os do B', async () => {
+    const res = await asTeacherA('get', '/api/v1/schedules');
+    expect(res.status).toBe(200);
+    const ids = (res.body.data as { id: string }[]).map((s) => s.id);
+    expect(ids).toContain(f.scheduleA);
+    expect(ids).not.toContain(f.scheduleB);
+  });
+
+  it('LEITURA — TEACHER A lê o horário do B (GET /schedules/:id) → 403', async () => {
+    const res = await asTeacherA('get', `/api/v1/schedules/${f.scheduleB}`);
+    expect(res.status).toBe(403);
+  });
+
+  it('LEITURA — CONTRA-PROVA: TEACHER A lê a sua própria avaliação e notas (200)', async () => {
+    const assessment = await asTeacherA('get', `/api/v1/assessments/${f.assessmentA}`);
+    expect(assessment.status).toBe(200);
+    const grades = await asTeacherA('get', `/api/v1/assessments/${f.assessmentA}/grades`);
+    expect(grades.status).toBe(200);
+    const ids = (grades.body.data as { id: string }[]).map((g) => g.id);
+    expect(ids).toContain(f.gradeA);
+  });
+
+  /* --------------------------------------------------------------------- */
+  /* ESCRITA — criação de horários é exclusiva da coordenação/administração */
+  /* --------------------------------------------------------------------- */
+  it('ESCRITA — TEACHER A tenta criar horário (POST /schedules) → 403', async () => {
+    const res = await asTeacherA('post', '/api/v1/schedules').send({
+      academicYearId: f.academicYearId,
+      termId: f.termId,
+      classId: f.classA,
+      subjectId: f.subjectId,
+      teacherId: f.teacherAId,
+      dayOfWeek: 'WEDNESDAY',
+      startTime: '11:00',
+      endTime: '12:00',
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it('CONTRA-PROVA — COORDINATOR cria horário (POST /schedules) → 201', async () => {
+    const res = await asCoordinator('post', '/api/v1/schedules').send({
+      academicYearId: f.academicYearId,
+      termId: f.termId,
+      classId: f.classA,
+      subjectId: f.subjectId,
+      teacherId: f.teacherAId,
+      dayOfWeek: 'WEDNESDAY',
+      startTime: '11:00',
+      endTime: '12:00',
+      room: 'Sala Coord',
+    });
+    expect(res.status).toBe(201);
+    await prisma.schedule.deleteMany({ where: { id: res.body.data.id } });
+  });
 });
 
 async function seedIsolatedFixtures(prisma: PrismaClient): Promise<Fixtures> {
@@ -319,6 +415,7 @@ async function seedIsolatedFixtures(prisma: PrismaClient): Promise<Fixtures> {
   const teacherB = await createTeacher(prisma, schoolId, 'Professor B');
   const studentA = await createStudent(prisma, schoolId, 'Estudante A');
   const studentB = await createStudent(prisma, schoolId, 'Estudante B');
+  const coordinator = await createStaff(prisma, schoolId, 'Coordenador BOLA', 'COORDINATOR');
 
   await prisma.enrollment.createMany({
     data: [
@@ -357,11 +454,26 @@ async function seedIsolatedFixtures(prisma: PrismaClient): Promise<Fixtures> {
     studentBId: studentB.studentId,
     teacherAId: teacherA.teacherId,
     teacherBId: teacherB.teacherId,
+    academicYearId: year.id,
     tokenStudentA: signToken({ id: studentA.userId, role: 'STUDENT', schoolId }, TEST_JWT_SECRET, 3600),
     tokenStudentB: signToken({ id: studentB.userId, role: 'STUDENT', schoolId }, TEST_JWT_SECRET, 3600),
     tokenTeacherA: signToken({ id: teacherA.userId, role: 'TEACHER', schoolId }, TEST_JWT_SECRET, 3600),
     tokenTeacherB: signToken({ id: teacherB.userId, role: 'TEACHER', schoolId }, TEST_JWT_SECRET, 3600),
+    tokenCoordinator: signToken({ id: coordinator.userId, role: 'COORDINATOR', schoolId }, TEST_JWT_SECRET, 3600),
   };
+}
+
+async function createStaff(
+  prisma: PrismaClient,
+  schoolId: string,
+  name: string,
+  role: 'COORDINATOR' | 'SCHOOL_ADMIN',
+): Promise<{ userId: string }> {
+  const userId = randomUUID();
+  await prisma.user.create({
+    data: { id: userId, schoolId, role, name, email: `${userId}@bola.teste.mz`, passwordHash: 'x', status: 'ACTIVE' },
+  });
+  return { userId };
 }
 
 interface TeacherFixture {

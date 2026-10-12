@@ -44,6 +44,7 @@ import {
   SubjectDto,
   TeacherDto,
   StudentDto,
+  StudentProfileDto,
   CalculationInputDto,
   CalculationResultDto,
   CalculationMethodMetaDto,
@@ -55,6 +56,12 @@ export const TYPE_MAP: Record<string, string> = {
   TESTE: 'TEST',
   EXAME_NORMAL: 'EXAM',
   EXAME_RECURRENCIA: 'EXAM',
+  TRABALHO: 'ASSIGNMENT',
+  PROJETO: 'PROJECT',
+  QUESTIONARIO: 'QUIZ',
+  PRATICA: 'PRACTICAL',
+  ORAL: 'ORAL',
+  OUTRO: 'OTHER',
 };
 
 export const NO_ACCESS_SCOPE = '00000000-0000-0000-0000-000000000000';
@@ -134,6 +141,25 @@ export interface AssessmentInput {
   maxScore?: number;
   weight: number;
   status?: string;
+}
+
+export interface AssessmentPlanItemInput {
+  name: string;
+  type: string;
+  description?: string | null;
+  date: string;
+  maxScore?: number;
+  weight: number;
+  status?: string;
+}
+
+export interface AssessmentPlanInput {
+  termId: string;
+  academicYearId: string;
+  classId: string;
+  subjectId: string;
+  teacherId: string;
+  assessments: AssessmentPlanItemInput[];
 }
 
 export interface GradeInputDto {
@@ -284,6 +310,101 @@ export class SchedulesAssessmentsService {
     });
 
     return assessmentDto(record as unknown as Record<string, unknown>);
+  }
+
+  /**
+   * Cria, de uma só vez, o conjunto de avaliações definido pelo docente para
+   * uma turma/disciplina/período — por exemplo "Teste 1" (peso 30),
+   * "Teste 2" (peso 30) e "Trabalho" (peso 40). O número e os pesos deixam de
+   * ser fixos: é o docente que decide quantas avaliações vai dar.
+   */
+  async createAssessmentPlan(input: AssessmentPlanInput, ctx?: ContractCallContext): Promise<AssessmentDto[]> {
+    if (!Array.isArray(input.assessments) || input.assessments.length === 0) {
+      throw new DomainError('VALIDATION_ERROR', 'O plano deve conter pelo menos uma avaliação');
+    }
+    const names = input.assessments.map((item) => item.name);
+    if (new Set(names).size !== names.length) {
+      throw new DomainError('VALIDATION_ERROR', 'O plano contém nomes de avaliação duplicados');
+    }
+
+    const prepared = input.assessments.map((item) => {
+      const type = withValidAssessmentType(item.type);
+      const weightCheck = validateWeight(item.weight);
+      if (!weightCheck.valid) {
+        throw new DomainError('VALIDATION_ERROR', `${item.name}: ${weightCheck.error}`);
+      }
+      if ((item.maxScore ?? EVALUATION_DEFAULT_MAX_SCORE) <= 0) {
+        throw new DomainError('VALIDATION_ERROR', `${item.name}: nota máxima deve ser maior que 0`);
+      }
+      return { ...item, type, maxScore: item.maxScore ?? EVALUATION_DEFAULT_MAX_SCORE };
+    });
+
+    const [term, classRecord, subject, teacher] = await Promise.all([
+      this.prisma.term.findUnique({ where: { id: input.termId } }),
+      this.prisma.class.findUnique({ where: { id: input.classId } }),
+      this.prisma.subject.findUnique({ where: { id: input.subjectId } }),
+      this.prisma.teacher.findUnique({ where: { id: input.teacherId } }),
+    ]);
+    assertRelation(term, 'Período não encontrado');
+    assertRelation(classRecord, 'Turma não encontrada');
+    assertRelation(subject, 'Disciplina não encontrada');
+    assertRelation(teacher, 'Professor não encontrado');
+
+    await this.assertTeacherOwns(teacher.id, ctx);
+
+    if (classRecord.academicYearId !== input.academicYearId) {
+      throw new DomainError('CONFLICT', 'A turma não pertence ao ano letivo indicado');
+    }
+
+    const assigned = await this.prisma.$transaction([
+      this.prisma.schedule.findMany({
+        where: { schoolId: term.schoolId, teacherId: teacher.id, classId: classRecord.id, status: { not: 'CANCELLED' as const } },
+        select: { subjectId: true },
+        distinct: ['subjectId'],
+      }),
+      this.prisma.assessment.findMany({
+        where: { schoolId: term.schoolId, teacherId: teacher.id, classId: classRecord.id },
+        select: { subjectId: true },
+        distinct: ['subjectId'],
+      }),
+    ]);
+    const assignedIds = Array.from(new Set([...assigned[0].map((s) => s.subjectId), ...assigned[1].map((s) => s.subjectId)]));
+    if (assignedIds.length > 0 && !assignedIds.includes(subject.id)) {
+      throw new DomainError('CONFLICT', 'Professor não leciona esta disciplina nesta turma');
+    }
+
+    const existing = await this.prisma.assessment.findMany({
+      where: { termId: term.id, classId: classRecord.id, subjectId: subject.id, name: { in: names } },
+      select: { name: true },
+    });
+    if (existing.length > 0) {
+      throw new DomainError('CONFLICT', `Já existe avaliação com este nome para esta turma, disciplina e período: ${existing.map((e) => e.name).join(', ')}`);
+    }
+
+    const created = await this.prisma.$transaction(
+      prepared.map((item) =>
+        this.prisma.assessment.create({
+          data: {
+            schoolId: term.schoolId,
+            academicYearId: input.academicYearId,
+            termId: term.id,
+            classId: classRecord.id,
+            subjectId: subject.id,
+            teacherId: teacher.id,
+            name: item.name,
+            type: item.type as EvaluationType,
+            description: item.description ?? null,
+            date: new Date(item.date),
+            maxScore: item.maxScore,
+            weight: item.weight,
+            status: (item.status ?? 'DRAFT') as EvaluationStatus,
+          },
+          include: { academicYear: true, term: true, class: true, subject: true, teacher: true },
+        }),
+      ),
+    );
+
+    return created.map((record) => assessmentDto(record as unknown as Record<string, unknown>));
   }
 
   async updateAssessment(id: string, patch: Record<string, unknown>, ctx?: ContractCallContext): Promise<AssessmentDto> {
@@ -447,11 +568,16 @@ export class SchedulesAssessmentsService {
     return { allowed: studentIds.filter((id) => !blocked.has(id)), blocked: Array.from(blocked) };
   }
 
-  async resolveStudentScope(requestedStudentId: string | undefined, ctx: ContractCallContext): Promise<string> {
+  private async requireMyStudent(ctx: ContractCallContext): Promise<StudentProfileDto> {
     const me = await this.gateway.getMyStudent(ctx);
     if (!me) {
       throw new DomainError('STUDENT_NOT_FOUND', 'Perfil de estudante não encontrado para este utilizador');
     }
+    return me;
+  }
+
+  async resolveStudentScope(requestedStudentId: string | undefined, ctx: ContractCallContext): Promise<string> {
+    const me = await this.requireMyStudent(ctx);
     if (requestedStudentId && requestedStudentId !== me.id) {
       throw new DomainError(POSSESSION_DENIED, POSSESSION_MESSAGE);
     }
@@ -488,6 +614,42 @@ export class SchedulesAssessmentsService {
     return teacher?.id ?? NO_ACCESS_SCOPE;
   }
 
+  /**
+   * Identificador do docente autenticado, para scoping de leitura. Devolve um
+   * id impossível (`NO_ACCESS_SCOPE`) quando o utilizador TEACHER não tem
+   * perfil de docente, pelo que as listagens ficam vazias em vez de vazarem
+   * dados de terceiros.
+   */
+  async currentTeacherId(ctx: ContractCallContext): Promise<string> {
+    const id = await this.resolveActorTeacherId(ctx);
+    return id ?? NO_ACCESS_SCOPE;
+  }
+
+  private async teacherTeachingPairs(teacherId: string): Promise<{ classId: string; subjectId: string }[]> {
+    const [schedules, assessments] = await Promise.all([
+      this.prisma.schedule.findMany({
+        where: { teacherId },
+        select: { classId: true, subjectId: true },
+        distinct: ['classId', 'subjectId'],
+      }),
+      this.prisma.assessment.findMany({
+        where: { teacherId },
+        select: { classId: true, subjectId: true },
+        distinct: ['classId', 'subjectId'],
+      }),
+    ]);
+    const seen = new Set<string>();
+    const pairs: { classId: string; subjectId: string }[] = [];
+    for (const pair of [...schedules, ...assessments]) {
+      const key = `${pair.classId}:${pair.subjectId}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        pairs.push(pair);
+      }
+    }
+    return pairs;
+  }
+
   async assertTeacherOwns(teacherId: string, ctx?: ContractCallContext): Promise<void> {
     const actorTeacherId = await this.resolveActorTeacherId(ctx);
     if (actorTeacherId === null) {
@@ -518,37 +680,56 @@ export class SchedulesAssessmentsService {
     }
   }
 
-  private async resolveFinancialStanding(studentId: string, ctx: ContractCallContext): Promise<'ACTIVE' | 'BLOCKED'> {
-    let status: Record<string, unknown>;
+  private isFinancialUnavailable(error: unknown): boolean {
+    return (
+      error instanceof DomainError &&
+      (error.code === CONTRACT_ERROR_CODES.FINANCIAL_VERIFICATION_UNAVAILABLE ||
+        error.code === CONTRACT_ERROR_CODES.FINANCIAL_SERVICE_UNAVAILABLE ||
+        error.code === CONTRACT_ERROR_CODES.UPSTREAM_UNAVAILABLE ||
+        error.httpStatus === 503)
+    );
+  }
+
+  /**
+   * Consulta a regularidade junto do serviço financeiro. Usa a rota de
+   * integração `standing` (contrato 03-financeiro), que trabalha com o
+   * `User.id` do Core e devolve ACTIVE/BLOCKED. Se o perfil não tiver `userId`
+   * ligado, recorre à rota interna detalhada por `StudentProfile.id`.
+   */
+  private async resolveFinancialStanding(profile: StudentProfileDto, ctx: ContractCallContext): Promise<'ACTIVE' | 'BLOCKED'> {
     try {
-      status = (await this.gateway.getFinancialStatus(studentId, ctx)) as unknown as Record<string, unknown>;
+      if (profile.userId) {
+        const check = await this.gateway.getFinancialStandingCheck(profile.userId, ctx);
+        return check.status;
+      }
+      const status = await this.gateway.getFinancialStatus(profile.id, ctx);
+      return status.hasDebt ? 'BLOCKED' : 'ACTIVE';
     } catch (error) {
-      if (
-        error instanceof DomainError &&
-        (error.code === CONTRACT_ERROR_CODES.FINANCIAL_VERIFICATION_UNAVAILABLE ||
-          error.code === CONTRACT_ERROR_CODES.FINANCIAL_SERVICE_UNAVAILABLE ||
-          error.code === CONTRACT_ERROR_CODES.UPSTREAM_UNAVAILABLE ||
-          error.httpStatus === 503)
-      ) {
+      if (this.isFinancialUnavailable(error)) {
         throw new DomainError('FINANCIAL_VERIFICATION_UNAVAILABLE', 'Não foi possível confirmar a situação financeira — acesso bloqueado por segurança');
       }
       throw error;
     }
-    return Boolean(status.hasDebt) ? 'BLOCKED' : 'ACTIVE';
   }
 
   async assertStudentCanViewNotes(requestedStudentId: string | undefined, ctx: ContractCallContext): Promise<string> {
-    const ownId = await this.resolveStudentScope(requestedStudentId, ctx);
-    const standing = await this.resolveFinancialStanding(ownId, ctx);
+    const me = await this.requireMyStudent(ctx);
+    if (requestedStudentId && requestedStudentId !== me.id) {
+      throw new DomainError(POSSESSION_DENIED, POSSESSION_MESSAGE);
+    }
+    const standing = await this.resolveFinancialStanding(me, ctx);
     if (standing === 'BLOCKED') {
       throw new DomainError('FINANCIAL_ACCESS_BLOCKED', 'A consulta das notas está indisponível. Regularize a sua situação financeira.');
     }
-    return ownId;
+    return me.id;
   }
 
   async getMyFinancialStanding(ctx: ContractCallContext, resolvedStudentId?: string): Promise<FinancialStandingDto> {
-    const ownId = resolvedStudentId ?? (await this.resolveStudentScope(undefined, ctx));
-    const status = await this.resolveFinancialStanding(ownId, ctx);
+    const me = await this.requireMyStudent(ctx);
+    if (resolvedStudentId && resolvedStudentId !== me.id) {
+      throw new DomainError(POSSESSION_DENIED, POSSESSION_MESSAGE);
+    }
+    const status = await this.resolveFinancialStanding(me, ctx);
     return { status, checkedAt: new Date().toISOString() };
   }
 
@@ -850,12 +1031,16 @@ export class SchedulesAssessmentsService {
     return scheduleDto(record as unknown as Record<string, unknown>);
   }
 
-  async listResults({ termId, classId, subjectId, studentId }: { termId?: string; classId?: string; subjectId?: string; studentId?: string } = {}): Promise<ResultDto[]> {
+  async listResults({ termId, classId, subjectId, studentId, teacherId }: { termId?: string; classId?: string; subjectId?: string; studentId?: string; teacherId?: string } = {}): Promise<ResultDto[]> {
     const where: Prisma.ResultWhereInput = {};
     if (termId) where.termId = termId;
     if (classId) where.classId = classId;
     if (subjectId) where.subjectId = subjectId;
     if (studentId) where.studentId = studentId;
+    if (teacherId) {
+      const pairs = await this.teacherTeachingPairs(teacherId);
+      where.OR = pairs.length > 0 ? pairs.map((pair) => ({ classId: pair.classId, subjectId: pair.subjectId })) : [{ id: NO_ACCESS_SCOPE }];
+    }
     const rows = await this.prisma.result.findMany({
       where,
       include: { term: true, class: true, subject: true, student: true },

@@ -13,9 +13,11 @@ Guia para agentes de IA. Leia antes de editar.
 
 ```bash
 # Verificação antes de concluir tarefa:
-npm run test:unit     # vitest (src/**/*.test.ts)
-npm run test:e2e      # vitest (src/modules/schedules-assessments/tests/**/*.e2e.test.ts)
-npm run test:services # vitest (services/*/src/*.e2e.test.ts — serviços Core)
+npm run test:unit      # vitest (src/**/*.test.ts)
+npm run test:e2e       # vitest (src/modules/schedules-assessments/tests/**/*.e2e.test.ts)
+npm run test:services  # vitest (services/*/src/*.e2e.test.ts — serviços Core)
+npm run test:coverage  # unit + e2e + services com coverage (thresholds 80%)
+npm run docs           # regenera docs/openapi.yaml + docs/ROUTE_ACCESS.md
 
 # Banco
 npm run db:migrate -- --name <nome>
@@ -34,7 +36,7 @@ npm run typecheck      # tsc --noEmit
 src/
 ├── main.ts                                          # boot, dotenv, porta 4100
 ├── app.ts                                           # Express, health, mount /api/v1, /api/docs, /api/openapi.json
-├── openapi.ts                                       # spec OpenAPI 3.0.0 (sem security)
+├── openapi.ts                                       # spec OpenAPI 3.0.0 (security global BearerAuth)
 └── modules/schedules-assessments/
     ├── domain/
     │   ├── evaluation.ts                             # regras puras: tipos, média ponderada, status, horas
@@ -45,19 +47,38 @@ src/
     │   └── schedulesAssessmentsService.ts             # casos de uso, transações ACID, DomainError, TYPE_MAP
     ├── infrastructure/
     │   ├── prisma.ts                                 # singleton do PrismaClient
-    │   └── contracts/gateway.ts                      # chamadas HTTP aos serviços Core (students/teachers/enrolments/finance)
+    │   ├── httpError.ts                              # DomainError/Prisma -> HTTP (401/403/404/409/503)
+    │   ├── httpError.test.ts                         # 17 testes do mapeamento de erros
+    │   ├── auth/
+    │   │   ├── routeAccess.ts                        # FONTE ÚNICA da tabela Rota -> Roles + posse
+    │   │   ├── routeAccess.test.ts                   # 12 testes da tabela de acessos
+    │   │   ├── accessPolicy.ts                       # guards de posse (anti-BOLA) por rota
+    │   │   ├── authMiddleware.ts                     # verificação do JWT e carregamento do perfil
+    │   │   ├── authMiddleware.test.ts                # 14 testes do middleware de autenticação
+    │   │   ├── identityProvider.ts                   # perfis: BD local + Core, cache e timeout
+    │   │   └── identityProvider.test.ts              # 27 testes do provedor de identidade
+    │   └── contracts/
+    │       ├── gateway.ts                            # chamadas HTTP aos serviços Core (students/teachers/enrolments/finance)
+    │       ├── academicRegistry.ts                   #CircuitBreaker + cache + fallback p/ espelho local
+    │       ├── academicRegistry.test.ts              # 19 testes de resiliência e fallback
+    │       └── resilience.ts                         # primitivas de circuit breaker e cache
     ├── http/
-    │   └── schedulesAssessmentsRouter.ts              # router Express + Zod + auth + correlationId
+    │   └── schedulesAssessmentsRouter.ts             # router Express + Zod + requireRole + anti-BOLA + correlationId
     └── tests/
         ├── g3.e2e.test.ts                            # 29 testes de integração (API autenticada)
-        ├── g3.catalog.e2e.test.ts                    # 15 testes de catálogo + nomes legíveis
+        ├── g3.catalog.e2e.test.ts                    # 17 testes de catálogo + nomes legíveis
         ├── calculation.e2e.test.ts                   # 18 testes e2e do motor de cálculo
         ├── error-scenarios.e2e.test.ts               # 3 testes de cenários de erro (400/404/500)
         ├── g3.transaction.e2e.test.ts                # 2 testes ACID (rollback forçado)
-        ├── auth.e2e.test.ts                          # autenticação/RBAC/scoping (401/403, login)
+        ├── auth.e2e.test.ts                          # 10 testes: autenticação/RBAC/scoping (401/403, login)
+        ├── auth.refresh.e2e.test.ts                  # 8 testes de refresh token e revogação
+        ├── bola.e2e.test.ts                          # 25 testes anti-BOLA (posse de objectos)
+        ├── spec-conformance.e2e.test.ts              # 18 testes: o endpoint escolhido vs openapi.yaml
+        ├── specValidator.test.ts                     # 20 testes de validação do spec
         ├── contractTestEnv.ts                        # arranca os serviços Core em memória + envs de teste
         ├── contract-debt.e2e.test.ts                 # contrato de dívida (409/503/mascaração)
-        └── financial-access.e2e.test.ts              # regra financeira: 403/503/404, /me/financial-status
+        ├── financial-access.e2e.test.ts              # regra financeira: 403/503/404, /me/financial-status
+        └── assessment-plan.e2e.test.ts               # plano de avaliações do docente (201/400/403/409)
 packages/
 ├── shared-types/src/index.ts                         # DTOs, constantes, campusModules, códigos financeiros
 ├── validation/src/index.ts                           # re-exporta schemas do módulo
@@ -80,8 +101,11 @@ docker-compose.yml                                    # PostgreSQL 16 na porta 5
 ## Rotas (contrato da ficha / via `/api/v1`)
 
 - `POST /api/v1/auth/login` — login, devolve accessToken (Bearer, TTL 3600s)
+- `POST /api/v1/auth/refresh` — renova o accessToken a partir do refreshToken
 - `GET /api/v1/me/financial-status` — estado financeiro do próprio estudante (`ACTIVE`|`BLOCKED`, sem montantes)
+- `GET /api/v1/financial/integration/students/:studentUserId/standing` — regularidade (ACTIVE/BLOCKED) no serviço Finance (service token; `User.id` do Core)
 - `GET|POST /api/v1/assessments`
+- `POST /api/v1/assessments/plan` — plano de avaliações (nomes/tipos/pesos) definido pelo docente
 - `GET|PATCH|DELETE /api/v1/assessments/:id`
 - `GET|POST /api/v1/assessments/:assessmentId/grades`
 - `PATCH /api/v1/assessments/:assessmentId/grades/:gradeId`
@@ -107,6 +131,21 @@ docker-compose.yml                                    # PostgreSQL 16 na porta 5
 > **Paginação (listas):** `GET /api/v1/assessments|schedules|results` + catálogos aceitam `page` (≥1) e `pageSize` (1–100); meta devolve `page`, `pageSize`, `total`.
 > **`@smartcampus/api-client`:** inclui `updateResult(id, payload?)`, `listCalculationMethods()`, `calculate(payload)` e `listSchools()|listAcademicYears()|listTerms()|listClasses()|listSubjects()|listTeachers()|listStudents()`.
 
+## Autorização (RBAC + anti-BOLA)
+
+- **Fonte única:** `infrastructure/auth/routeAccess.ts` declara, para cada rota,
+  os roles permitidos e a verificação de posse exigida. `npm run docs:access-table`
+  gera `docs/ROUTE_ACCESS.md` a partir dessa tabela — não editar o Markdown à mão.
+- **Papéis:** `SCHOOL_ADMIN`, `TEACHER`, `STUDENT`; credencial interna
+  `SERVICE_ROLE='__SERVICE__'` (service token) para o Finance.
+- **Ter o role certo não basta.** O router aplica também `enforcePossession`, que
+  impede um `STUDENT` de ler recursos de outro estudante (BOLA) e limita o
+  `TEACHER` às turmas que lecciona.
+- **Endpoint escolhido para a Semana 6:** `GET /api/v1/assessments/{assessmentId}/grades`.
+  Conformance verificado em `tests/spec-conformance.e2e.test.ts`.
+- **Prova mutacional:** remover a verificação de posse faz a suite falhar
+  (ver `docs/evidence/semana-05/prova-mutacional-anti-bola.txt`).
+
 ## Convenções
 
 - **Sem comentários** no código.
@@ -123,6 +162,7 @@ docker-compose.yml                                    # PostgreSQL 16 na porta 5
 - `contracts/gateway.ts`: `call(url, ctx, service, { method, body, tokenOverride, retry })` com headers `x-correlation-id` + `x-request-id`.
 - **Financeiro** usa sempre `tokenOverride` = senha de serviço (`FINANCIAL_SERVICE_TOKEN`) — nunca o JWT do aluno.
 - `getFinancialStatus(studentId, ctx)`: GET com 2 tentativas; erros de rede → `FINANCIAL_VERIFICATION_UNAVAILABLE` (503) — **fail-closed**, nunca assume regular.
+- `getFinancialStandingCheck(studentUserId, ctx)`: `GET /api/v1/financial/integration/students/:studentUserId/standing` (contrato 03-financeiro). Usa o `User.id` do Core e devolve apenas `ACTIVE`/`BLOCKED` + `checkedAt`, **sem montantes**. Só service token (403 para tokens de utilizador); aluno desconhecido → 404. O G3 usa-a no **caminho de leitura** (notas/resultados/pauta/`/me/financial-status`), pois não expõe valores privados. O **caminho de escrita** (lançar nota, `POST /results`) mantém `getFinancialStatus` para devolver `409 GRADES_BLOCKED_DUE_TO_DEBT` com `outstandingAmount`.
 - `chargeAssessment(...)`: POST `/api/v1/financial/integration/assessment-charges` (o serviço é idempotente por `sourceModule:sourceRequestId:studentUserId:feeCode`).
 
 ## Regra financeira
@@ -131,13 +171,14 @@ docker-compose.yml                                    # PostgreSQL 16 na porta 5
   - sem perfil académico → `404 STUDENT_NOT_FOUND`;
   - com dívida (`hasDebt`) → `403 FINANCIAL_ACCESS_BLOCKED` (mensagem: "Regularize a sua situação financeira");
   - service indisponível → `503 FINANCIAL_VERIFICATION_UNAVAILABLE`.
-- `assertStudentCanViewNotes(requestedStudentId, ctx)` — **assinatura com 2 argumentos**; o router passa `query.studentId` quando aplicável.
-- Staff (SCHOOL_ADMIN/TEACHER): pauta mascara linhas de endividados (`debtRestricted: true`, `average: null`); lançar nota de endividado → `409 GRADES_BLOCKED_DUE_TO_DEBT`.
+- `assertStudentCanViewNotes(requestedStudentId, ctx)` — **assinatura com 2 argumentos**; o router passa `query.studentId` quando aplicável. A verificação agora usa a rota de integração `standing` (por `User.id`), com fallback para a rota interna detalhada quando o perfil não tem `userId` ligado.
+- Staff (SCHOOL_ADMIN/TEACHER): pauta mascara linhas de endividados (`debtRestricted: true`, `average: null`); lançar nota de endividado → `409 GRADES_BLOCKED_DUE_TO_DEBT` (usa a rota detalhada para devolver `outstandingAmount`).
 
 ## Regras de negócio
 
 ### Avaliações
-- Tipos (API): `TESTE`, `EXAME_NORMAL`, `EXAME_RECURRENCIA` (Zod) → DB `TEST`/`EXAM` via `TYPE_MAP`; DTO devolve `TESTE`/`EXAME_NORMAL` (reverse map).
+- Tipos (API): `TESTE`, `EXAME_NORMAL`, `EXAME_RECURRENCIA`, `TRABALHO`, `PROJETO`, `QUESTIONARIO`, `PRATICA`, `ORAL`, `OUTRO` (Zod) → DB `TEST`/`EXAM`/`ASSIGNMENT`/`PROJECT`/`QUIZ`/`PRACTICAL`/`ORAL`/`OTHER` via `TYPE_MAP`; DTO devolve o tipo de API via reverse map (`apiAssessmentType`).
+- **Plano definido pelo docente:** `POST /api/v1/assessments/plan` cria em transação o conjunto de avaliações (nomes, tipos e pesos) — substitui a lista fixa. Nomes repetidos no plano → 400; nome já existente no mesmo `termId+classId+subjectId` → 409; docente de outra docência → 403.
 - **Peso > 0** obrigatório (nível domínio + Zod + CHECK no DB).
 - Média: `Σ(nota×peso)/Σ(pesos)` com `round2`; fallback aritmético se Σ(pesos)=0.
 - Status: `APPROVED` (≥10), `RECOVERY` (≥8), `FAILED`, `IN_PROGRESS`, `PENDING`.
@@ -173,9 +214,25 @@ docker-compose.yml                                    # PostgreSQL 16 na porta 5
 
 ## Testes
 
-- **Unitários** (`src/**/*.test.ts`): regras puras do domínio — sem banco. 21 evaluation + 54 calculationEngine + 5 validation = 80.
-- **E2E G3** (`src/modules/schedules-assessments/tests/*.e2e.test.ts`): Supertest em app Express ephemeral. IDs via Prisma. Inclui auth (401/403/scoping), lançamento bloqueado por dívida (409), regra financeira (403/503/404), mascaração da pauta, `/me/financial-status`, contratos HTTP com os serviços Core (via `contractTestEnv.ts`, arrancados em memória). Total: 97.
-- **Services** (`services/*/src/*.e2e.test.ts` via `vitest.services.config.ts`): contratos dos serviços Core (students/teachers/enrolments/finance, inclui assessment-charges idempotente). Total: 46.
+Contagem verificada com `npm run test:coverage` (496 testes, 29 ficheiros).
+
+- **Unitários** (`src/**/*.test.ts`): regras puras do domínio sem banco, mais os
+  testes de infraestrutura (auth, RBAC, contratos, mapeamento de erros).
+  evaluation 21 + calculationEngine 54 + routeAccess 12 + authMiddleware 14 +
+  identityProvider 27 + academicRegistry 19 + resilience 20 + httpError 17 +
+  verifiers 21 + auth/index 8 + openapi 25 + specValidator 20.
+- **E2E G3** (`src/modules/schedules-assessments/tests/*.e2e.test.ts`): Supertest
+  em app Express ephemeral, IDs via Prisma. Inclui auth (401/403/scoping),
+  refresh, anti-BOLA, conformidade com o spec, lançamento bloqueado por dívida
+  (409), regra financeira (403/503/404), mascaração da pauta, `/me/financial-status`
+  e contratos HTTP com os serviços Core (via `contractTestEnv.ts`, arrancados em
+  memória). Total: 167.
+- **Services** (`services/*/src/*.e2e.test.ts` via `vitest.services.config.ts`):
+  contratos dos serviços Core (students/teachers/enrolments/finance, inclui
+  assessment-charges idempotente). Total: 71.
+- **Cobertura** (`npm run test:coverage`, `vitest.coverage.config.ts`): thresholds
+  de 80% em statements/branches/functions/lines. Estado actual: 89,36% linhas,
+  82,24% ramos, 93,03% funções.
 - **Env de teste e2e:** `SMARTCAMPUS_JWT_SECRET=g3-e2e-secret`, `FINANCIAL_SERVICE_TOKEN=g3-e2e-service-token` (definidos em `contractTestEnv.ts`).
 - **Prisma:** `prisma db seed` cria dados UJAC; `npm run db:reset` para recriar.
 

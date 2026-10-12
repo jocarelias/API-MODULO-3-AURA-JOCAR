@@ -1,0 +1,96 @@
+Endpoint escolhido: GET /api/v1/assessments/{assessmentId}/grades
+Especificacao: http://localhost:4100/api/docs  (Swagger UI) | http://localhost:4100/api/openapi.json
+security global: BearerAuth   |  publicas: POST /auth/login, POST /auth/refresh
+Executado em: 2026-10-05T14:34Z
+Servidor: G3 http://localhost:4100 | students :4101 | finance :4104
+Navegador: Brave 153.1.95.102 (contentor Linglong), driver playwright-core 1.63.0
+Script das capturas: scripts/capturas-swagger.js
+
+Credenciais de seed
+  admin@ucjac.ac.mz / admin123             SUPER_ADMIN
+  prof1@ucjac.ac.mz / prof123              TEACHER
+  aluno1@student.ucjac.ac.mz / aluno123    STUDENT
+
+Avaliacoes usadas
+  ALUNO = a4a6c3b2-65cc-4d29-a11d-361eeb5be091  (turma do aluno1 -> STUDENT tem posse)
+  TURMA = 587aa5cc-59fb-487b-af89-44f380e5ee8b  (outra turma -> anti-BOLA)
+
+===============================================================================
+1. CENARIOS EXECUTADOS NO SWAGGER UI (com "Try it out")
+===============================================================================
+Cenário                          Esperado  Obtido  Captura
+--------------------------------------------------------------------------
+Raiz da documentação             200       200     01-docs-raiz.png
+POST /auth/login (TEACHER)       200       200     02b-login-resposta.png
+Authorize com token              activo    locked  03-authorize.png
+GET .. grades  TEACHER           200       200     04-200-teacher.png
+GET .. grades  STUDENT           200       200     05-200-student-escopo.png
+GET .. grades  sem token         401       401     06-401-sem-token.png
+GET .. grades  STUDENT outra tm  403       403     07-403-anti-bola.png
+GET .. grades  id inexistente    404       404     08-404-inexistente.png
+GET .. grades  id mal formado    bloqueio  bloqueio 09-400-validacao-cliente.png
+
+8/8 dos cenarios exigidos pelo guiao coincidem com a especificacao, sem
+discrepancias por resolver.
+
+Header Authorization observado em cada pedido (lido do browser, nao inventado):
+  TEACHER  -> Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+  STUDENT  -> Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+  sem token-> AUSENTE
+
+===============================================================================
+2. PROVA ANTI-BOLA NAS CAPTURAS
+===============================================================================
+O mesmo recurso e o mesmo assessmentId devolvem conteudo diferente conforme a
+role, o que prova que o filtro e por donio do objecto e nao apenas por role:
+
+  04-200-teacher.png        TEACHER -> HTTP 200, 10 notas de toda a turma
+  05-200-student-escopo.png  STUDENT -> HTTP 200,  1 nota, apenas a sua
+  07-403-anti-bola.png      STUDENT noutra turma -> HTTP 403 FORBIDDEN
+
+===============================================================================
+3. DISCREPANCIA ENCONTRADA E CORRIGIDA (Passo 2, ponto 5 do guiao)
+===============================================================================
+O exemplo do corpo de POST /auth/login na especificacao indicava
+    password: "Aluno@2026"
+que nao existe no seed. Quem copiasse o exemplo do Swagger UI recebia
+HTTP 401 sem sucesso. Corrigido em src/openapi.ts para "aluno123" (a password
+real do seed) e docs/openapi.yaml regenerado com `npm run docs`.
+
+===============================================================================
+4. COMPORTAMENTO INTERESSANTE: VALIDACAO DE UUID NO CLIENTE
+===============================================================================
+O parametro assessmentId esta declarado como `format: uuid`. O Swagger UI
+valida isso no proprio cliente e NAO envia o pedido quando o valor e invalido:
+
+  assessmentId = "abc"
+  -> "Please correct the following validation errors and try again."
+     "For 'assessmentId': Value must be a Guid."
+  -> nenhum pedido HTTP chega a ser feito (captura 09)
+
+Para clientes que nao pre-validam (curl, Postman, supertest) a API responde
+HTTP 400 VALIDATION_ERROR. As duas behaviours sao correctas e complementares.
+Validacao completa do parametro contra a API real:
+
+  vazio /grades                        -> 400 VALIDATION_ERROR
+  abc                                  -> 400 VALIDATION_ERROR
+  12345                                -> 400 VALIDATION_ERROR
+  %20                                  -> 400 VALIDATION_ERROR
+  23aad7d5d38340ea89e1bbb89fb258ae      -> 400 VALIDATION_ERROR  (sem hifens)
+  aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa  -> 404 NOT_FOUND  (formato valido)
+  00000000-0000-0000-0000-000000000001  -> 404 NOT_FOUND
+
+===============================================================================
+5. VERIFICACAO DA ESPECIFICACAO SERVIDA
+===============================================================================
+GET /api/docs                                  -> 200
+GET /api/docs/assets/swagger-ui.css           -> 200 (185784 bytes)
+GET /api/docs/assets/swagger-ui-bundle.js     -> 200 (1553809 bytes)
+GET /api/openapi.json                          -> 200 (23 paths, 259251 bytes)
+Tag do endpoint: "Notas"
+OperationId:    getAssessmentsAssessmentIdGrades
+
+Respostas documentadas
+  GET  .. grades -> 200, 400, 401, 403, 404, 409, 500, 503
+  POST .. grades -> 200, 201, 400, 401, 403, 404, 409, 500
+  Rotas com security: [] -> apenas POST /auth/login e POST /auth/refresh

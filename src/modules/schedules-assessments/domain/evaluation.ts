@@ -1,6 +1,25 @@
-export type EvaluationType = 'TESTE' | 'EXAME_NORMAL' | 'EXAME_RECURRENCIA';
+export type EvaluationType =
+  | 'TESTE'
+  | 'EXAME_NORMAL'
+  | 'EXAME_RECURRENCIA'
+  | 'TRABALHO'
+  | 'PROJETO'
+  | 'QUESTIONARIO'
+  | 'PRATICA'
+  | 'ORAL'
+  | 'OUTRO';
 
-export const EVALUATION_TYPES: EvaluationType[] = ['TESTE', 'EXAME_NORMAL', 'EXAME_RECURRENCIA'];
+export const EVALUATION_TYPES: EvaluationType[] = [
+  'TESTE',
+  'EXAME_NORMAL',
+  'EXAME_RECURRENCIA',
+  'TRABALHO',
+  'PROJETO',
+  'QUESTIONARIO',
+  'PRATICA',
+  'ORAL',
+  'OUTRO',
+];
 
 export const EVALUATION_DEFAULT_MAX_SCORE = 20;
 export const EVALUATION_MIN_SCORE = 0;

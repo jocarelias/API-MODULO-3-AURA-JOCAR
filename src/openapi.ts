@@ -70,7 +70,7 @@ const loginInput: OpenApiSchema = {
     email: { type: 'string', format: 'email' },
     password: { type: 'string', minLength: 1 },
   },
-  example: { email: 'aluno1@student.ucjac.ac.mz', password: 'Aluno@2026' },
+  example: { email: 'aluno1@student.ucjac.ac.mz', password: 'aluno123' },
 };
 
 const authUser: OpenApiSchema = {
@@ -342,6 +342,36 @@ const assessmentBody: OpenApiSchema = {
     maxScore: { type: 'number', exclusiveMinimum: 0, default: EVALUATION_DEFAULT_MAX_SCORE },
     weight: { type: 'number', exclusiveMinimum: 0 },
     status: { type: 'string', enum: ASSESSMENT_DB_STATUS },
+  },
+};
+
+const assessmentPlanBody: OpenApiSchema = {
+  type: 'object',
+  required: ['academicYearId', 'termId', 'classId', 'subjectId', 'teacherId', 'assessments'],
+  properties: {
+    academicYearId: uuid,
+    termId: uuid,
+    classId: uuid,
+    subjectId: uuid,
+    teacherId: uuid,
+    assessments: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 30,
+      items: {
+        type: 'object',
+        required: ['name', 'type', 'date', 'weight'],
+        properties: {
+          name: { type: 'string', minLength: 1 },
+          type: { type: 'string', enum: EVALUATION_TYPES },
+          description: { type: 'string', nullable: true },
+          date: dateTime,
+          maxScore: { type: 'number', exclusiveMinimum: 0, default: EVALUATION_DEFAULT_MAX_SCORE },
+          weight: { type: 'number', exclusiveMinimum: 0 },
+          status: { type: 'string', enum: ASSESSMENT_DB_STATUS },
+        },
+      },
+    },
   },
 };
 
@@ -1068,6 +1098,16 @@ export function buildOpenApi(): Record<string, unknown> {
           responses: responses(assessment),
         },
       },
+      '/api/v1/assessments/plan': {
+        post: {
+          tags: ['Avaliações'],
+          summary: 'Cria o plano de avaliações do docente (nomes, tipos e pesos em lote)',
+          description:
+            'O docente define quantas avaliações existem e o peso de cada uma (ex.: Teste 1 = 40, Teste 2 = 40, Trabalho = 20). Tudo é criado numa transação; nomes duplicados no mesmo período, turma e disciplina retornam 409.',
+          requestBody: { required: true, content: { 'application/json': { schema: assessmentPlanBody } } },
+          responses: responses({ type: 'array', items: assessment }, { list: true }),
+        },
+      },
       '/api/v1/assessments/{id}': {
         get: {
           tags: ['Avaliações'],
@@ -1105,7 +1145,7 @@ export function buildOpenApi(): Record<string, unknown> {
         get: {
           tags: ['Notas'],
           summary: 'Lista notas de uma avaliação',
-          description: 'Para estudantes, devolve 403 cuando o utilizador tem dívida financeira (fail-closed 503 se o serviço financeiro estiver indisponível).',
+          description: 'Para estudantes, devolve 403 quando o utilizador tem dívida financeira (fail-closed 503 se o serviço financeiro estiver indisponível).',
           parameters: [idParam('assessmentId')],
           responses: studentResponses({ type: 'array', items: grade }, { list: true }),
         },
@@ -1298,6 +1338,7 @@ export function buildOpenApi(): Record<string, unknown> {
       schemas: {
         Assessment: assessment,
         AssessmentBody: assessmentBody,
+        AssessmentPlanBody: assessmentPlanBody,
         Grade: grade,
         GradeBody: gradeBody,
         Schedule: schedule,

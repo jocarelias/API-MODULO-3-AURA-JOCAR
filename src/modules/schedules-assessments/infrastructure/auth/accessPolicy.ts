@@ -21,6 +21,7 @@ export interface PossessionOutcome {
   studentId?: string;
   classIds?: string[];
   classId?: string;
+  teacherId?: string;
 }
 
 export type PossessionGuard = (
@@ -132,6 +133,140 @@ const guards: Record<PossessionKind, PossessionGuard> = {
     await service.assertTeacherOwnsTeaching({ classId: result.classId, subjectId: result.subjectId }, request.ctx);
     return { classId: result.classId };
   },
+
+  /* ---- Leitura mista: STUDENT limitado a si próprio, TEACHER limitado à
+     cadeira/turma que leciona, COORDINATOR/ADMIN sem restrição. ---- */
+
+  [POSSESSION.STUDENT_OR_TEACHER_ASSESSMENT_LIST]: async (service, request) => {
+    const role = request.ctx.role;
+    if (isTeacherRole(role)) {
+      return { teacherId: await service.currentTeacherId(request.ctx) };
+    }
+    if (!isStudentRole(role)) {
+      return NO_OUTCOME;
+    }
+    const studentId = await service.resolveStudentScope(requestedId(request, 'studentId'), request.ctx);
+    const classId = requestedId(request, 'classId');
+    if (classId) {
+      await service.assertStudentInClass(studentId, classId);
+      return { studentId, classId };
+    }
+    return { studentId, classIds: await service.listStudentClassIds(studentId) };
+  },
+
+  [POSSESSION.STUDENT_OR_TEACHER_ASSESSMENT]: async (service, request) => {
+    const id = request.params.id;
+    if (!id) {
+      return NO_OUTCOME;
+    }
+    const assessment = await service.getAssessment(id);
+    const role = request.ctx.role;
+    if (isTeacherRole(role)) {
+      await service.assertTeacherOwns(assessment.teacherId, request.ctx);
+      return { classId: assessment.classId };
+    }
+    if (!isStudentRole(role)) {
+      return NO_OUTCOME;
+    }
+    const studentId = await service.resolveStudentScope(undefined, request.ctx);
+    await service.assertStudentInClass(studentId, assessment.classId);
+    return { studentId, classId: assessment.classId };
+  },
+
+  [POSSESSION.STUDENT_OR_TEACHER_GRADES]: async (service, request) => {
+    const assessment = await service.getAssessment(request.params.assessmentId as string);
+    const role = request.ctx.role;
+    if (isTeacherRole(role)) {
+      await service.assertTeacherOwnsTeaching({ classId: assessment.classId, subjectId: assessment.subjectId }, request.ctx);
+      return { classId: assessment.classId };
+    }
+    if (!isStudentRole(role)) {
+      return NO_OUTCOME;
+    }
+    const studentId = await service.assertStudentCanViewNotes(undefined, request.ctx);
+    await service.assertStudentInClass(studentId, assessment.classId);
+    return { studentId, classId: assessment.classId };
+  },
+
+  [POSSESSION.STUDENT_OR_TEACHER_RESULTS]: async (service, request) => {
+    const role = request.ctx.role;
+    if (isTeacherRole(role)) {
+      return { teacherId: await service.currentTeacherId(request.ctx) };
+    }
+    if (!isStudentRole(role)) {
+      return NO_OUTCOME;
+    }
+    const studentId = await service.assertStudentCanViewNotes(requestedId(request, 'studentId'), request.ctx);
+    return { studentId };
+  },
+
+  [POSSESSION.STUDENT_OR_TEACHER_RESULT]: async (service, request) => {
+    const id = request.params.id;
+    if (!id) {
+      return NO_OUTCOME;
+    }
+    const role = request.ctx.role;
+    if (isTeacherRole(role)) {
+      const result = await service.getResult(id);
+      await service.assertTeacherOwnsTeaching({ classId: result.classId, subjectId: result.subjectId }, request.ctx);
+      return { classId: result.classId };
+    }
+    if (!isStudentRole(role)) {
+      return NO_OUTCOME;
+    }
+    const studentId = await service.assertStudentCanViewNotes(undefined, request.ctx);
+    return { studentId };
+  },
+
+  [POSSESSION.STUDENT_OR_TEACHER_SCHEDULE_LIST]: async (service, request) => {
+    const role = request.ctx.role;
+    if (isTeacherRole(role)) {
+      return { teacherId: await service.currentTeacherId(request.ctx) };
+    }
+    if (!isStudentRole(role)) {
+      return NO_OUTCOME;
+    }
+    const studentId = await service.resolveStudentScope(undefined, request.ctx);
+    return { studentId, classIds: await service.listStudentClassIds(studentId) };
+  },
+
+  [POSSESSION.STUDENT_OR_TEACHER_SCHEDULE]: async (service, request) => {
+    const id = request.params.id;
+    if (!id) {
+      return NO_OUTCOME;
+    }
+    const schedule = await service.getSchedule(id);
+    const role = request.ctx.role;
+    if (isTeacherRole(role)) {
+      await service.assertTeacherOwns(schedule.teacherId, request.ctx);
+      return { classId: schedule.classId };
+    }
+    if (!isStudentRole(role)) {
+      return NO_OUTCOME;
+    }
+    const studentId = await service.resolveStudentScope(undefined, request.ctx);
+    await service.assertStudentInClass(studentId, schedule.classId);
+    return { studentId, classId: schedule.classId };
+  },
+
+  [POSSESSION.STUDENT_OR_TEACHER_PAUTA]: async (service, request) => {
+    const classId = request.params.classId as string;
+    const role = request.ctx.role;
+    if (isTeacherRole(role)) {
+      const subjectId = requestedId(request, 'subjectId');
+      if (!subjectId) {
+        return NO_OUTCOME;
+      }
+      await service.assertTeacherOwnsTeaching({ classId, subjectId }, request.ctx);
+      return { classId };
+    }
+    if (!isStudentRole(role)) {
+      return NO_OUTCOME;
+    }
+    const studentId = await service.assertStudentCanViewNotes(undefined, request.ctx);
+    await service.assertStudentInClass(studentId, classId);
+    return { studentId, classId };
+  },
 };
 
 export function isStudentRole(role: string | undefined): boolean {
@@ -163,8 +298,24 @@ const TEACHER_SCOPED: ReadonlySet<PossessionKind> = new Set<PossessionKind>([
   POSSESSION.TEACHER_OWN_RESULT,
 ]);
 
+/**
+ * Posses de leitura combinadas (estudante OU docente). O guard decide pelo
+ * role: o estudante é limitado a si próprio; o docente é limitado às turmas e
+ * disciplinas que leciona; a coordenação/administração não é restringida.
+ */
+const MIXED_SCOPED: ReadonlySet<PossessionKind> = new Set<PossessionKind>([
+  POSSESSION.STUDENT_OR_TEACHER_ASSESSMENT_LIST,
+  POSSESSION.STUDENT_OR_TEACHER_ASSESSMENT,
+  POSSESSION.STUDENT_OR_TEACHER_GRADES,
+  POSSESSION.STUDENT_OR_TEACHER_RESULTS,
+  POSSESSION.STUDENT_OR_TEACHER_RESULT,
+  POSSESSION.STUDENT_OR_TEACHER_SCHEDULE_LIST,
+  POSSESSION.STUDENT_OR_TEACHER_SCHEDULE,
+  POSSESSION.STUDENT_OR_TEACHER_PAUTA,
+]);
+
 export function isStudentScoped(possession: PossessionKind): boolean {
-  return STUDENT_SCOPED.has(possession);
+  return STUDENT_SCOPED.has(possession) || MIXED_SCOPED.has(possession);
 }
 
 export function isTeacherScoped(possession: PossessionKind): boolean {
@@ -182,6 +333,10 @@ export async function enforcePossession(
   }
 
   const role = request.ctx.role;
+  if (MIXED_SCOPED.has(rule.possession)) {
+    // O guard distingue o role (estudante vs. docente vs. coordenação).
+    return guard(service, request);
+  }
   if (STUDENT_SCOPED.has(rule.possession)) {
     if (!isStudentRole(role)) {
       return NO_OUTCOME;

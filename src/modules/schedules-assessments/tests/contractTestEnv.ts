@@ -14,11 +14,76 @@ process.env.JWT_REFRESH_EXPIRES_IN = '86400';
 process.env.FINANCIAL_SERVICE_TOKEN = 'g3-e2e-service-token';
 process.env.SMARTCAMPUS_SERVICE_TOKEN = 'g3-e2e-service-token';
 
+/**
+ * Catálogo mínimo criado dentro da escola descartável.
+ *
+ * Os testes NÃO podem reutilizar a escola do seed com o token da escola
+ * descartável: o `schoolId` do utilizador é lido da base de dados pelos
+ * serviços de contrato, e os dados de outra escola têm de ser recusados
+ * (403). Usar a mesma escola nos dois lados é o que permite ao teste afirmar
+ * sobre regras de negócio sem violar o isolamento por tenant.
+ */
+export interface SchoolFixtures {
+  schoolId: string;
+  academicYearId: string;
+  academicYearName: string;
+  termId: string;
+  termName: string;
+  classId: string;
+  className: string;
+  subjectId: string;
+  subjectName: string;
+  subjectCode: string;
+  teacherId: string;
+  teacherName: string;
+}
+
 export interface ContractTestContext {
   token: string;
   role: string;
   schoolId: string;
+  fixtures: SchoolFixtures;
   stop: () => Promise<void>;
+}
+
+async function createSchoolFixtures(schoolId: string, label: string): Promise<SchoolFixtures> {
+  const prisma = new PrismaClient();
+  try {
+    const academicYearName = '2026';
+    const academicYear = await prisma.academicYear.create({
+      data: { schoolId, name: academicYearName, startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), status: 'ACTIVE' },
+    });
+    const termName = '1º Período';
+    const term = await prisma.term.create({
+      data: { schoolId, academicYearId: academicYear.id, name: termName, startDate: new Date('2026-02-01'), endDate: new Date('2026-06-30'), status: 'ACTIVE' },
+    });
+    const className = `${label} 1º Ano A`;
+    const klass = await prisma.class.create({
+      data: { schoolId, academicYearId: academicYear.id, name: className, grade: '1', status: 'ACTIVE' },
+    });
+    const subjectName = `Matemática ${label}`;
+    const subjectCode = `M${label.replace(/[^A-Za-z0-9]/g, '').slice(0, 6).toUpperCase()}`;
+    const subject = await prisma.subject.create({ data: { schoolId, name: subjectName, code: subjectCode, status: 'ACTIVE' } });
+    const teacherName = `Docente ${label}`;
+    const teacher = await prisma.teacher.create({ data: { schoolId, name: teacherName, status: 'ACTIVE' } });
+
+    return {
+      schoolId,
+      academicYearId: academicYear.id,
+      academicYearName,
+      termId: term.id,
+      termName,
+      classId: klass.id,
+      className,
+      subjectId: subject.id,
+      subjectName,
+      subjectCode,
+      teacherId: teacher.id,
+      teacherName,
+    };
+  } finally {
+    await prisma.$disconnect();
+  }
 }
 
 function listen(serverLike: Express, servers: Server[]): Promise<string> {
@@ -77,10 +142,13 @@ export async function startContractServices(): Promise<ContractTestContext> {
   process.env.ENROLMENTS_SERVICE_URL = enrolments;
   process.env.FINANCE_SERVICE_URL = finance;
 
+  const fixtures = await createSchoolFixtures(schoolId, schoolId.slice(0, 4).toUpperCase());
+
   return {
     token,
     role: 'SCHOOL_ADMIN',
     schoolId,
+    fixtures,
     stop: async () => {
       await Promise.all(servers.map((server) => new Promise<void>((resolve) => server.close(() => resolve()))));
       // Limpa a escola descartável (cascata apaga utilizadores, turmas, notas, etc.)
@@ -130,4 +198,65 @@ export async function resolveSeedFixtures(prisma: PrismaClient): Promise<SeedFix
   }
 
   return { schoolId, termId: term.id, academicYearId: academicYear.id, classId: classRecord.id, subjectId: subject.id, teacherId: teacher.id };
+}
+
+/**
+ * Cria um estudante matriculado na turma da escola descartável.
+ *
+ * Serve para os testes que precisam de um aluno real (nota, resultado, dívida)
+ * sem depender da escola do seed: o token, o utilizador, a matrícula e a
+ * situação financeira pertencem todos à mesma escola, como em produção.
+ */
+export async function createEnrolledStudent(
+  context: ContractTestContext,
+  label: string,
+  options: { hasDebt?: boolean; outstandingAmount?: number } = {},
+): Promise<{ studentId: string; userId: string; token: string }> {
+  const prisma = new PrismaClient();
+  try {
+    const fx = context.fixtures;
+    const user = await prisma.user.create({
+      data: {
+        schoolId: fx.schoolId,
+        role: 'STUDENT',
+        name: `Aluno ${label}`,
+        email: `${label}.${randomUUID().slice(0, 8)}@teste.mz`,
+        passwordHash: 'x',
+        status: 'ACTIVE',
+      },
+    });
+    const student = await prisma.student.create({
+      data: {
+        schoolId: fx.schoolId,
+        userId: user.id,
+        name: `Aluno ${label}`,
+        email: user.email,
+        enrollmentNumber: `${label.toUpperCase().slice(0, 3)}-${randomUUID().slice(0, 8)}`,
+        status: 'ACTIVE',
+      },
+    });
+    await prisma.financialStatus.create({
+      data: {
+        schoolId: fx.schoolId,
+        studentId: student.id,
+        hasDebt: options.hasDebt ?? false,
+        status: options.hasDebt ? 'IN_DEBT' : 'REGULAR',
+        outstandingAmount: options.outstandingAmount ?? 0,
+      },
+    });
+    await prisma.enrollment.create({
+      data: {
+        schoolId: fx.schoolId,
+        academicYearId: fx.academicYearId,
+        termId: fx.termId,
+        classId: fx.classId,
+        subjectId: fx.subjectId,
+        studentId: student.id,
+        status: 'ACTIVE',
+      },
+    });
+    return { studentId: student.id, userId: user.id, token: signToken({ id: user.id, role: 'STUDENT', schoolId: fx.schoolId }, TEST_JWT_SECRET, 3600) };
+  } finally {
+    await prisma.$disconnect();
+  }
 }
